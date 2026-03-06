@@ -39,11 +39,11 @@
 
 **Request**
 ```json
-{ "email": "nemoto@example.com", "password": "..." }
+{ "email": "yamada@example.com", "password": "..." }
 ```
 **Response**
 ```json
-{ "data": { "token": "jwt...", "user": { "id": "uuid", "name": "根本賢一郎", "role": "member" } } }
+{ "data": { "token": "jwt...", "user": { "id": "uuid", "name": "山田 太郎", "role": "member" } } }
 ```
 
 ---
@@ -53,7 +53,7 @@
 ### GET /api/v1/members
 社員一覧（manager / admin のみ）
 
-**Query**: `?division=観光&fiscal_year=2025`
+**Query**: `?division=システム開発&fiscal_year=2025`
 
 **Response**
 ```json
@@ -61,9 +61,9 @@
   "data": [
     {
       "id": "uuid",
-      "name": "根本賢一郎",
-      "division": "観光ビッグデータ事業部",
-      "joined_at": "2010-05-01",
+      "name": "山田 太郎",
+      "division": "システム開発事業部",
+      "joined_at": "2015-04-01",
       "role": "member",
       "current_position": "EL"
     }
@@ -80,8 +80,8 @@
 **Request**
 ```json
 {
-  "name": "根本賢一郎",
-  "division": "観光ビッグデータ事業部",
+  "name": "山田 太郎",
+  "division": "システム開発事業部",
   "wants_president_meeting": false
 }
 ```
@@ -280,7 +280,7 @@
 **Request**
 ```json
 {
-  "division": "観光",
+  "division": "事業部A",
   "items": [
     { "eval_uid": "1-1-1", "weight": 10 },
     { "eval_uid": "2-3-3", "weight": 20 }
@@ -301,8 +301,8 @@
   "data": [
     {
       "record_month": "2025-01-01",
-      "product": "DMO",
-      "task": "データコネクトHUB（バッチ）",
+      "product": "プロダクトA",
+      "task": "バッチ処理対応",
       "done": true
     }
   ]
@@ -316,8 +316,8 @@
 ```json
 {
   "records": [
-    { "product": "DMO", "task": "データコネクトHUB（バッチ）", "done": true },
-    { "product": "観光予報PF", "task": "Stripe対応", "done": false }
+    { "product": "プロダクトA", "task": "バッチ処理対応", "done": true },
+    { "product": "プロダクトB", "task": "決済機能対応", "done": false }
   ]
 }
 ```

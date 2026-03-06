@@ -31,9 +31,9 @@ Phase 5: UI 整備・仕上げ（5-6 デプロイのみ MVP）
 |---|---|---|---|
 | 1-1 | Next.js プロジェクト初期化（App Router + TypeScript） | — | 未着手 |
 | 1-2 | Tailwind CSS + shadcn/ui セットアップ | 1-1 | 未着手 |
-| 1-3 | PostgreSQL 接続・Prisma セットアップ | 1-1 | 未着手 |
-| 1-4 | Prisma スキーマ定義（schema.md に基づく全テーブル） | 1-3 | 未着手 |
-| 1-5 | マイグレーション実行・DB 生成 | 1-4 | 未着手 |
+| 1-3 | TiDB Cloud Serverless 接続・Prisma セットアップ（`@tidbcloud/prisma-adapter`） | 1-1 | 未着手 |
+| 1-4 | Prisma スキーマ定義（schema.md に基づく全テーブル・MySQL 向け） | 1-3 | 未着手 |
+| 1-5 | `prisma db push` でスキーマ適用・DB 生成 | 1-4 | 未着手 |
 | 1-6 | NextAuth.js 認証実装（ログイン・セッション・ロール制御） | 1-3 | 未着手 |
 | 1-7 | API レスポンス共通フォーマット実装 | 1-1 | 未着手 |
 | 1-8 | マスタデータシード（evaluation_items / roles / role_eval_mappings / allocations） | 1-5 | 未着手 |
