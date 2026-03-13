@@ -1,716 +1,716 @@
 [
-  {
-    "role_classification": "engineer",
-    "role_name": "front end engineer",
-    "eval_uid": "2-1-5",
-    "necessity": "half",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "front end engineer",
-    "eval_uid": "2-1-6",
-    "necessity": "half",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "front end engineer",
-    "eval_uid": "2-3-11",
-    "necessity": "half",
-    "required_level": "none"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "front end engineer",
-    "eval_uid": "2-3-2",
-    "necessity": "half",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "front end engineer",
-    "eval_uid": "2-3-6",
-    "necessity": "required",
-    "required_level": "none"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "front end engineer",
-    "eval_uid": "2-3-7",
-    "necessity": "half",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "front end engineer",
-    "eval_uid": "2-3-8",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "front end engineer",
-    "eval_uid": "2-3-9",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "front end engineer",
-    "eval_uid": "2-5-2",
-    "necessity": "half",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "server side engineer",
-    "eval_uid": "2-1-11",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "server side engineer",
-    "eval_uid": "2-1-6",
-    "necessity": "half",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "server side engineer",
-    "eval_uid": "2-3-2",
-    "necessity": "half",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "server side engineer",
-    "eval_uid": "2-3-3",
-    "necessity": "required",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "server side engineer",
-    "eval_uid": "2-3-7",
-    "necessity": "half",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "server side engineer",
-    "eval_uid": "2-3-8",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "server side engineer",
-    "eval_uid": "2-3-9",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "server side engineer",
-    "eval_uid": "2-5-1",
-    "necessity": "half",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "server side engineer",
-    "eval_uid": "2-5-2",
-    "necessity": "half",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "platform engineer",
-    "eval_uid": "2-1-6",
-    "necessity": "half",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "platform engineer",
-    "eval_uid": "2-3-2",
-    "necessity": "required",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "platform engineer",
-    "eval_uid": "2-3-8",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "platform engineer",
-    "eval_uid": "2-3-11",
-    "necessity": "half",
-    "required_level": "none"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "platform engineer",
-    "eval_uid": "2-5-5",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "platform engineer",
-    "eval_uid": "2-5-6",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "platform engineer",
-    "eval_uid": "2-7-1",
-    "necessity": "half",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "platform engineer",
-    "eval_uid": "2-7-5",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "platform engineer",
-    "eval_uid": "2-7-7",
-    "necessity": "required",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "platform engineer",
-    "eval_uid": "2-7-8",
-    "necessity": "half",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "platform engineer",
-    "eval_uid": "2-7-13",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "database engineer",
-    "eval_uid": "2-1-11",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "database engineer",
-    "eval_uid": "2-1-6",
-    "necessity": "half",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "database engineer",
-    "eval_uid": "2-3-4",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "database engineer",
-    "eval_uid": "2-3-8",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "database engineer",
-    "eval_uid": "2-5-1",
-    "necessity": "half",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "database engineer",
-    "eval_uid": "2-6-10",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "sales engineer",
-    "eval_uid": "2-1-2",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "sales engineer",
-    "eval_uid": "2-1-8",
-    "necessity": "half",
-    "required_level": "none"
-  },
-  {
-    "role_classification": "engineer",
-    "role_name": "sales engineer",
-    "eval_uid": "2-8-8",
-    "necessity": "half",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Software Architect",
-    "eval_uid": "1-2-1",
-    "necessity": "required",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Software Architect",
-    "eval_uid": "2-1-12",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Software Architect",
-    "eval_uid": "2-6-1",
-    "necessity": "required",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Software Architect",
-    "eval_uid": "2-6-3",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Software Architect",
-    "eval_uid": "2-6-5",
-    "necessity": "half",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Software Architect",
-    "eval_uid": "2-6-7",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Software Architect",
-    "eval_uid": "2-7-1",
-    "necessity": "required",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Security Architect",
-    "eval_uid": "1-2-1",
-    "necessity": "required",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Security Architect",
-    "eval_uid": "2-1-12",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Security Architect",
-    "eval_uid": "2-5-2",
-    "necessity": "half",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Security Architect",
-    "eval_uid": "2-5-5",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Security Architect",
-    "eval_uid": "2-6-1",
-    "necessity": "half",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Security Architect",
-    "eval_uid": "2-6-3",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Database   Architect",
-    "eval_uid": "1-2-1",
-    "necessity": "required",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Database   Architect",
-    "eval_uid": "2-1-11",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Database   Architect",
-    "eval_uid": "2-1-12",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Database   Architect",
-    "eval_uid": "2-5-1",
-    "necessity": "half",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Database   Architect",
-    "eval_uid": "2-6-1",
-    "necessity": "half",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Database   Architect",
-    "eval_uid": "2-6-10",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "Architect",
-    "role_name": "Database   Architect",
-    "eval_uid": "2-6-3",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project leader",
-    "eval_uid": "1-2-1",
-    "necessity": "half",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project leader",
-    "eval_uid": "1-2-3",
-    "necessity": "half",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project leader",
-    "eval_uid": "1-2-4",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project leader",
-    "eval_uid": "2-6-5",
-    "necessity": "half",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project leader",
-    "eval_uid": "2-8-1",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project leader",
-    "eval_uid": "2-8-20",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project leader",
-    "eval_uid": "2-8-4",
-    "necessity": "half",
-    "required_level": "none"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project leader",
-    "eval_uid": "2-8-8",
-    "necessity": "half",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project manager",
-    "eval_uid": "1-2-1",
-    "necessity": "half",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project manager",
-    "eval_uid": "1-2-3",
-    "necessity": "required",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project manager",
-    "eval_uid": "1-2-4",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project manager",
-    "eval_uid": "2-6-5",
-    "necessity": "required",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project manager",
-    "eval_uid": "2-8-1",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project manager",
-    "eval_uid": "2-8-20",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project manager",
-    "eval_uid": "2-8-4",
-    "necessity": "required",
-    "required_level": "none"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project manager",
-    "eval_uid": "2-8-8",
-    "necessity": "half",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "project manager",
-    "eval_uid": "2-8-9",
-    "necessity": "half",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "management",
-    "role_name": "product owner",
-    "eval_uid": "1-2-5",
-    "necessity": "required",
-    "required_level": "none"
-  },
-  {
-    "role_classification": "Others",
-    "role_name": "Web designer",
-    "eval_uid": "2-1-5",
-    "necessity": "required",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "Others",
-    "role_name": "Web directer",
-    "eval_uid": "2-1-5",
-    "necessity": "required",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "Others",
-    "role_name": "Customer Success",
-    "eval_uid": "3-3-2",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "Others",
-    "role_name": "Customer Success",
-    "eval_uid": "3-3-3",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "Others",
-    "role_name": "supervisor",
-    "eval_uid": "1-2-1",
-    "necessity": "required",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "Others",
-    "role_name": "supervisor",
-    "eval_uid": "1-2-3",
-    "necessity": "required",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "Others",
-    "role_name": "supervisor",
-    "eval_uid": "1-2-4",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "Others",
-    "role_name": "supervisor",
-    "eval_uid": "3-3-2",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "Others",
-    "role_name": "supervisor",
-    "eval_uid": "3-3-3",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "Others",
-    "role_name": "IT Consultant",
-    "eval_uid": "2-1-2",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "Others",
-    "role_name": "IT Consultant",
-    "eval_uid": "2-1-7",
-    "necessity": "required",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "Others",
-    "role_name": "IT Consultant",
-    "eval_uid": "2-1-8",
-    "necessity": "required",
-    "required_level": "none"
-  },
-  {
-    "role_classification": "Others",
-    "role_name": "Senior Consultant",
-    "eval_uid": "1-2-1",
-    "necessity": "required",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "Others",
-    "role_name": "Senior Consultant",
-    "eval_uid": "2-1-2",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "Others",
-    "role_name": "Senior Consultant",
-    "eval_uid": "2-1-7",
-    "necessity": "required",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "Others",
-    "role_name": "Senior Consultant",
-    "eval_uid": "2-1-8",
-    "necessity": "required",
-    "required_level": "none"
-  },
-  {
-    "role_classification": "sales & marketing",
-    "role_name": "sales manager",
-    "eval_uid": "1-2-1",
-    "necessity": "required",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "sales & marketing",
-    "role_name": "sales manager",
-    "eval_uid": "1-2-2",
-    "necessity": "half",
-    "required_level": "none"
-  },
-  {
-    "role_classification": "sales & marketing",
-    "role_name": "sales manager",
-    "eval_uid": "1-2-5",
-    "necessity": "required",
-    "required_level": "none"
-  },
-  {
-    "role_classification": "sales & marketing",
-    "role_name": "Marketer",
-    "eval_uid": "3-1-3",
-    "necessity": "required",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "sales & marketing",
-    "role_name": "Marketer",
-    "eval_uid": "3-1-11",
-    "necessity": "required",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "HumanResouces",
-    "role_name": "Human resources",
-    "eval_uid": "1-2-1",
-    "necessity": "required",
-    "required_level": "yu"
-  },
-  {
-    "role_classification": "HumanResouces",
-    "role_name": "Human resources",
-    "eval_uid": "4-3-15",
-    "necessity": "required",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "HumanResouces",
-    "role_name": "Human resources",
-    "eval_uid": "4-3-17",
-    "necessity": "required",
-    "required_level": "ka"
-  },
-  {
-    "role_classification": "HumanResouces",
-    "role_name": "Recruiter",
-    "eval_uid": "4-4-4",
-    "necessity": "half",
-    "required_level": "ryo"
-  },
-  {
-    "role_classification": "General",
-    "role_name": "Public relations",
-    "eval_uid": "1-1-2",
-    "necessity": "half",
-    "required_level": "yu"
-  }
+	{
+		"role_classification": "engineer",
+		"role_name": "front end engineer",
+		"eval_uid": "2-1-5",
+		"necessity": "half",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "front end engineer",
+		"eval_uid": "2-1-6",
+		"necessity": "half",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "front end engineer",
+		"eval_uid": "2-3-11",
+		"necessity": "half",
+		"required_level": "none"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "front end engineer",
+		"eval_uid": "2-3-2",
+		"necessity": "half",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "front end engineer",
+		"eval_uid": "2-3-6",
+		"necessity": "required",
+		"required_level": "none"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "front end engineer",
+		"eval_uid": "2-3-7",
+		"necessity": "half",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "front end engineer",
+		"eval_uid": "2-3-8",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "front end engineer",
+		"eval_uid": "2-3-9",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "front end engineer",
+		"eval_uid": "2-5-2",
+		"necessity": "half",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "server side engineer",
+		"eval_uid": "2-1-11",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "server side engineer",
+		"eval_uid": "2-1-6",
+		"necessity": "half",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "server side engineer",
+		"eval_uid": "2-3-2",
+		"necessity": "half",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "server side engineer",
+		"eval_uid": "2-3-3",
+		"necessity": "required",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "server side engineer",
+		"eval_uid": "2-3-7",
+		"necessity": "half",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "server side engineer",
+		"eval_uid": "2-3-8",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "server side engineer",
+		"eval_uid": "2-3-9",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "server side engineer",
+		"eval_uid": "2-5-1",
+		"necessity": "half",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "server side engineer",
+		"eval_uid": "2-5-2",
+		"necessity": "half",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "platform engineer",
+		"eval_uid": "2-1-6",
+		"necessity": "half",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "platform engineer",
+		"eval_uid": "2-3-2",
+		"necessity": "required",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "platform engineer",
+		"eval_uid": "2-3-8",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "platform engineer",
+		"eval_uid": "2-3-11",
+		"necessity": "half",
+		"required_level": "none"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "platform engineer",
+		"eval_uid": "2-5-5",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "platform engineer",
+		"eval_uid": "2-5-6",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "platform engineer",
+		"eval_uid": "2-7-1",
+		"necessity": "half",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "platform engineer",
+		"eval_uid": "2-7-5",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "platform engineer",
+		"eval_uid": "2-7-7",
+		"necessity": "required",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "platform engineer",
+		"eval_uid": "2-7-8",
+		"necessity": "half",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "platform engineer",
+		"eval_uid": "2-7-13",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "database engineer",
+		"eval_uid": "2-1-11",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "database engineer",
+		"eval_uid": "2-1-6",
+		"necessity": "half",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "database engineer",
+		"eval_uid": "2-3-4",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "database engineer",
+		"eval_uid": "2-3-8",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "database engineer",
+		"eval_uid": "2-5-1",
+		"necessity": "half",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "database engineer",
+		"eval_uid": "2-6-10",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "sales engineer",
+		"eval_uid": "2-1-2",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "sales engineer",
+		"eval_uid": "2-1-8",
+		"necessity": "half",
+		"required_level": "none"
+	},
+	{
+		"role_classification": "engineer",
+		"role_name": "sales engineer",
+		"eval_uid": "2-8-8",
+		"necessity": "half",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Software Architect",
+		"eval_uid": "1-2-1",
+		"necessity": "required",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Software Architect",
+		"eval_uid": "2-1-12",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Software Architect",
+		"eval_uid": "2-6-1",
+		"necessity": "required",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Software Architect",
+		"eval_uid": "2-6-3",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Software Architect",
+		"eval_uid": "2-6-5",
+		"necessity": "half",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Software Architect",
+		"eval_uid": "2-6-7",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Software Architect",
+		"eval_uid": "2-7-1",
+		"necessity": "required",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Security Architect",
+		"eval_uid": "1-2-1",
+		"necessity": "required",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Security Architect",
+		"eval_uid": "2-1-12",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Security Architect",
+		"eval_uid": "2-5-2",
+		"necessity": "half",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Security Architect",
+		"eval_uid": "2-5-5",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Security Architect",
+		"eval_uid": "2-6-1",
+		"necessity": "half",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Security Architect",
+		"eval_uid": "2-6-3",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Database   Architect",
+		"eval_uid": "1-2-1",
+		"necessity": "required",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Database   Architect",
+		"eval_uid": "2-1-11",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Database   Architect",
+		"eval_uid": "2-1-12",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Database   Architect",
+		"eval_uid": "2-5-1",
+		"necessity": "half",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Database   Architect",
+		"eval_uid": "2-6-1",
+		"necessity": "half",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Database   Architect",
+		"eval_uid": "2-6-10",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "Architect",
+		"role_name": "Database   Architect",
+		"eval_uid": "2-6-3",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project leader",
+		"eval_uid": "1-2-1",
+		"necessity": "half",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project leader",
+		"eval_uid": "1-2-3",
+		"necessity": "half",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project leader",
+		"eval_uid": "1-2-4",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project leader",
+		"eval_uid": "2-6-5",
+		"necessity": "half",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project leader",
+		"eval_uid": "2-8-1",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project leader",
+		"eval_uid": "2-8-20",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project leader",
+		"eval_uid": "2-8-4",
+		"necessity": "half",
+		"required_level": "none"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project leader",
+		"eval_uid": "2-8-8",
+		"necessity": "half",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project manager",
+		"eval_uid": "1-2-1",
+		"necessity": "half",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project manager",
+		"eval_uid": "1-2-3",
+		"necessity": "required",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project manager",
+		"eval_uid": "1-2-4",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project manager",
+		"eval_uid": "2-6-5",
+		"necessity": "required",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project manager",
+		"eval_uid": "2-8-1",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project manager",
+		"eval_uid": "2-8-20",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project manager",
+		"eval_uid": "2-8-4",
+		"necessity": "required",
+		"required_level": "none"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project manager",
+		"eval_uid": "2-8-8",
+		"necessity": "half",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "project manager",
+		"eval_uid": "2-8-9",
+		"necessity": "half",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "management",
+		"role_name": "product owner",
+		"eval_uid": "1-2-5",
+		"necessity": "required",
+		"required_level": "none"
+	},
+	{
+		"role_classification": "Others",
+		"role_name": "Web designer",
+		"eval_uid": "2-1-5",
+		"necessity": "required",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "Others",
+		"role_name": "Web directer",
+		"eval_uid": "2-1-5",
+		"necessity": "required",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "Others",
+		"role_name": "Customer Success",
+		"eval_uid": "3-3-2",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "Others",
+		"role_name": "Customer Success",
+		"eval_uid": "3-3-3",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "Others",
+		"role_name": "supervisor",
+		"eval_uid": "1-2-1",
+		"necessity": "required",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "Others",
+		"role_name": "supervisor",
+		"eval_uid": "1-2-3",
+		"necessity": "required",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "Others",
+		"role_name": "supervisor",
+		"eval_uid": "1-2-4",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "Others",
+		"role_name": "supervisor",
+		"eval_uid": "3-3-2",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "Others",
+		"role_name": "supervisor",
+		"eval_uid": "3-3-3",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "Others",
+		"role_name": "IT Consultant",
+		"eval_uid": "2-1-2",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "Others",
+		"role_name": "IT Consultant",
+		"eval_uid": "2-1-7",
+		"necessity": "required",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "Others",
+		"role_name": "IT Consultant",
+		"eval_uid": "2-1-8",
+		"necessity": "required",
+		"required_level": "none"
+	},
+	{
+		"role_classification": "Others",
+		"role_name": "Senior Consultant",
+		"eval_uid": "1-2-1",
+		"necessity": "required",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "Others",
+		"role_name": "Senior Consultant",
+		"eval_uid": "2-1-2",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "Others",
+		"role_name": "Senior Consultant",
+		"eval_uid": "2-1-7",
+		"necessity": "required",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "Others",
+		"role_name": "Senior Consultant",
+		"eval_uid": "2-1-8",
+		"necessity": "required",
+		"required_level": "none"
+	},
+	{
+		"role_classification": "sales & marketing",
+		"role_name": "sales manager",
+		"eval_uid": "1-2-1",
+		"necessity": "required",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "sales & marketing",
+		"role_name": "sales manager",
+		"eval_uid": "1-2-2",
+		"necessity": "half",
+		"required_level": "none"
+	},
+	{
+		"role_classification": "sales & marketing",
+		"role_name": "sales manager",
+		"eval_uid": "1-2-5",
+		"necessity": "required",
+		"required_level": "none"
+	},
+	{
+		"role_classification": "sales & marketing",
+		"role_name": "Marketer",
+		"eval_uid": "3-1-3",
+		"necessity": "required",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "sales & marketing",
+		"role_name": "Marketer",
+		"eval_uid": "3-1-11",
+		"necessity": "required",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "HumanResouces",
+		"role_name": "Human resources",
+		"eval_uid": "1-2-1",
+		"necessity": "required",
+		"required_level": "yu"
+	},
+	{
+		"role_classification": "HumanResouces",
+		"role_name": "Human resources",
+		"eval_uid": "4-3-15",
+		"necessity": "required",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "HumanResouces",
+		"role_name": "Human resources",
+		"eval_uid": "4-3-17",
+		"necessity": "required",
+		"required_level": "ka"
+	},
+	{
+		"role_classification": "HumanResouces",
+		"role_name": "Recruiter",
+		"eval_uid": "4-4-4",
+		"necessity": "half",
+		"required_level": "ryo"
+	},
+	{
+		"role_classification": "General",
+		"role_name": "Public relations",
+		"eval_uid": "1-1-2",
+		"necessity": "half",
+		"required_level": "yu"
+	}
 ]
