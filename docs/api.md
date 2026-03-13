@@ -50,6 +50,8 @@
 
 ## 社員（Members）
 
+> **注意：** `POST /api/v1/members`（admin によるメンバー追加）および初期ユーザー作成は v1.1 以降（T5-7）。MVP では DB シードで初期ユーザーを投入する。
+
 ### GET /api/v1/members
 社員一覧（manager / admin のみ）
 
