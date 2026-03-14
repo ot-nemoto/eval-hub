@@ -1,13 +1,13 @@
-> 最終更新: 2026-03-06 (DB: TiDB Cloud Serverless に変更)
+> 最終更新: 2026-03-14 (DB: Neon (PostgreSQL) に変更)
 
 # schema.md — DB スキーマ定義
 
-## TiDB (MySQL) 固有の注意点
+## PostgreSQL 固有の注意点
 
-- `TEXT[]` は MySQL で使えないため **`Json` 型**に変更（例: `["server side engineer", "Software Architect"]`）
-- `UUID` は `VARCHAR(36)` で代替（TiDB は UUID 型なし）
-- `ENUM` は Prisma の `enum` 定義を使用（MySQL の ENUM にマップ）
-- `relationMode = "prisma"` のため、FK カラムには `@@index` を明示的に定義
+- `TEXT[]` は PostgreSQL でそのまま使用可能（配列型）
+- `UUID` は `uuid` 型を使用（`@default(uuid())`）
+- `ENUM` は Prisma の `enum` 定義を使用（PostgreSQL の ENUM にマップ）
+- 外部キー制約は DB レベルで担保（`relationMode = "prisma"` 不要）
 
 ## ER 概要
 
@@ -36,14 +36,14 @@ allocations
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| id | VARCHAR(36) | PK | UUID 文字列 |
+| id | UUID | PK, DEFAULT uuid() | |
 | email | VARCHAR(255) | UNIQUE, NOT NULL | ログイン用メール |
 | password_hash | VARCHAR(255) | NOT NULL | bcrypt ハッシュ |
 | name | VARCHAR(100) | NOT NULL | 氏名 |
 | division | VARCHAR(100) | | 所属事業部 |
 | joined_at | DATE | | 入社日 |
 | role | ENUM | NOT NULL | `admin` / `manager` / `member` |
-| manager_id | VARCHAR(36) | FK → users.id, INDEX | 上長 |
+| manager_id | UUID | FK → users.id | 上長 |
 | wants_president_meeting | BOOLEAN | DEFAULT false | 社長面談希望 |
 | created_at | TIMESTAMP | DEFAULT now() | |
 | updated_at | TIMESTAMP | | |
@@ -52,8 +52,8 @@ allocations
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| id | VARCHAR(36) | PK | |
-| user_id | VARCHAR(36) | FK → users.id, INDEX | |
+| id | UUID | PK, DEFAULT uuid() | |
+| user_id | UUID | FK → users.id | |
 | fiscal_year | INTEGER | NOT NULL | 年度（例: 2025） |
 | division | VARCHAR(100) | NOT NULL | 配属事業部 |
 
@@ -61,13 +61,13 @@ allocations
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| id | VARCHAR(36) | PK | |
-| user_id | VARCHAR(36) | FK → users.id, INDEX | |
+| id | UUID | PK, DEFAULT uuid() | |
+| user_id | UUID | FK → users.id | |
 | fiscal_year | INTEGER | NOT NULL | 年度 |
-| current_roles_self | Json | | 現在ロール（自己認識）例: `["server side engineer"]` |
-| current_roles_official | Json | | 現在ロール（公式） |
+| current_roles_self | TEXT[] | | 現在ロール（自己認識）例: `["server side engineer"]` |
+| current_roles_official | TEXT[] | | 現在ロール（公式） |
 | current_position | VARCHAR(50) | | 現在役職 |
-| future_roles_self | Json | | 将来ロール（自己）例: `["Software Architect"]` |
+| future_roles_self | TEXT[] | | 将来ロール（自己）例: `["Software Architect"]` |
 | future_position_self | VARCHAR(50) | | 将来役職（自己） |
 | future_comment | TEXT | | 将来への補足コメント |
 | achievements_pr | TEXT | | 本年度成果・自由PR |
@@ -80,8 +80,8 @@ allocations
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| id | VARCHAR(36) | PK | |
-| career_plan_id | VARCHAR(36) | FK → career_plans.id, INDEX | |
+| id | UUID | PK, DEFAULT uuid() | |
+| career_plan_id | UUID | FK → career_plans.id | |
 | category | VARCHAR(100) | | 大項目（例: 事業部活動） |
 | title | VARCHAR(255) | NOT NULL | 目標タイトル |
 | goal_criteria | TEXT | | Goal（達成基準） |
@@ -95,8 +95,8 @@ allocations
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| goal_id | VARCHAR(36) | FK → goals.id, INDEX | |
-| eval_uid | VARCHAR(20) | FK → evaluation_items.uid, INDEX | |
+| goal_id | UUID | FK → goals.id | |
+| eval_uid | VARCHAR(20) | FK → evaluation_items.uid | |
 | PRIMARY KEY | (goal_id, eval_uid) | | |
 
 ### evaluation_items — 評価項目マスタ
@@ -118,10 +118,10 @@ allocations
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| id | VARCHAR(36) | PK | |
-| user_id | VARCHAR(36) | FK → users.id, INDEX | |
+| id | UUID | PK, DEFAULT uuid() | |
+| user_id | UUID | FK → users.id | |
 | fiscal_year | INTEGER | NOT NULL | 年度 |
-| eval_uid | VARCHAR(20) | FK → evaluation_items.uid, INDEX | |
+| eval_uid | VARCHAR(20) | FK → evaluation_items.uid | |
 | self_score | ENUM | | `none` / `ka` / `ryo` / `yu`（なし/可/良/優） |
 | self_reason | TEXT | | 自己採点理由 |
 | manager_score | ENUM | | `none` / `ka` / `ryo` / `yu` |
@@ -132,7 +132,7 @@ allocations
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| id | VARCHAR(36) | PK | |
+| id | UUID | PK, DEFAULT uuid() | |
 | classification | VARCHAR(50) | NOT NULL | 分類（例: engineer, Architect） |
 | name | VARCHAR(100) | NOT NULL | ロール名（例: server side engineer） |
 | weight | INTEGER | DEFAULT 1 | 重み |
@@ -145,9 +145,9 @@ allocations
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| id | VARCHAR(36) | PK | |
-| role_id | VARCHAR(36) | FK → roles.id, INDEX | |
-| eval_uid | VARCHAR(20) | FK → evaluation_items.uid, INDEX | |
+| id | UUID | PK, DEFAULT uuid() | |
+| role_id | UUID | FK → roles.id | |
+| eval_uid | VARCHAR(20) | FK → evaluation_items.uid | |
 | necessity | ENUM | NOT NULL | `required`（○）/ `half`（△） |
 | required_level | ENUM | NOT NULL | `none` / `ka` / `ryo` / `yu` |
 
@@ -155,9 +155,9 @@ allocations
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| id | VARCHAR(36) | PK | |
-| user_id | VARCHAR(36) | FK → users.id, INDEX | |
-| role_id | VARCHAR(36) | FK → roles.id, INDEX | |
+| id | UUID | PK, DEFAULT uuid() | |
+| user_id | UUID | FK → users.id | |
+| role_id | UUID | FK → roles.id | |
 | fiscal_year | INTEGER | NOT NULL | 年度 |
 | judgment | ENUM | NOT NULL | `qualified` / `unqualified` / `none` |
 | qualified_count | INTEGER | | 認定項目数 |
@@ -168,10 +168,10 @@ allocations
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| id | VARCHAR(36) | PK | |
+| id | UUID | PK, DEFAULT uuid() | |
 | fiscal_year | INTEGER | NOT NULL | 年度 |
 | division | VARCHAR(100) | NOT NULL | 事業部名 |
-| eval_uid | VARCHAR(20) | FK → evaluation_items.uid, INDEX | |
+| eval_uid | VARCHAR(20) | FK → evaluation_items.uid | |
 | weight | INTEGER | NOT NULL | 配点 |
 | UNIQUE | (fiscal_year, division, eval_uid) | | |
 
@@ -179,40 +179,11 @@ allocations
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| id | VARCHAR(36) | PK | |
-| user_id | VARCHAR(36) | FK → users.id, INDEX | |
+| id | UUID | PK, DEFAULT uuid() | |
+| user_id | UUID | FK → users.id | |
 | fiscal_year | INTEGER | NOT NULL | 年度 |
 | record_month | DATE | NOT NULL | 対象月（月初日） |
 | product | VARCHAR(100) | NOT NULL | プロダクト名 |
 | task | VARCHAR(255) | NOT NULL | タスク名 |
 | done | BOOLEAN | DEFAULT false | 実施済みフラグ |
 | UNIQUE | (user_id, record_month, product, task) | | |
-
----
-
-## インデックス
-
-`relationMode = "prisma"` の場合、FK カラムのインデックスは Prisma が自動生成しないため、
-`schema.prisma` に `@@index` を明示的に定義する。
-
-```prisma
-// 例：evaluations モデル
-model evaluations {
-  // ... カラム定義
-  @@index([user_id, fiscal_year])
-  @@index([eval_uid])
-}
-
-model career_plans {
-  @@index([user_id, fiscal_year])
-}
-
-model role_members {
-  @@index([user_id, fiscal_year])
-  @@index([role_id])
-}
-
-model monthly_records {
-  @@index([user_id, record_month])
-}
-```

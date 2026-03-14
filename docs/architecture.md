@@ -1,4 +1,4 @@
-> 最終更新: 2026-03-06 (DB: TiDB Cloud Serverless に変更)
+> 最終更新: 2026-03-14 (DB: Neon (PostgreSQL) に変更)
 
 # architecture.md — 実装方針・技術スタック
 
@@ -8,11 +8,11 @@
 |---|---|---|
 | Frontend | Next.js (App Router) + TypeScript | SSR/CSR の柔軟な使い分け、型安全 |
 | Styling | Tailwind CSS + shadcn/ui | 高速なUI構築、デザイン統一 |
-| Backend | Next.js API Routes（または別立て Express） | フロントと同リポジトリで管理しやすい |
+| Backend | Next.js API Routes | フロントと同リポジトリで管理しやすい |
 | ORM | Prisma | TypeScript との親和性、スキーマ管理 |
-| DB | TiDB Cloud Serverless | MySQL 互換・Edge 対応 HTTP 接続・無料 5GB・自動停止なし |
+| DB | Neon (PostgreSQL) | PostgreSQL 互換・Edge 対応・無料10プロジェクト・ブランチ機能あり |
 | 認証 | NextAuth.js | セッション管理・ロール制御が容易 |
-| デプロイ | Cloudflare Pages（Frontend） + TiDB Cloud Serverless（DB） | 無料枠で完結 |
+| デプロイ | Cloudflare Pages（Frontend） + Neon（DB） | 無料枠で完結 |
 
 ## システム構成
 
@@ -25,9 +25,9 @@
 ├── /api         ← API Routes（RESTful）
 └── /components  ← UI コンポーネント
     │
-    │ Prisma + @tidbcloud/prisma-adapter (HTTP)
+    │ Prisma + @prisma/adapter-neon (WebSocket)
     ▼
-[TiDB Cloud Serverless]
+[Neon (PostgreSQL)]
 ├── users（社員・認証）
 ├── career_plans（年度別キャリアプラン）
 ├── goals（年度目標）
@@ -78,16 +78,14 @@
 
 ## 設計方針
 
-### TiDB 接続設定
+### Neon 接続設定
 
 ```ts
 // lib/prisma.ts
-import { PrismaTiDBCloud } from '@tidbcloud/prisma-adapter'
-import { connect } from '@tidbcloud/serverless'
 import { PrismaClient } from '@prisma/client'
+import { PrismaNeon } from '@prisma/adapter-neon'
 
-const connection = connect({ url: process.env.DATABASE_URL })
-const adapter = new PrismaTiDBCloud(connection)
+const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL })
 export const prisma = new PrismaClient({ adapter })
 ```
 
@@ -99,13 +97,17 @@ generator client {
 }
 
 datasource db {
-  provider     = "mysql"
-  url          = env("DATABASE_URL")
-  relationMode = "prisma"  // TiDB はDBレベルの外部キー制約が弱いため Prisma 側で担保
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 ```
 
-**注意：** `relationMode = "prisma"` の場合、FK カラムには必ずインデックスを手動で追加すること（Prisma が自動生成しないため）。
+### DB ブランチ戦略
+
+| ブランチ | 用途 | 接続先環境変数 |
+|---|---|---|
+| `main` | staging 用 | Cloudflare Pages の staging 環境変数 |
+| `develop` | develop 用 | `.env.local` |
 
 ### API 設計
 - RESTful に統一（GET / POST / PUT / DELETE）
@@ -169,22 +171,18 @@ none が存在する項目はカウント対象外（分母から除く）
 # 起動
 npm run dev
 
-# DB マイグレーション（TiDB Cloud に対して実行）
-npx prisma db push
+# DB マイグレーション
+npx prisma migrate dev
 
 # シード（マスタデータ投入）
 npx prisma db seed
 ```
 
-> **注意：** TiDB Cloud Serverless では `prisma migrate dev` が使えないため、
-> スキーマ変更は `prisma db push` で適用する。
-> マイグレーション履歴の管理は行われないため、スキーマ変更は慎重に。
-
 ## 環境変数
 
 ```bash
 # .env.local
-DATABASE_URL="mysql://<user>:<password>@<host>:4000/<db>?sslaccept=strict"
+DATABASE_URL="postgresql://<user>:<password>@<host>/<db>?sslmode=require"
 NEXTAUTH_SECRET="..."
 NEXTAUTH_URL="http://localhost:3000"
 ```
