@@ -1,4 +1,4 @@
-> 最終更新: 2026-03-14 (DB: Neon (PostgreSQL) に変更)
+> 最終更新: 2026-03-14 (ディレクトリ構成を src/ レイアウトに変更)
 
 # architecture.md — 実装方針・技術スタック
 
@@ -21,9 +21,9 @@
     │ HTTPS
     ▼
 [Next.js (Cloudflare Pages / Edge Runtime)]
-├── /app         ← ページ（App Router）
-├── /api         ← API Routes（RESTful）
-└── /components  ← UI コンポーネント
+├── /src/app         ← ページ（App Router）
+├── /src/app/api     ← API Routes（RESTful）
+└── /src/components  ← UI コンポーネント
     │
     │ Prisma + @prisma/adapter-neon (WebSocket)
     ▼
@@ -43,36 +43,41 @@
 
 ```
 /
-├── app/
-│   ├── (auth)/
-│   │   └── login/
-│   ├── (dashboard)/
-│   │   ├── members/          ← 社員一覧・プロフィール
-│   │   ├── career/           ← キャリアプラン
-│   │   ├── evaluations/      ← 評価入力・一覧
-│   │   ├── roles/            ← ロール認定状況
-│   │   ├── records/          ← 月次実績
-│   │   └── admin/            ← マスタ管理（admin専用）
-│   ├── api/
-│   │   ├── auth/
-│   │   ├── members/
-│   │   ├── career-plans/
-│   │   ├── evaluations/
-│   │   ├── roles/
-│   │   ├── allocations/
-│   │   └── records/
-│   └── layout.tsx
-├── components/
-│   ├── ui/                   ← shadcn/ui ベース
-│   ├── evaluation/
-│   ├── career/
-│   └── role/
-├── lib/
-│   ├── prisma.ts
+├── src/
+│   ├── app/
+│   │   ├── (auth)/
+│   │   │   └── login/
+│   │   ├── (dashboard)/
+│   │   │   ├── members/          ← 社員一覧・プロフィール
+│   │   │   ├── career/           ← キャリアプラン
+│   │   │   ├── evaluations/      ← 評価入力・一覧
+│   │   │   ├── roles/            ← ロール認定状況
+│   │   │   ├── records/          ← 月次実績
+│   │   │   └── admin/            ← マスタ管理（admin専用）
+│   │   ├── api/
+│   │   │   ├── auth/
+│   │   │   ├── members/
+│   │   │   ├── career-plans/
+│   │   │   ├── evaluations/
+│   │   │   ├── roles/
+│   │   │   ├── allocations/
+│   │   │   └── records/
+│   │   └── layout.tsx
 │   ├── auth.ts
-│   └── utils.ts
+│   ├── components/
+│   │   ├── ui/                   ← shadcn/ui ベース
+│   │   ├── evaluation/
+│   │   ├── career/
+│   │   └── role/
+│   ├── lib/
+│   │   ├── prisma.ts
+│   │   └── utils.ts
+│   ├── test/
+│   │   └── setup.ts              ← Vitest セットアップ
+│   └── types/
 ├── prisma/
 │   └── schema.prisma
+├── vitest.config.ts
 └── docs/
 ```
 
@@ -81,7 +86,7 @@
 ### Neon 接続設定
 
 ```ts
-// lib/prisma.ts
+// src/lib/prisma.ts
 import { PrismaClient } from '@prisma/client'
 import { PrismaNeon } from '@prisma/adapter-neon'
 
