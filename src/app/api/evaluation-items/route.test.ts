@@ -38,7 +38,7 @@ const mockItems = [
   },
 ];
 
-describe("GET /api/v1/evaluation-items", () => {
+describe("GET /api/evaluation-items", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -47,7 +47,7 @@ describe("GET /api/v1/evaluation-items", () => {
     vi.mocked(auth).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
     vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue(mockItems);
 
-    const req = new Request("http://localhost/api/v1/evaluation-items");
+    const req = new Request("http://localhost/api/evaluation-items");
     const res = await GET(req);
     const body = await res.json();
 
@@ -59,7 +59,7 @@ describe("GET /api/v1/evaluation-items", () => {
     vi.mocked(auth).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
     vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue([mockItems[0]]);
 
-    const req = new Request("http://localhost/api/v1/evaluation-items?target=employee");
+    const req = new Request("http://localhost/api/evaluation-items?target=employee");
     const res = await GET(req);
     const body = await res.json();
 
@@ -76,7 +76,7 @@ describe("GET /api/v1/evaluation-items", () => {
     vi.mocked(auth).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
     vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue(mockItems);
 
-    const req = new Request("http://localhost/api/v1/evaluation-items?category=engagement");
+    const req = new Request("http://localhost/api/evaluation-items?category=engagement");
     const res = await GET(req);
 
     expect(prisma.evaluationItem.findMany).toHaveBeenCalledWith(
@@ -90,7 +90,7 @@ describe("GET /api/v1/evaluation-items", () => {
   it("未認証の場合は 401 を返す", async () => {
     vi.mocked(auth).mockResolvedValue(null);
 
-    const req = new Request("http://localhost/api/v1/evaluation-items");
+    const req = new Request("http://localhost/api/evaluation-items");
     const res = await GET(req);
     const body = await res.json();
 
