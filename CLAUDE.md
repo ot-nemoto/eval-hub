@@ -1,4 +1,4 @@
-# CLAUDE.md — daily-hub プロジェクトルール
+# CLAUDE.md — eval-hub プロジェクトルール
 
 ## 作業開始時のチェックリスト
 
