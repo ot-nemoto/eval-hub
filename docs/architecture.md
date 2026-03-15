@@ -91,15 +91,13 @@ export const prisma = new PrismaClient({ adapter })
 ```
 
 ```prisma
-// prisma/schema.prisma
+// prisma/schema.prisma（Prisma v7: url は prisma.config.ts で管理）
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 ```
 
