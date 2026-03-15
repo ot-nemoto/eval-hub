@@ -48,7 +48,12 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
-  if (!body || typeof body.fiscal_year !== "number" || !body.evaluatee_id || !body.evaluator_id) {
+  if (
+    !body ||
+    typeof body.fiscal_year !== "number" ||
+    typeof body.evaluatee_id !== "string" ||
+    typeof body.evaluator_id !== "string"
+  ) {
     return errorResponse("BAD_REQUEST", "fiscal_year, evaluatee_id, evaluator_id は必須です", 400);
   }
 
