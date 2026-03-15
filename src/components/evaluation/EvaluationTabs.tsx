@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 type Score = "none" | "ka" | "ryo" | "yu";
@@ -42,6 +42,7 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const savedTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const activeItems = items.filter((i) => i.category === activeCategory);
 
@@ -62,7 +63,8 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
       );
       if (!res.ok) throw new Error();
       setSaved((s) => ({ ...s, [uid]: true }));
-      setTimeout(() => setSaved((s) => ({ ...s, [uid]: false })), 2000);
+      clearTimeout(savedTimers.current[uid]);
+      savedTimers.current[uid] = setTimeout(() => setSaved((s) => ({ ...s, [uid]: false })), 2000);
     } catch {
       setErrors((e) => ({ ...e, [uid]: "保存に失敗しました" }));
     } finally {
