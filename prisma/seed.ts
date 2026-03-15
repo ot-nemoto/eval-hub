@@ -1,15 +1,76 @@
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "@prisma/client";
-import allocationsData from "./seeds/allocations.json";
+import bcrypt from "bcryptjs";
 import evaluationItemsData from "./seeds/evaluation_items.json";
-import roleMappingsData from "./seeds/role_eval_mappings.json";
-import rolesData from "./seeds/roles.json";
 
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  // 1. evaluation_items
+  // 1. users
+  const password = await bcrypt.hash("password", 10);
+
+  const tanaka = await prisma.user.upsert({
+    where: { email: "tanaka@example.com" },
+    update: { name: "田中太郎", role: "admin", password_hash: password },
+    create: {
+      email: "tanaka@example.com",
+      name: "田中太郎",
+      role: "admin",
+      password_hash: password,
+    },
+  });
+
+  const suzuki = await prisma.user.upsert({
+    where: { email: "suzuki@example.com" },
+    update: { name: "鈴木花子", role: "member", password_hash: password },
+    create: {
+      email: "suzuki@example.com",
+      name: "鈴木花子",
+      role: "member",
+      password_hash: password,
+    },
+  });
+
+  const sato = await prisma.user.upsert({
+    where: { email: "sato@example.com" },
+    update: { name: "佐藤健", role: "member", password_hash: password },
+    create: {
+      email: "sato@example.com",
+      name: "佐藤健",
+      role: "member",
+      password_hash: password,
+    },
+  });
+
+  console.log("users: 3 upserted");
+
+  // 2. evaluation_assignments（2025年度）
+  //   田中 → 評価者なし
+  //   鈴木 → 評価者: 田中
+  //   佐藤 → 評価者: 鈴木、田中
+  const assignments = [
+    { evaluatee_id: suzuki.id, evaluator_id: tanaka.id },
+    { evaluatee_id: sato.id, evaluator_id: suzuki.id },
+    { evaluatee_id: sato.id, evaluator_id: tanaka.id },
+  ];
+
+  for (const a of assignments) {
+    await prisma.evaluationAssignment.upsert({
+      where: {
+        fiscal_year_evaluatee_id_evaluator_id: {
+          fiscal_year: 2025,
+          evaluatee_id: a.evaluatee_id,
+          evaluator_id: a.evaluator_id,
+        },
+      },
+      update: {},
+      create: { fiscal_year: 2025, ...a },
+    });
+  }
+  console.log("evaluation_assignments: 3 upserted");
+
+  // 3. evaluation_items
   for (const item of evaluationItemsData) {
     await prisma.evaluationItem.upsert({
       where: { uid: item.uid },
@@ -39,75 +100,6 @@ async function main() {
     });
   }
   console.log(`evaluation_items: ${evaluationItemsData.length} upserted`);
-
-  // 2. roles
-  for (const role of rolesData) {
-    await prisma.role.upsert({
-      where: { classification_name: { classification: role.classification, name: role.name } },
-      update: {
-        weight: role.weight,
-        description: role.description ?? null,
-        required_criteria: role.required_criteria ?? null,
-        special_criteria: role.special_criteria ?? null,
-      },
-      create: {
-        classification: role.classification,
-        name: role.name,
-        weight: role.weight,
-        description: role.description ?? null,
-        required_criteria: role.required_criteria ?? null,
-        special_criteria: role.special_criteria ?? null,
-      },
-    });
-  }
-  console.log(`roles: ${rolesData.length} upserted`);
-
-  // 3. role_eval_mappings（unique 制約なし → 全削除して再投入）
-  await prisma.roleEvalMapping.deleteMany();
-  for (const mapping of roleMappingsData) {
-    const role = await prisma.role.findUnique({
-      where: {
-        classification_name: {
-          classification: mapping.role_classification,
-          name: mapping.role_name,
-        },
-      },
-    });
-    if (!role) {
-      console.warn(`role not found: ${mapping.role_classification} / ${mapping.role_name}`);
-      continue;
-    }
-    await prisma.roleEvalMapping.create({
-      data: {
-        role_id: role.id,
-        eval_uid: mapping.eval_uid,
-        necessity: mapping.necessity as "required" | "half",
-        required_level: mapping.required_level as "none" | "ka" | "ryo" | "yu",
-      },
-    });
-  }
-  console.log(`role_eval_mappings: ${roleMappingsData.length} created`);
-
-  // 4. allocations
-  for (const alloc of allocationsData) {
-    await prisma.allocation.upsert({
-      where: {
-        fiscal_year_division_eval_uid: {
-          fiscal_year: alloc.fiscal_year,
-          division: alloc.division,
-          eval_uid: alloc.eval_uid,
-        },
-      },
-      update: { weight: alloc.weight },
-      create: {
-        fiscal_year: alloc.fiscal_year,
-        division: alloc.division,
-        eval_uid: alloc.eval_uid,
-        weight: alloc.weight,
-      },
-    });
-  }
-  console.log(`allocations: ${allocationsData.length} upserted`);
 }
 
 main()
