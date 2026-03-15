@@ -22,6 +22,9 @@ dist/
 # TypeScript
 tsconfig.tsbuildinfo
 
+# Claude Code
+.claude/settings.local.json
+
 # Misc
 .DS_Store
 *.pem

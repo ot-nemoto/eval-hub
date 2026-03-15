@@ -1,0 +1,113 @@
+// @vitest-environment node
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { GET } from "./route";
+
+vi.mock("@/auth", () => ({ auth: vi.fn() }));
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    evaluationAssignment: { findFirst: vi.fn() },
+    evaluation: { findMany: vi.fn() },
+  },
+}));
+
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+
+const makeParams = (id: string, year: string) => Promise.resolve({ id, year });
+
+const adminSession = { user: { id: "admin-1", role: "admin" } };
+const selfSession = { user: { id: "user-2", role: "member" } };
+const evaluatorSession = { user: { id: "user-1", role: "member" } };
+const otherSession = { user: { id: "other-99", role: "member" } };
+
+const mockEvaluations = [
+  {
+    eval_uid: "1-1-1",
+    fiscal_year: 2025,
+    evaluatee_id: "user-2",
+    self_score: "ryo",
+    self_reason: "理由",
+    manager_score: null,
+    manager_reason: null,
+    evaluation_item: { name: "会社員としての基本姿勢" },
+  },
+];
+
+describe("GET /api/members/:id/evaluations/:year", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("本人は自分の評価一覧を取得できる", async () => {
+    vi.mocked(auth).mockResolvedValue(selfSession as never);
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue(mockEvaluations);
+
+    const res = await GET(new Request("http://localhost"), {
+      params: makeParams("user-2", "2025"),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0]).toMatchObject({ eval_uid: "1-1-1", item_name: "会社員としての基本姿勢" });
+  });
+
+  it("admin は任意の評価一覧を取得できる", async () => {
+    vi.mocked(auth).mockResolvedValue(adminSession as never);
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue(mockEvaluations);
+
+    const res = await GET(new Request("http://localhost"), {
+      params: makeParams("user-2", "2025"),
+    });
+
+    expect(res.status).toBe(200);
+    expect(prisma.evaluationAssignment.findFirst).not.toHaveBeenCalled();
+  });
+
+  it("アサインされた評価者は取得できる", async () => {
+    vi.mocked(auth).mockResolvedValue(evaluatorSession as never);
+    vi.mocked(prisma.evaluationAssignment.findFirst).mockResolvedValue({
+      id: "assign-1",
+      fiscal_year: 2025,
+      evaluatee_id: "user-2",
+      evaluator_id: "user-1",
+    });
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue(mockEvaluations);
+
+    const res = await GET(new Request("http://localhost"), {
+      params: makeParams("user-2", "2025"),
+    });
+
+    expect(res.status).toBe(200);
+  });
+
+  it("アサインされていない第三者は 403 を返す", async () => {
+    vi.mocked(auth).mockResolvedValue(otherSession as never);
+    vi.mocked(prisma.evaluationAssignment.findFirst).mockResolvedValue(null);
+
+    const res = await GET(new Request("http://localhost"), {
+      params: makeParams("user-2", "2025"),
+    });
+
+    expect(res.status).toBe(403);
+    expect(prisma.evaluation.findMany).not.toHaveBeenCalled();
+  });
+
+  it("未認証の場合は 401 を返す", async () => {
+    vi.mocked(auth).mockResolvedValue(null);
+
+    const res = await GET(new Request("http://localhost"), {
+      params: makeParams("user-2", "2025"),
+    });
+
+    expect(res.status).toBe(401);
+  });
+
+  it("year が数値以外の場合は 400 を返す", async () => {
+    vi.mocked(auth).mockResolvedValue(selfSession as never);
+
+    const res = await GET(new Request("http://localhost"), {
+      params: makeParams("user-2", "abc"),
+    });
+
+    expect(res.status).toBe(400);
+  });
+});
