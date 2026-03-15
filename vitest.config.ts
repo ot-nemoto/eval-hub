@@ -9,11 +9,11 @@ export default defineConfig({
     environment: "node",
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
-    exclude: ["node_modules", ".next"],
+    exclude: ["**/node_modules/**", "**/.next/**"],
     passWithNoTests: true,
     coverage: {
       provider: "v8",
-      exclude: ["node_modules", ".next", "src/test"],
+      exclude: ["**/node_modules/**", "**/.next/**", "**/src/test/**"],
     },
   },
   resolve: {
