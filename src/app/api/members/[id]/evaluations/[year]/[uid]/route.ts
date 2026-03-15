@@ -38,7 +38,10 @@ export async function PUT(
     return errorResponse("FORBIDDEN", "権限がありません", 403);
   }
 
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return errorResponse("BAD_REQUEST", "リクエストボディが不正です", 400);
+  }
   const { self_score, self_reason, manager_score, manager_reason } = body;
 
   const hasSelfFields = self_score !== undefined || self_reason !== undefined;
