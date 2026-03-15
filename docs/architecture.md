@@ -1,4 +1,4 @@
-> 最終更新: 2026-03-14 (ディレクトリ構成を src/ レイアウトに変更)
+> 最終更新: 2026-03-15 (MVPスコープを評価登録に絞り、DB構成・権限制御を更新)
 
 # architecture.md — 実装方針・技術スタック
 
@@ -28,15 +28,11 @@
     │ Prisma + @prisma/adapter-neon (WebSocket)
     ▼
 [Neon (PostgreSQL)]
-├── users（社員・認証）
-├── career_plans（年度別キャリアプラン）
-├── goals（年度目標）
+├── users（ユーザー・認証）
+├── evaluation_assignments（年度ごとの評価者アサイン）
 ├── evaluation_items（評価項目マスタ）
-├── evaluations（年度別採点記録）
-├── roles（ロール定義）
-├── role_eval_mappings（ロール×評価項目マッピング）
-├── allocations（事業部別配点）
-└── monthly_records（月次実績）
+└── evaluations（採点レコード）
+※ roles / allocations / career_plans 等は v1.1 以降
 ```
 
 ## ディレクトリ構成
@@ -120,55 +116,27 @@ datasource db {
 - 認証は JWT（NextAuth.js のセッショントークン）をヘッダーで渡す
 
 ### 評価ロジック
-- 自己採点・上長採点は独立して保存（同一テーブルの別カラム）
-- ロール認定判定はサーバーサイドで計算し、結果を `role_members` テーブルに保存
+- 自己採点・評価者採点は同一テーブル（`evaluations`）の別カラムに保存
+- 被評価者 × 年度 × 評価項目 で1レコード
+- 複数の評価者がいる場合、評価者側で意見をまとめて1つのスコアを登録する
 
 #### スコア順序定義
 ```
 none(0) < 可=ka(1) < 良=ryo(2) < 優=yu(3)
 ```
 
-#### 項目ごとの判定（item_judgment）
-```
-user_score >= required_level → "pass"
-user_score <  required_level → "fail"
-user_score が none           → "none"
-```
-
-#### ロール全体の判定（role_judgment）
-```
-必須項目（necessity = "required"）  : すべて "pass"
-半必須項目（necessity = "half"）    : 過半数（>50%）が "pass"
-
-上記を両方満たす → "qualified"
-どちらか未達    → "unqualified"
-none が存在する項目はカウント対象外（分母から除く）
-```
-
-#### メンテナンス方法
-判定基準の変更は `prisma/seeds/role_eval_mappings.json` の
-`required_level` と `necessity` を書き換えて再シードするだけ。
-コードの変更は不要。
-
-例：ロール X の評価項目 A を「可以上 必須」→「良以上 必須」に変更
-```json
-// 変更前
-{ "role": "X", "eval_uid": "2-3-3", "necessity": "required", "required_level": "ka" }
-
-// 変更後
-{ "role": "X", "eval_uid": "2-3-3", "necessity": "required", "required_level": "ryo" }
-```
-
 ### 年度管理
 - 年度は `fiscal_year`（例: `2025`）で管理
-- 評価・キャリアプランはすべて `fiscal_year` に紐付く
-- ２年ルール項目は前年度のスコアを自動コピーする処理を年度切替時に実行
+- 評価はすべて `fiscal_year` に紐付く
+- `evaluation_assignments` も年度単位で管理（年度ごとに評価者を変更可）
 
 ### 権限制御
-- API Routes でミドルウェアによるロールチェック
-- `member`: 自分の `user_id` に一致するデータのみ操作可
-- `manager`: 担当メンバー（`manager_id` が自分）のデータを閲覧・評価可
+- API Routes でセッション + DB 参照によるアクセス制御
+- `member`（自己評価）: `evaluatee_id == 自分` のレコードの `self_score / self_reason` のみ更新可
+- `member`（評価者）: `evaluation_assignments` に `evaluator_id == 自分` のレコードがある被評価者の `manager_score / manager_reason` を更新可
 - `admin`: すべてのデータ操作可
+
+> `manager` ロールは廃止。評価権限は `evaluation_assignments` で動的に管理する。
 
 ## 開発環境
 
