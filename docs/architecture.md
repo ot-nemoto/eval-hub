@@ -152,8 +152,16 @@ npx prisma db seed
 ## 環境変数
 
 ```bash
-# .env.local
-DATABASE_URL="postgresql://<user>:<password>@<host>/<db>?sslmode=require"
+# .env
+
+# Neon のプーリング接続 URL（アプリケーション実行時に PrismaClient が使用）
+DATABASE_URL="postgresql://<user>:<password>@<pooler-host>/<db>?sslmode=require"
+
+# Neon の直接接続 URL（prisma migrate dev / db seed 実行時に prisma.config.ts が使用）
+# Neon のコネクションプーラーはトランザクションモードのため、
+# マイグレーションには直接接続が必要
+DIRECT_URL="postgresql://<user>:<password>@<direct-host>/<db>?sslmode=require"
+
 NEXTAUTH_SECRET="..."
 NEXTAUTH_URL="http://localhost:3000"
 ```
