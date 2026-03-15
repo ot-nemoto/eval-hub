@@ -1,4 +1,4 @@
-> 最終更新: 2026-03-13
+> 最終更新: 2026-03-16
 
 # tasks.md — 実装タスク設計図
 
@@ -18,13 +18,13 @@
 
 - [Issues — Phase 1: 基盤構築](https://github.com/ot-nemoto/eval-hub/milestone/1)
 
-## Phase 2: コアデータ管理（評価・ロール）
+## Phase 2: 評価API
 
-- [Issues — Phase 2: コアデータ管理](https://github.com/ot-nemoto/eval-hub/milestone/2)
+- [Issues — Phase 2: 評価API](https://github.com/ot-nemoto/eval-hub/milestone/2)
 
-## Phase 3: キャリアプラン・目標管理
+## Phase 3: 評価UI
 
-- [Issues — Phase 3: キャリアプラン・目標管理](https://github.com/ot-nemoto/eval-hub/milestone/3)
+- [Issues — Phase 3: 評価UI](https://github.com/ot-nemoto/eval-hub/milestone/3)
 
 ## Phase 4: デプロイ
 
@@ -37,7 +37,7 @@
 フェーズ構成・優先順位は v1.1 着手時に改めて検討する。以下は候補タスク（順不同）。
 
 - 実績管理・集計
-  - 月次実績 API（GET/PUT /api/v1/members/:id/records）
+  - 月次実績 API（GET/PUT /api/members/:id/records）
   - 月次実績入力画面（月×プロダクト×タスクのグリッド）
   - 配点管理 API（admin 用）
   - 年度切り替え処理（２年ルール項目の自動コピー）
@@ -47,4 +47,4 @@
   - バリデーション強化・エラーハンドリング整備
   - レスポンシブ対応（タブレット）
   - E2E テスト（Playwright）主要フロー
-  - ユーザー管理 API（admin による POST/DELETE /api/v1/members）
+  - ユーザー管理 API（admin による POST/DELETE /api/members）
