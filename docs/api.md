@@ -6,7 +6,7 @@
 
 ### ベース URL
 ```
-/api/v1
+/api
 ```
 
 ### 認証
@@ -53,7 +53,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 ## 評価項目マスタ
 
-### GET /api/v1/evaluation-items
+### GET /api/evaluation-items
 評価項目一覧
 
 **Query**: `?target=employee&category=engagement`
@@ -81,7 +81,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 ## 評価者アサイン
 
-### GET /api/v1/evaluation-assignments
+### GET /api/evaluation-assignments
 アサイン一覧（admin のみ）
 
 **Query**: `?fiscal_year=2025`
@@ -100,7 +100,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 }
 ```
 
-### POST /api/v1/evaluation-assignments
+### POST /api/evaluation-assignments
 アサイン登録（admin のみ）
 
 **Request**
@@ -117,7 +117,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 { "data": { "id": "uuid", "fiscal_year": 2025, "evaluatee_id": "uuid", "evaluator_id": "uuid" } }
 ```
 
-### DELETE /api/v1/evaluation-assignments/:id
+### DELETE /api/evaluation-assignments/:id
 アサイン削除（admin のみ）
 
 **Response**: `204 No Content`
@@ -126,7 +126,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 ## 評価
 
-### GET /api/v1/members/:id/evaluations/:year
+### GET /api/members/:id/evaluations/:year
 指定年度の評価一覧
 
 **Response**
@@ -150,7 +150,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 - アサインされた評価者（`evaluation_assignments` に `evaluatee_id == :id` かつ `evaluator_id == 自分` のレコードがある）
 - admin
 
-### PUT /api/v1/members/:id/evaluations/:year/:uid
+### PUT /api/members/:id/evaluations/:year/:uid
 採点入力・更新
 
 **Request（本人の場合）**
@@ -194,10 +194,10 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 | エンドポイント | 機能 |
 |---|---|
-| `GET/PUT /api/v1/members/:id` | 社員プロフィール |
-| `GET/PUT /api/v1/members/:id/career-plans/:year` | キャリアプラン |
-| `GET/POST/PUT/DELETE /api/v1/goals` | 年度目標 |
-| `GET /api/v1/roles` | ロール一覧 |
-| `GET /api/v1/members/:id/roles/:year` | ロール認定状況 |
-| `GET/PUT /api/v1/allocations/:year` | 配点管理 |
-| `GET/PUT /api/v1/members/:id/records/:year` | 月次実績 |
+| `GET/PUT /api/members/:id` | 社員プロフィール |
+| `GET/PUT /api/members/:id/career-plans/:year` | キャリアプラン |
+| `GET/POST/PUT/DELETE /api/goals` | 年度目標 |
+| `GET /api/roles` | ロール一覧 |
+| `GET /api/members/:id/roles/:year` | ロール認定状況 |
+| `GET/PUT /api/allocations/:year` | 配点管理 |
+| `GET/PUT /api/members/:id/records/:year` | 月次実績 |
