@@ -1,4 +1,4 @@
-> 最終更新: 2026-03-14 (DB: Neon (PostgreSQL) に変更)
+> 最終更新: 2026-03-15 (ER図をMermaid形式で追加)
 
 # schema.md — DB スキーマ定義
 
@@ -11,21 +11,138 @@
 
 ## ER 概要
 
-```
-users
- ├── career_plans (1:N)
- │    └── goals (1:N)
- ├── evaluations (1:N) ※年度×UID
- ├── role_members (N:M) ← roles
- └── monthly_records (1:N)
+```mermaid
+erDiagram
+    users {
+        UUID id PK
+        VARCHAR email UK
+        VARCHAR password_hash
+        VARCHAR name
+        VARCHAR division
+        DATE joined_at
+        ENUM role
+        UUID manager_id FK
+        BOOLEAN wants_president_meeting
+    }
+    assignment_histories {
+        UUID id PK
+        UUID user_id FK
+        INT fiscal_year
+        VARCHAR division
+    }
+    career_plans {
+        UUID id PK
+        UUID user_id FK
+        INT fiscal_year
+        TEXT[] current_roles_self
+        TEXT[] current_roles_official
+        VARCHAR current_position
+        TEXT[] future_roles_self
+        VARCHAR future_position_self
+        TEXT future_comment
+        TEXT achievements_pr
+        TEXT next_year_goals
+        TEXT interim_comment
+        TEXT final_comment
+    }
+    goals {
+        UUID id PK
+        UUID career_plan_id FK
+        VARCHAR category
+        VARCHAR title
+        TEXT goal_criteria
+        TEXT action
+        VARCHAR period
+        TEXT progress
+        TEXT progress_official
+        INT sort_order
+    }
+    goal_eval_links {
+        UUID goal_id FK
+        VARCHAR eval_uid FK
+    }
+    evaluation_items {
+        VARCHAR uid PK
+        VARCHAR target
+        INT target_no
+        VARCHAR category
+        INT category_no
+        INT item_no
+        VARCHAR name
+        TEXT description
+        TEXT eval_criteria
+        BOOLEAN two_year_rule
+    }
+    evaluations {
+        UUID id PK
+        UUID user_id FK
+        INT fiscal_year
+        VARCHAR eval_uid FK
+        ENUM self_score
+        TEXT self_reason
+        ENUM manager_score
+        TEXT manager_reason
+    }
+    roles {
+        UUID id PK
+        VARCHAR classification
+        VARCHAR name
+        INT weight
+        TEXT description
+        TEXT required_criteria
+        TEXT special_criteria
+    }
+    role_eval_mappings {
+        UUID id PK
+        UUID role_id FK
+        VARCHAR eval_uid FK
+        ENUM necessity
+        ENUM required_level
+    }
+    role_members {
+        UUID id PK
+        UUID user_id FK
+        UUID role_id FK
+        INT fiscal_year
+        ENUM judgment
+        INT qualified_count
+        INT total_count
+    }
+    allocations {
+        UUID id PK
+        INT fiscal_year
+        VARCHAR division
+        VARCHAR eval_uid FK
+        INT weight
+    }
+    monthly_records {
+        UUID id PK
+        UUID user_id FK
+        INT fiscal_year
+        DATE record_month
+        VARCHAR product
+        VARCHAR task
+        BOOLEAN done
+    }
 
-evaluation_items
- ├── evaluations (1:N)
- ├── role_eval_mappings (1:N) ← roles
- └── goal_eval_links (N:M) ← goals
+    users ||--o{ users : "manager_id"
+    users ||--o{ assignment_histories : "user_id"
+    users ||--o{ career_plans : "user_id"
+    users ||--o{ evaluations : "user_id"
+    users ||--o{ role_members : "user_id"
+    users ||--o{ monthly_records : "user_id"
 
-allocations
- └── evaluation_items (N:M) × divisions
+    career_plans ||--o{ goals : "career_plan_id"
+
+    goals ||--o{ goal_eval_links : "goal_id"
+    evaluation_items ||--o{ goal_eval_links : "eval_uid"
+
+    evaluation_items ||--o{ evaluations : "eval_uid"
+    evaluation_items ||--o{ role_eval_mappings : "eval_uid"
+    evaluation_items ||--o{ allocations : "eval_uid"
+
+    roles ||--o{ role_eval_mappings : "role_id"
+    roles ||--o{ role_members : "role_id"
 ```
 
 ---

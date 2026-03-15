@@ -2,6 +2,9 @@
   "name": "eval-hub",
   "version": "0.1.0",
   "private": true,
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
@@ -42,6 +45,7 @@
     "@vitejs/plugin-react": "^6.0.0",
     "dotenv": "^17.3.1",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5",
     "vitest": "^4.1.0"
   }
