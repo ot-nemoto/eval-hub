@@ -1,4 +1,4 @@
-> 最終更新: 2026-03-16
+> 最終更新: 2026-03-16 (Phase 4 デプロイ先を Vercel に変更)
 
 # tasks.md — 実装タスク設計図
 
@@ -29,6 +29,11 @@
 ## Phase 4: デプロイ
 
 - [Issues — Phase 4: デプロイ](https://github.com/ot-nemoto/eval-hub/milestone/4)
+
+> **方針変更（2026-03-16）**: Cloudflare Workers は無料プランの 3 MiB サイズ制限を超過するため、**Vercel** にデプロイ先を変更。
+>
+> - T31: Cloudflare Workers 関連コードの削除（`@opennextjs/cloudflare`・`wrangler`・`wrangler.toml`）
+> - T32: Vercel デプロイ設定（プロジェクト作成・環境変数設定）
 
 ---
 
