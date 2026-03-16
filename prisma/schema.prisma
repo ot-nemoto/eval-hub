@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  admin
+  member
+}
+
+enum Score {
+  none
+  ka
+  ryo
+  yu
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id                      String    @id @default(uuid())
+  email                   String    @unique @db.VarChar(255)
+  password_hash           String    @db.VarChar(255)
+  name                    String    @db.VarChar(100)
+  division                String?   @db.VarChar(100)
+  joined_at               DateTime? @db.Date
+  role                    UserRole
+  wants_president_meeting Boolean   @default(false)
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+
+  evaluatee_assignments EvaluationAssignment[] @relation("EvaluateeAssignments")
+  evaluator_assignments EvaluationAssignment[] @relation("EvaluatorAssignments")
+  evaluations           Evaluation[]
+
+  @@map("users")
+}
+
+model EvaluationAssignment {
+  id           String @id @default(uuid())
+  fiscal_year  Int
+  evaluatee_id String
+  evaluator_id String
+
+  evaluatee User @relation("EvaluateeAssignments", fields: [evaluatee_id], references: [id])
+  evaluator User @relation("EvaluatorAssignments", fields: [evaluator_id], references: [id])
+
+  @@unique([fiscal_year, evaluatee_id, evaluator_id])
+  @@map("evaluation_assignments")
+}
+
+model EvaluationItem {
+  uid           String  @id @db.VarChar(20)
+  target        String  @db.VarChar(50)
+  target_no     Int?
+  category      String  @db.VarChar(100)
+  category_no   Int?
+  item_no       Int
+  name          String  @db.VarChar(255)
+  description   String? @db.Text
+  eval_criteria String? @db.Text
+  two_year_rule Boolean @default(false)
+
+  evaluations Evaluation[]
+
+  @@map("evaluation_items")
+}
+
+model Evaluation {
+  id             String  @id @default(uuid())
+  fiscal_year    Int
+  evaluatee_id   String
+  eval_uid       String  @db.VarChar(20)
+  self_score     Score?
+  self_reason    String? @db.Text
+  manager_score  Score?
+  manager_reason String? @db.Text
+
+  evaluatee       User           @relation(fields: [evaluatee_id], references: [id])
+  evaluation_item EvaluationItem @relation(fields: [eval_uid], references: [uid])
+
+  @@unique([fiscal_year, evaluatee_id, eval_uid])
+  @@map("evaluations")
+}

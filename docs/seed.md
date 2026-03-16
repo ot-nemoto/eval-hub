@@ -123,13 +123,13 @@ prisma/
 [
   {
     "fiscal_year": 2025,
-    "division": "観光",
+    "division": "事業部C",
     "eval_uid": "1-1-1",
     "weight": 10
   },
   {
     "fiscal_year": 2025,
-    "division": "観光",
+    "division": "事業部C",
     "eval_uid": "2-3-3",
     "weight": 20
   }

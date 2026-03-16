@@ -1,4 +1,4 @@
-> 最終更新: 2026-03-06
+> 最終更新: 2026-03-15 (MVPスコープを評価登録に絞り、APIを再設計)
 
 # api.md — API 仕様
 
@@ -6,7 +6,7 @@
 
 ### ベース URL
 ```
-/api/v1
+/api
 ```
 
 ### 認証
@@ -16,13 +16,25 @@
 ### レスポンス形式
 ```json
 // 成功
-{ "data": {...}, "meta": { "total": 100, "page": 1 } }
+{ "data": {...}, "meta": { "total": 100 } }
 
 // エラー
 { "error": { "code": "UNAUTHORIZED", "message": "認証が必要です" } }
 ```
 
+### エラーコード一覧
+
+| コード | HTTP | 説明 |
+|---|---|---|
+| `BAD_REQUEST` | 400 | リクエストの形式・値が不正 |
+| `UNAUTHORIZED` | 401 | 未認証 |
+| `FORBIDDEN` | 403 | 権限なし |
+| `NOT_FOUND` | 404 | リソースが存在しない |
+| `CONFLICT` | 409 | リソースの重複 |
+| `INTERNAL_SERVER_ERROR` | 500 | サーバー内部エラー |
+
 ### スコア値の定義
+
 | 値 | 意味 |
 |---|---|
 | `"none"` | なし（未評価） |
@@ -34,127 +46,15 @@
 
 ## 認証
 
-### POST /api/auth/login
-ログイン
-
-**Request**
-```json
-{ "email": "nemoto@example.com", "password": "..." }
-```
-**Response**
-```json
-{ "data": { "token": "jwt...", "user": { "id": "uuid", "name": "根本賢一郎", "role": "member" } } }
-```
+### POST /api/auth/[...nextauth]
+NextAuth.js による認証（ログイン・セッション管理）
 
 ---
 
-## 社員（Members）
+## 評価項目マスタ
 
-### GET /api/v1/members
-社員一覧（manager / admin のみ）
-
-**Query**: `?division=観光&fiscal_year=2025`
-
-**Response**
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "name": "根本賢一郎",
-      "division": "観光ビッグデータ事業部",
-      "joined_at": "2010-05-01",
-      "role": "member",
-      "current_position": "EL"
-    }
-  ]
-}
-```
-
-### GET /api/v1/members/:id
-社員詳細
-
-### PUT /api/v1/members/:id
-社員情報更新（本人または admin）
-
-**Request**
-```json
-{
-  "name": "根本賢一郎",
-  "division": "観光ビッグデータ事業部",
-  "wants_president_meeting": false
-}
-```
-
----
-
-## キャリアプラン（Career Plans）
-
-### GET /api/v1/members/:id/career-plans
-年度別キャリアプラン一覧
-
-**Response**
-```json
-{
-  "data": [
-    { "fiscal_year": 2025, "current_position": "EL", "future_roles_self": ["server side engineer", "Software Architect"] }
-  ]
-}
-```
-
-### GET /api/v1/members/:id/career-plans/:year
-指定年度のキャリアプラン詳細
-
-### PUT /api/v1/members/:id/career-plans/:year
-キャリアプラン更新（本人入力 or 上長コメント追記）
-
-**Request**
-```json
-{
-  "current_roles_self": ["server side engineer", "platform engineer", "Software Architect"],
-  "current_roles_official": ["server side engineer", "platform engineer", "database engineer", "Software Architect", "Customer Success"],
-  "current_position": "EL",
-  "future_roles_self": ["server side engineer", "Software Architect"],
-  "future_comment": "サポート・指導をメインとしていきたい",
-  "interim_comment": "AI活用の広がりが見られます...",
-  "final_comment": "ELとしての目立つ成果は薄かった..."
-}
-```
-
----
-
-## 年度目標（Goals）
-
-### GET /api/v1/members/:id/career-plans/:year/goals
-目標一覧
-
-### POST /api/v1/members/:id/career-plans/:year/goals
-目標追加
-
-**Request**
-```json
-{
-  "category": "事業部活動",
-  "title": "AI推進",
-  "goal_criteria": "チームへの共有し、基盤決定。",
-  "action": "SSDサービスの調査を行い、チームで進めるうえでの基盤選定を行う。",
-  "period": "1Q",
-  "eval_uids": ["5-1-1", "2-3-2"]
-}
-```
-
-### PUT /api/v1/goals/:id
-目標更新（進捗記録など）
-
-### DELETE /api/v1/goals/:id
-目標削除
-
----
-
-## 評価（Evaluations）
-
-### GET /api/v1/evaluation-items
-評価項目マスタ一覧
+### GET /api/evaluation-items
+評価項目一覧
 
 **Query**: `?target=employee&category=engagement`
 
@@ -168,14 +68,66 @@
       "category": "engagement",
       "name": "会社員としての基本姿勢",
       "description": "...",
+      "eval_criteria": "...",
       "two_year_rule": false
     }
   ]
 }
 ```
 
-### GET /api/v1/members/:id/evaluations/:year
-指定年度の採点記録一覧
+**権限**: 認証済みユーザー全員
+
+---
+
+## 評価者アサイン
+
+### GET /api/evaluation-assignments
+アサイン一覧（admin のみ）
+
+**Query**: `?fiscal_year=2025`
+
+**Response**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "fiscal_year": 2025,
+      "evaluatee": { "id": "uuid", "name": "山田 太郎" },
+      "evaluator": { "id": "uuid", "name": "鈴木 一郎" }
+    }
+  ]
+}
+```
+
+### POST /api/evaluation-assignments
+アサイン登録（admin のみ）
+
+**Request**
+```json
+{
+  "fiscal_year": 2025,
+  "evaluatee_id": "uuid",
+  "evaluator_id": "uuid"
+}
+```
+
+**Response**: `201 Created`
+```json
+{ "data": { "id": "uuid", "fiscal_year": 2025, "evaluatee_id": "uuid", "evaluator_id": "uuid" } }
+```
+
+### DELETE /api/evaluation-assignments/:id
+アサイン削除（admin のみ）
+
+**Response**: `204 No Content`
+
+---
+
+## 評価
+
+### GET /api/members/:id/evaluations/:year
+指定年度の評価一覧
 
 **Response**
 ```json
@@ -185,7 +137,7 @@
       "eval_uid": "1-1-1",
       "item_name": "会社員としての基本姿勢",
       "self_score": "ryo",
-      "self_reason": "日報、採用委員会での補助実施...",
+      "self_reason": "日報を毎日記録し...",
       "manager_score": "ryo",
       "manager_reason": "採用業務を一次メンバーで対応可能になるよう..."
     }
@@ -193,10 +145,15 @@
 }
 ```
 
-### PUT /api/v1/members/:id/evaluations/:year/:uid
-採点入力（自己 or 上長）
+**権限**
+- 本人（`id == 自分`）
+- アサインされた評価者（`evaluation_assignments` に `evaluatee_id == :id` かつ `evaluator_id == 自分` のレコードがある）
+- admin
 
-**Request**（本人の場合）
+### PUT /api/members/:id/evaluations/:year/:uid
+採点入力・更新
+
+**Request（本人の場合）**
 ```json
 {
   "self_score": "ryo",
@@ -204,7 +161,7 @@
 }
 ```
 
-**Request**（上長の場合）
+**Request（評価者の場合）**
 ```json
 {
   "manager_score": "yu",
@@ -212,112 +169,35 @@
 }
 ```
 
----
+**権限**
+- `self_score / self_reason`：本人のみ
+- `manager_score / manager_reason`：アサインされた評価者または admin
 
-## ロール（Roles）
-
-### GET /api/v1/roles
-ロール一覧
-
-**Response**
+**Response**: `200 OK`
 ```json
 {
-  "data": [
-    {
-      "id": "uuid",
-      "classification": "engineer",
-      "name": "server side engineer",
-      "description": "サーバ/言語/フレームワークの特性に合わせたプログラム設計・実装する"
-    }
-  ]
-}
-```
-
-### GET /api/v1/roles/:id/mappings
-ロールに必要な評価項目マッピング一覧
-
-**Response**
-```json
-{
-  "data": [
-    {
-      "eval_uid": "2-3-3",
-      "item_name": "サーバーサイドプログラミング能力",
-      "necessity": "required",
-      "required_level": "yu"
-    }
-  ]
-}
-```
-
-### GET /api/v1/members/:id/roles/:year
-社員のロール認定状況一覧
-
-**Response**
-```json
-{
-  "data": [
-    {
-      "role_name": "server side engineer",
-      "judgment": "qualified",
-      "qualified_count": 7,
-      "total_count": 8
-    }
-  ]
+  "data": {
+    "eval_uid": "1-1-1",
+    "self_score": "ryo",
+    "self_reason": "...",
+    "manager_score": "yu",
+    "manager_reason": "..."
+  }
 }
 ```
 
 ---
 
-## 配点（Allocations）
+## v1.1 以降（defer）
 
-### GET /api/v1/allocations/:year
-年度別・事業部別配点一覧（admin のみ）
+以下のエンドポイントは v1.1 で追加予定。
 
-### PUT /api/v1/allocations/:year
-配点更新（admin のみ）
-
-**Request**
-```json
-{
-  "division": "観光",
-  "items": [
-    { "eval_uid": "1-1-1", "weight": 10 },
-    { "eval_uid": "2-3-3", "weight": 20 }
-  ]
-}
-```
-
----
-
-## 月次実績（Monthly Records）
-
-### GET /api/v1/members/:id/records/:year
-年度の月次実績一覧
-
-**Response**
-```json
-{
-  "data": [
-    {
-      "record_month": "2025-01-01",
-      "product": "DMO",
-      "task": "データコネクトHUB（バッチ）",
-      "done": true
-    }
-  ]
-}
-```
-
-### PUT /api/v1/members/:id/records/:year/:month
-月次実績の一括更新
-
-**Request**
-```json
-{
-  "records": [
-    { "product": "DMO", "task": "データコネクトHUB（バッチ）", "done": true },
-    { "product": "観光予報PF", "task": "Stripe対応", "done": false }
-  ]
-}
-```
+| エンドポイント | 機能 |
+|---|---|
+| `GET/PUT /api/members/:id` | 社員プロフィール |
+| `GET/PUT /api/members/:id/career-plans/:year` | キャリアプラン |
+| `GET/POST/PUT/DELETE /api/goals` | 年度目標 |
+| `GET /api/roles` | ロール一覧 |
+| `GET /api/members/:id/roles/:year` | ロール認定状況 |
+| `GET/PUT /api/allocations/:year` | 配点管理 |
+| `GET/PUT /api/members/:id/records/:year` | 月次実績 |
