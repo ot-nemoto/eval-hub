@@ -7,6 +7,10 @@
 out/
 next-env.d.ts
 
+# OpenNext / Cloudflare Workers
+.open-next/
+.dev.vars
+
 # Dependencies
 node_modules/
 
