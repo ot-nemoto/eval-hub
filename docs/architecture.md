@@ -1,4 +1,4 @@
-> 最終更新: 2026-03-15 (MVPスコープを評価登録に絞り、DB構成・権限制御を更新)
+> 最終更新: 2026-03-16 (デプロイ先を Cloudflare Workers → Vercel に変更)
 
 # architecture.md — 実装方針・技術スタック
 
@@ -12,7 +12,7 @@
 | ORM | Prisma | TypeScript との親和性、スキーマ管理 |
 | DB | Neon (PostgreSQL) | PostgreSQL 互換・Edge 対応・無料10プロジェクト・ブランチ機能あり |
 | 認証 | NextAuth.js | セッション管理・ロール制御が容易 |
-| デプロイ | Cloudflare Workers（`@opennextjs/cloudflare`） + Neon（DB） | 無料枠で完結・Next.js 16 フルサポート |
+| デプロイ | Vercel + Neon（DB） | 無料枠で完結・Next.js 16 フルサポート・Serverless Functions 50 MiB |
 
 ## システム構成
 
@@ -20,7 +20,7 @@
 [ブラウザ]
     │ HTTPS
     ▼
-[Next.js (Cloudflare Workers / Node.js compat)]
+[Next.js (Vercel / Serverless Functions)]
 ├── /src/app         ← ページ（App Router）
 ├── /src/app/api     ← API Routes（RESTful）
 └── /src/components  ← UI コンポーネント
@@ -105,8 +105,8 @@ datasource db {
 
 | ブランチ | 用途 | 接続先環境変数 |
 |---|---|---|
-| `main` | staging 用 | Cloudflare Workers の環境変数（wrangler secret） |
-| `develop` | develop 用 | `.env.local` |
+| `main` | 本番用（予定） | Vercel 環境変数（Production） |
+| `develop` | 検証用 | Vercel 環境変数（Preview） / `.env.local` |
 
 ### API 設計
 - RESTful に統一（GET / POST / PUT / DELETE）
