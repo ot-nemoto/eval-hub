@@ -12,7 +12,7 @@
 | ORM | Prisma | TypeScript との親和性、スキーマ管理 |
 | DB | Neon (PostgreSQL) | PostgreSQL 互換・Edge 対応・無料10プロジェクト・ブランチ機能あり |
 | 認証 | NextAuth.js | セッション管理・ロール制御が容易 |
-| デプロイ | Cloudflare Pages（Frontend） + Neon（DB） | 無料枠で完結 |
+| デプロイ | Cloudflare Workers（`@opennextjs/cloudflare`） + Neon（DB） | 無料枠で完結・Next.js 16 フルサポート |
 
 ## システム構成
 
@@ -20,7 +20,7 @@
 [ブラウザ]
     │ HTTPS
     ▼
-[Next.js (Cloudflare Pages / Edge Runtime)]
+[Next.js (Cloudflare Workers / Node.js compat)]
 ├── /src/app         ← ページ（App Router）
 ├── /src/app/api     ← API Routes（RESTful）
 └── /src/components  ← UI コンポーネント
@@ -105,7 +105,7 @@ datasource db {
 
 | ブランチ | 用途 | 接続先環境変数 |
 |---|---|---|
-| `main` | staging 用 | Cloudflare Pages の staging 環境変数 |
+| `main` | staging 用 | Cloudflare Workers の環境変数（wrangler secret） |
 | `develop` | develop 用 | `.env.local` |
 
 ### API 設計
