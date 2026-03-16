@@ -45,7 +45,7 @@ async function main() {
 
   console.log("users: 3 upserted");
 
-  // 2. evaluation_assignments（2025年度）
+  // 2. evaluation_assignments（2026年度）
   //   田中 → 評価者なし
   //   鈴木 → 評価者: 田中
   //   佐藤 → 評価者: 鈴木、田中
@@ -59,13 +59,13 @@ async function main() {
     await prisma.evaluationAssignment.upsert({
       where: {
         fiscal_year_evaluatee_id_evaluator_id: {
-          fiscal_year: 2025,
+          fiscal_year: 2026,
           evaluatee_id: a.evaluatee_id,
           evaluator_id: a.evaluator_id,
         },
       },
       update: {},
-      create: { fiscal_year: 2025, ...a },
+      create: { fiscal_year: 2026, ...a },
     });
   }
   console.log("evaluation_assignments: 3 upserted");
