@@ -10,8 +10,6 @@
     "build": "if [ \"$VERCEL_ENV\" = 'production' ]; then prisma migrate deploy && prisma generate && next build; else prisma generate && next build; fi",
     "postinstall": "prisma generate",
     "start": "next start",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check --write .",
@@ -22,7 +20,6 @@
     "@auth/prisma-adapter": "^2.11.1",
     "@base-ui/react": "^1.3.0",
     "@neondatabase/serverless": "^1.0.2",
-    "@opennextjs/cloudflare": "^1.17.1",
     "@prisma/adapter-neon": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "bcryptjs": "^3.0.3",
@@ -50,7 +47,6 @@
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5",
-    "vitest": "^4.1.0",
-    "wrangler": "^4.73.0"
+    "vitest": "^4.1.0"
   }
 }
