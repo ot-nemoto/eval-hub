@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 type Score = "none" | "ka" | "ryo" | "yu";
@@ -45,6 +45,15 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const savedTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  useEffect(() => {
+    const timers = savedTimers.current;
+    return () => {
+      for (const id of Object.values(timers)) {
+        clearTimeout(id);
+      }
+    };
+  }, []);
 
   const activeItems = items.filter((i) => i.category === activeCategory);
 
