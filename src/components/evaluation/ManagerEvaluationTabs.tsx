@@ -137,11 +137,13 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
                 <label className="block text-sm font-medium text-gray-700">
                   評価者採点
                 </label>
-                <div className="mt-1 flex gap-2">
+                <div role="radiogroup" aria-label="評価者採点" className="mt-1 flex gap-2">
                   {(["none", "ka", "ryo", "yu"] as Score[]).map((score) => (
                     <button
                       key={score}
                       type="button"
+                      role="radio"
+                      aria-checked={scores[item.uid] === score}
                       onClick={() => setScores((s) => ({ ...s, [item.uid]: score }))}
                       className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                         scores[item.uid] === score
