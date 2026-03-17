@@ -24,8 +24,8 @@ enum Score {
 
 model User {
   id                      String    @id @default(uuid())
+  clerk_id                String?   @unique @db.VarChar(255)
   email                   String    @unique @db.VarChar(255)
-  password_hash           String    @db.VarChar(255)
   name                    String    @db.VarChar(100)
   division                String?   @db.VarChar(100)
   joined_at               DateTime? @db.Date
