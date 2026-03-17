@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET, POST } from "./route";
 
-vi.mock("@/auth", () => ({ auth: vi.fn() }));
+vi.mock("@/lib/auth", () => ({ getSession: vi.fn() }));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     evaluationAssignment: {
@@ -13,7 +13,7 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-import { auth } from "@/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const adminSession = { user: { id: "admin-1", role: "admin" } };
@@ -34,7 +34,7 @@ describe("GET /api/evaluation-assignments", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("admin はアサイン一覧を取得できる", async () => {
-    vi.mocked(auth).mockResolvedValue(adminSession as never);
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.evaluationAssignment.findMany).mockResolvedValue(mockAssignments);
 
     const req = new Request("http://localhost/api/evaluation-assignments");
@@ -47,7 +47,7 @@ describe("GET /api/evaluation-assignments", () => {
   });
 
   it("fiscal_year クエリで絞り込みができる", async () => {
-    vi.mocked(auth).mockResolvedValue(adminSession as never);
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.evaluationAssignment.findMany).mockResolvedValue(mockAssignments);
 
     const req = new Request("http://localhost/api/evaluation-assignments?fiscal_year=2025");
@@ -59,7 +59,7 @@ describe("GET /api/evaluation-assignments", () => {
   });
 
   it("fiscal_year が数値以外の場合は 400 を返す", async () => {
-    vi.mocked(auth).mockResolvedValue(adminSession as never);
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
 
     const req = new Request("http://localhost/api/evaluation-assignments?fiscal_year=abc");
     const res = await GET(req);
@@ -68,7 +68,7 @@ describe("GET /api/evaluation-assignments", () => {
   });
 
   it("未認証の場合は 401 を返す", async () => {
-    vi.mocked(auth).mockResolvedValue(null);
+    vi.mocked(getSession).mockResolvedValue(null);
 
     const req = new Request("http://localhost/api/evaluation-assignments");
     const res = await GET(req);
@@ -77,7 +77,7 @@ describe("GET /api/evaluation-assignments", () => {
   });
 
   it("member の場合は 403 を返す", async () => {
-    vi.mocked(auth).mockResolvedValue(memberSession as never);
+    vi.mocked(getSession).mockResolvedValue(memberSession as never);
 
     const req = new Request("http://localhost/api/evaluation-assignments");
     const res = await GET(req);
@@ -90,7 +90,7 @@ describe("POST /api/evaluation-assignments", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("admin はアサインを作成できる", async () => {
-    vi.mocked(auth).mockResolvedValue(adminSession as never);
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.evaluationAssignment.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.evaluationAssignment.create).mockResolvedValue({
       id: "assign-new",
@@ -111,7 +111,7 @@ describe("POST /api/evaluation-assignments", () => {
   });
 
   it("必須項目が欠けている場合は 400 を返す", async () => {
-    vi.mocked(auth).mockResolvedValue(adminSession as never);
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
 
     const req = new Request("http://localhost/api/evaluation-assignments", {
       method: "POST",
@@ -123,7 +123,7 @@ describe("POST /api/evaluation-assignments", () => {
   });
 
   it("同一組み合わせが存在する場合は 409 を返す", async () => {
-    vi.mocked(auth).mockResolvedValue(adminSession as never);
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.evaluationAssignment.findUnique).mockResolvedValue(mockAssignments[0]);
 
     const req = new Request("http://localhost/api/evaluation-assignments", {
@@ -136,7 +136,7 @@ describe("POST /api/evaluation-assignments", () => {
   });
 
   it("未認証の場合は 401 を返す", async () => {
-    vi.mocked(auth).mockResolvedValue(null);
+    vi.mocked(getSession).mockResolvedValue(null);
 
     const req = new Request("http://localhost/api/evaluation-assignments", {
       method: "POST",
@@ -148,7 +148,7 @@ describe("POST /api/evaluation-assignments", () => {
   });
 
   it("member の場合は 403 を返す", async () => {
-    vi.mocked(auth).mockResolvedValue(memberSession as never);
+    vi.mocked(getSession).mockResolvedValue(memberSession as never);
 
     const req = new Request("http://localhost/api/evaluation-assignments", {
       method: "POST",

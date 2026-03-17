@@ -1,18 +1,14 @@
-import { auth, signOut } from "@/auth";
+import { SignOutButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-
-async function handleSignOut() {
-  "use server";
-  await signOut({ redirectTo: "/login" });
-}
+import { getSession } from "@/lib/auth";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   return (
@@ -32,14 +28,14 @@ export default async function DashboardLayout({
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">{session.user.name}</span>
-            <form action={handleSignOut}>
+            <SignOutButton redirectUrl="/login">
               <button
-                type="submit"
+                type="button"
                 className="cursor-pointer text-sm text-gray-500 hover:text-gray-700"
               >
                 ログアウト
               </button>
-            </form>
+            </SignOutButton>
           </div>
         </div>
       </header>
