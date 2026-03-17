@@ -1,6 +1,5 @@
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
 import evaluationItemsData from "./seeds/evaluation_items.json";
 
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
@@ -8,39 +7,22 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   // 1. users
-  const password = await bcrypt.hash("password", 10);
-
   const tanaka = await prisma.user.upsert({
     where: { email: "tanaka@example.com" },
-    update: { name: "田中太郎", role: "admin", password_hash: password },
-    create: {
-      email: "tanaka@example.com",
-      name: "田中太郎",
-      role: "admin",
-      password_hash: password,
-    },
+    update: { name: "田中太郎", role: "admin" },
+    create: { email: "tanaka@example.com", name: "田中太郎", role: "admin" },
   });
 
   const suzuki = await prisma.user.upsert({
     where: { email: "suzuki@example.com" },
-    update: { name: "鈴木花子", role: "member", password_hash: password },
-    create: {
-      email: "suzuki@example.com",
-      name: "鈴木花子",
-      role: "member",
-      password_hash: password,
-    },
+    update: { name: "鈴木花子", role: "member" },
+    create: { email: "suzuki@example.com", name: "鈴木花子", role: "member" },
   });
 
   const sato = await prisma.user.upsert({
     where: { email: "sato@example.com" },
-    update: { name: "佐藤健", role: "member", password_hash: password },
-    create: {
-      email: "sato@example.com",
-      name: "佐藤健",
-      role: "member",
-      password_hash: password,
-    },
+    update: { name: "佐藤健", role: "member" },
+    create: { email: "sato@example.com", name: "佐藤健", role: "member" },
   });
 
   console.log("users: 3 upserted");
