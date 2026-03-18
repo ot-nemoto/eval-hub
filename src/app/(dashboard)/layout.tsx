@@ -24,7 +24,7 @@ export default async function DashboardLayout({
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <div className="flex items-center gap-6">
             <h1 className="text-lg font-semibold text-gray-900">{APP_NAME}</h1>
-            <NavLinks />
+            <NavLinks role={session.user.role} />
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">{session.user.name}</span>
