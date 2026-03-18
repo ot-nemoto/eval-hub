@@ -32,7 +32,7 @@ export default async function DashboardLayout({
             <SignOutButton redirectUrl="/login">
               <button
                 type="button"
-                className="cursor-pointer text-sm text-gray-500 hover:text-gray-700"
+                className="cursor-pointer rounded border border-gray-300 px-3 py-1 text-sm text-gray-600 hover:bg-gray-100"
               >
                 ログアウト
               </button>
