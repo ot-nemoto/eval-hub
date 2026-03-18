@@ -4,8 +4,8 @@ import { NextResponse } from "next/server";
 const isPublicRoute = createRouteMatcher(["/login(.*)", "/auth-error"]);
 
 export default clerkMiddleware(async (auth, request) => {
-  // ローカル開発時: MOCK_USER_ID が設定されている場合はバイパス
-  if (process.env.MOCK_USER_ID) {
+  // 非本番環境: MOCK_USER_ID が設定されている場合はバイパス
+  if (process.env.NODE_ENV !== "production" && process.env.MOCK_USER_ID) {
     return NextResponse.next();
   }
 
