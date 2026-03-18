@@ -11,6 +11,7 @@ vi.mock("@/lib/prisma", () => ({
     user: {
       findUnique: vi.fn(),
       update: vi.fn(),
+      create: vi.fn(),
     },
   },
 }));
@@ -23,6 +24,7 @@ const mockAuth = vi.mocked(auth);
 const mockCurrentUser = vi.mocked(currentUser);
 const mockFindUnique = vi.mocked(prisma.user.findUnique);
 const mockUpdate = vi.mocked(prisma.user.update);
+const mockCreate = vi.mocked(prisma.user.create);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -92,7 +94,7 @@ describe("getSession", () => {
       });
     });
 
-    it("メールアドレスに一致するDBユーザーが存在しない場合はnullを返す", async () => {
+    it("DBに存在しない新規サインアップユーザーを自動作成してセッションを返す", async () => {
       // @ts-ignore
       mockAuth.mockResolvedValue({ userId: "clerk_new123" });
       // @ts-ignore
@@ -101,11 +103,21 @@ describe("getSession", () => {
         .mockResolvedValueOnce(null); // email 検索 → 未ヒット
       // @ts-ignore
       mockCurrentUser.mockResolvedValue({
-        emailAddresses: [{ emailAddress: "unknown@example.com" }],
+        emailAddresses: [{ emailAddress: "new@example.com" }],
+        fullName: "新規ユーザー",
+        firstName: null,
       });
+      // @ts-ignore
+      mockCreate.mockResolvedValue({ id: "new-uuid", name: "新規ユーザー", role: "member" });
 
       const result = await getSession();
-      expect(result).toBeNull();
+      expect(result).toEqual({
+        user: { id: "new-uuid", name: "新規ユーザー", role: "member" },
+      });
+      expect(mockCreate).toHaveBeenCalledWith({
+        data: { clerk_id: "clerk_new123", email: "new@example.com", name: "新規ユーザー", role: "member" },
+        select: { id: true, name: true, role: true },
+      });
       expect(mockUpdate).not.toHaveBeenCalled();
     });
 
