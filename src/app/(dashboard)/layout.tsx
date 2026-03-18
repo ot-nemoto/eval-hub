@@ -22,7 +22,9 @@ export default async function DashboardLayout({
       <header className="border-b bg-white px-6 py-4">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <div className="flex items-center gap-6">
-            <h1 className="text-lg font-semibold text-gray-900">評価ハブ</h1>
+            <h1 className="text-lg font-semibold text-gray-900">
+              {process.env.NEXT_PUBLIC_APP_NAME ?? "Eval Hub"}
+            </h1>
             <NavLinks />
           </div>
           <div className="flex items-center gap-4">
