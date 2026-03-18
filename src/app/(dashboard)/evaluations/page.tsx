@@ -1,10 +1,10 @@
-import { auth } from "@/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import EvaluationTabs from "@/components/evaluation/EvaluationTabs";
 
 export default async function EvaluationsPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
   const userId = session.user.id;
   const fiscalYear = new Date().getFullYear();

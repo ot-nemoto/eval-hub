@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getSession } from "@/lib/auth";
 import { errorResponse, successResponse } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
 
@@ -6,7 +6,7 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string; year: string }> },
 ) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) {
     return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
   }

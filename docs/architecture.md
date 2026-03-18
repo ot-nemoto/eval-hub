@@ -11,7 +11,7 @@
 | Backend | Next.js API Routes | フロントと同リポジトリで管理しやすい |
 | ORM | Prisma | TypeScript との親和性、スキーマ管理 |
 | DB | Neon (PostgreSQL) | PostgreSQL 互換・Edge 対応・無料10プロジェクト・ブランチ機能あり |
-| 認証 | NextAuth.js | セッション管理・ロール制御が容易 |
+| 認証 | Clerk | ホスト型UI・セッション管理・ロール制御が容易 |
 | デプロイ | Vercel + Neon（DB） | 無料枠で完結・Next.js 16 フルサポート・Serverless Functions 50 MiB |
 
 ## システム構成
@@ -111,7 +111,7 @@ datasource db {
 ### API 設計
 - RESTful に統一（GET / POST / PUT / DELETE）
 - レスポンスは `{ data, error, meta }` の統一フォーマット
-- 認証は JWT（NextAuth.js のセッショントークン）をヘッダーで渡す
+- 認証は Clerk のセッショントークンを使用する
 
 ### 評価ロジック
 - 自己採点・評価者採点は同一テーブル（`evaluations`）の別カラムに保存
@@ -162,6 +162,6 @@ DATABASE_URL="postgresql://<user>:<password>@<pooler-host>/<db>?sslmode=require"
 # マイグレーションには直接接続が必要
 DIRECT_URL="postgresql://<user>:<password>@<direct-host>/<db>?sslmode=require"
 
-NEXTAUTH_SECRET="..."
-NEXTAUTH_URL="http://localhost:3000"
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
+CLERK_SECRET_KEY="sk_test_..."
 ```

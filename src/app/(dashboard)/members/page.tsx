@@ -1,10 +1,10 @@
-import { auth } from "@/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function MembersPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const userId = session.user.id;
