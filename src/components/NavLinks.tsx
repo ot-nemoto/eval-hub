@@ -19,6 +19,7 @@ export function NavLinks() {
           <Link
             key={href}
             href={href}
+            aria-current={isActive ? "page" : undefined}
             className={
               isActive
                 ? "font-semibold text-gray-900 border-b-2 border-gray-900 pb-0.5"
