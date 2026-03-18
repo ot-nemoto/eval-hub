@@ -2,8 +2,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "./route";
 
-vi.mock("@/auth", () => ({
-  auth: vi.fn(),
+vi.mock("@/lib/auth", () => ({
+  getSession: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -14,7 +14,7 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-import { auth } from "@/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const mockItems = [
@@ -44,7 +44,7 @@ describe("GET /api/evaluation-items", () => {
   });
 
   it("認証済みユーザーに評価項目一覧を返す", async () => {
-    vi.mocked(auth).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
     vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue(mockItems);
 
     const req = new Request("http://localhost/api/evaluation-items");
@@ -56,7 +56,7 @@ describe("GET /api/evaluation-items", () => {
   });
 
   it("target クエリで絞り込みができる", async () => {
-    vi.mocked(auth).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
     vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue([mockItems[0]]);
 
     const req = new Request("http://localhost/api/evaluation-items?target=employee");
@@ -73,7 +73,7 @@ describe("GET /api/evaluation-items", () => {
   });
 
   it("category クエリで絞り込みができる", async () => {
-    vi.mocked(auth).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
     vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue(mockItems);
 
     const req = new Request("http://localhost/api/evaluation-items?category=engagement");
@@ -88,7 +88,7 @@ describe("GET /api/evaluation-items", () => {
   });
 
   it("未認証の場合は 401 を返す", async () => {
-    vi.mocked(auth).mockResolvedValue(null);
+    vi.mocked(getSession).mockResolvedValue(null);
 
     const req = new Request("http://localhost/api/evaluation-items");
     const res = await GET(req);

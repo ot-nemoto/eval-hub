@@ -1,58 +1,71 @@
+import { createClerkClient } from "@clerk/backend";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import * as dotenv from "dotenv";
 import evaluationItemsData from "./seeds/evaluation_items.json";
+
+dotenv.config({ path: ".env.local" });
 
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
+const clerkClient =
+  process.env.NODE_ENV !== "production" && process.env.CLERK_SECRET_KEY
+    ? createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY })
+    : null;
+
+async function syncClerkUser(email: string): Promise<string | null> {
+  if (!clerkClient) {
+    if (process.env.NODE_ENV === "production") {
+      console.warn("  本番環境のため Clerk ユーザー作成をスキップします");
+    } else {
+      console.warn("  CLERK_SECRET_KEY が未設定のため Clerk ユーザー作成をスキップします");
+    }
+    return null;
+  }
+
+  // 既存の Clerk ユーザーを検索
+  const existing = await clerkClient.users.getUserList({ emailAddress: [email] });
+  if (existing.data.length > 0) {
+    return existing.data[0].id;
+  }
+
+  // 新規作成
+  const created = await clerkClient.users.createUser({
+    emailAddress: [email],
+    password: "EvalHub#Dev2026!",
+    skipPasswordChecks: false,
+  });
+  return created.id;
+}
+
 async function main() {
   // 1. users
-  const password = await bcrypt.hash("password", 10);
+  const usersData = [
+    { email: "tanaka@example.com", name: "田中太郎", role: "admin" as const },
+    { email: "suzuki@example.com", name: "鈴木花子", role: "member" as const },
+    { email: "sato@example.com", name: "佐藤健", role: "member" as const },
+  ];
 
-  const tanaka = await prisma.user.upsert({
-    where: { email: "tanaka@example.com" },
-    update: { name: "田中太郎", role: "admin", password_hash: password },
-    create: {
-      email: "tanaka@example.com",
-      name: "田中太郎",
-      role: "admin",
-      password_hash: password,
-    },
-  });
+  const createdUsers: Record<string, { id: string }> = {};
 
-  const suzuki = await prisma.user.upsert({
-    where: { email: "suzuki@example.com" },
-    update: { name: "鈴木花子", role: "member", password_hash: password },
-    create: {
-      email: "suzuki@example.com",
-      name: "鈴木花子",
-      role: "member",
-      password_hash: password,
-    },
-  });
-
-  const sato = await prisma.user.upsert({
-    where: { email: "sato@example.com" },
-    update: { name: "佐藤健", role: "member", password_hash: password },
-    create: {
-      email: "sato@example.com",
-      name: "佐藤健",
-      role: "member",
-      password_hash: password,
-    },
-  });
+  for (const u of usersData) {
+    const clerkId = await syncClerkUser(u.email);
+    const user = await prisma.user.upsert({
+      where: { email: u.email },
+      update: { name: u.name, role: u.role, ...(clerkId ? { clerk_id: clerkId } : {}) },
+      create: { email: u.email, name: u.name, role: u.role, ...(clerkId ? { clerk_id: clerkId } : {}) },
+    });
+    createdUsers[u.email] = user;
+  }
 
   console.log("users: 3 upserted");
 
   // 2. evaluation_assignments（2026年度）
-  //   田中 → 評価者なし
-  //   鈴木 → 評価者: 田中
-  //   佐藤 → 評価者: 鈴木、田中
   const assignments = [
-    { evaluatee_id: suzuki.id, evaluator_id: tanaka.id },
-    { evaluatee_id: sato.id, evaluator_id: suzuki.id },
-    { evaluatee_id: sato.id, evaluator_id: tanaka.id },
+    { evaluatee_id: createdUsers["suzuki@example.com"].id, evaluator_id: createdUsers["tanaka@example.com"].id },
+    { evaluatee_id: createdUsers["sato@example.com"].id, evaluator_id: createdUsers["suzuki@example.com"].id },
+    { evaluatee_id: createdUsers["sato@example.com"].id, evaluator_id: createdUsers["tanaka@example.com"].id },
   ];
 
   for (const a of assignments) {

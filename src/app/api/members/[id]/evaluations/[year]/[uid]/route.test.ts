@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PUT } from "./route";
 
-vi.mock("@/auth", () => ({ auth: vi.fn() }));
+vi.mock("@/lib/auth", () => ({ getSession: vi.fn() }));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     evaluationAssignment: { findFirst: vi.fn() },
@@ -10,7 +10,7 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-import { auth } from "@/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const makeParams = (id: string, year: string, uid: string) =>
@@ -36,7 +36,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("本人は self_score/self_reason を更新できる", async () => {
-    vi.mocked(auth).mockResolvedValue(selfSession as never);
+    vi.mocked(getSession).mockResolvedValue(selfSession as never);
     vi.mocked(prisma.evaluation.upsert).mockResolvedValue(mockUpsertResult);
 
     const res = await PUT(
@@ -54,7 +54,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
   });
 
   it("admin は manager_score/manager_reason を更新できる", async () => {
-    vi.mocked(auth).mockResolvedValue(adminSession as never);
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.evaluation.upsert).mockResolvedValue({
       ...mockUpsertResult,
       manager_score: "yu",
@@ -74,7 +74,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
   });
 
   it("アサインされた評価者は manager_score/manager_reason を更新できる", async () => {
-    vi.mocked(auth).mockResolvedValue(evaluatorSession as never);
+    vi.mocked(getSession).mockResolvedValue(evaluatorSession as never);
     vi.mocked(prisma.evaluationAssignment.findFirst).mockResolvedValue({
       id: "assign-1",
       fiscal_year: 2025,
@@ -99,7 +99,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
   });
 
   it("本人が manager_score を更新しようとすると 403 を返す", async () => {
-    vi.mocked(auth).mockResolvedValue(selfSession as never);
+    vi.mocked(getSession).mockResolvedValue(selfSession as never);
 
     const res = await PUT(
       new Request("http://localhost", {
@@ -114,7 +114,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
   });
 
   it("アサインされた評価者が self_score を更新しようとすると 403 を返す", async () => {
-    vi.mocked(auth).mockResolvedValue(evaluatorSession as never);
+    vi.mocked(getSession).mockResolvedValue(evaluatorSession as never);
     vi.mocked(prisma.evaluationAssignment.findFirst).mockResolvedValue({
       id: "assign-1",
       fiscal_year: 2025,
@@ -135,7 +135,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
   });
 
   it("アサインされていない第三者は 403 を返す", async () => {
-    vi.mocked(auth).mockResolvedValue(otherSession as never);
+    vi.mocked(getSession).mockResolvedValue(otherSession as never);
     vi.mocked(prisma.evaluationAssignment.findFirst).mockResolvedValue(null);
 
     const res = await PUT(
@@ -151,7 +151,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
   });
 
   it("未認証の場合は 401 を返す", async () => {
-    vi.mocked(auth).mockResolvedValue(null);
+    vi.mocked(getSession).mockResolvedValue(null);
 
     const res = await PUT(
       new Request("http://localhost", {
@@ -165,7 +165,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
   });
 
   it("year が数値以外の場合は 400 を返す", async () => {
-    vi.mocked(auth).mockResolvedValue(selfSession as never);
+    vi.mocked(getSession).mockResolvedValue(selfSession as never);
 
     const res = await PUT(
       new Request("http://localhost", {

@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DELETE } from "./route";
 
-vi.mock("@/auth", () => ({ auth: vi.fn() }));
+vi.mock("@/lib/auth", () => ({ getSession: vi.fn() }));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     evaluationAssignment: {
@@ -12,7 +12,7 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-import { auth } from "@/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const adminSession = { user: { id: "admin-1", role: "admin" } };
@@ -31,7 +31,7 @@ describe("DELETE /api/evaluation-assignments/:id", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("admin はアサインを削除できる", async () => {
-    vi.mocked(auth).mockResolvedValue(adminSession as never);
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.evaluationAssignment.findUnique).mockResolvedValue(mockAssignment);
     vi.mocked(prisma.evaluationAssignment.delete).mockResolvedValue(mockAssignment);
 
@@ -47,7 +47,7 @@ describe("DELETE /api/evaluation-assignments/:id", () => {
   });
 
   it("存在しない ID の場合は 404 を返す", async () => {
-    vi.mocked(auth).mockResolvedValue(adminSession as never);
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.evaluationAssignment.findUnique).mockResolvedValue(null);
 
     const req = new Request("http://localhost/api/evaluation-assignments/not-exist", {
@@ -59,7 +59,7 @@ describe("DELETE /api/evaluation-assignments/:id", () => {
   });
 
   it("未認証の場合は 401 を返す", async () => {
-    vi.mocked(auth).mockResolvedValue(null);
+    vi.mocked(getSession).mockResolvedValue(null);
 
     const req = new Request("http://localhost/api/evaluation-assignments/assign-1", {
       method: "DELETE",
@@ -70,7 +70,7 @@ describe("DELETE /api/evaluation-assignments/:id", () => {
   });
 
   it("member の場合は 403 を返す", async () => {
-    vi.mocked(auth).mockResolvedValue(memberSession as never);
+    vi.mocked(getSession).mockResolvedValue(memberSession as never);
 
     const req = new Request("http://localhost/api/evaluation-assignments/assign-1", {
       method: "DELETE",

@@ -147,6 +147,11 @@ prisma/
 4. allocations.json を upsert（fiscal_year + division + eval_uid で一意）
 ```
 
+### Clerk ユーザー作成について
+
+`CLERK_SECRET_KEY` が設定されており、かつ `NODE_ENV !== 'production'` の場合のみ、シードユーザーを Clerk に自動作成します。
+本番環境（`NODE_ENV === 'production'`）では Clerk へのユーザー作成をスキップします。
+
 実行コマンド：
 ```bash
 npx prisma db seed
