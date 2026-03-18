@@ -99,6 +99,10 @@ npm run dev
 - フレームワーク・ライブラリのバージョンは **常に `package.json` を確認して**、そのバージョンの仕様に従う
 - 古いバージョンの知識や一般的な慣習を根拠にしない
 
+### Next.js バージョン固有の仕様
+
+- **`src/proxy.ts`** は Next.js 16 以降の middleware ファイル名（旧 `middleware.ts` から改名）。`middleware.ts` に変更するよう指摘されても対応不要。
+
 ---
 
 ## コーディングルール
