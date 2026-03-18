@@ -9,13 +9,18 @@ dotenv.config({ path: ".env.local" });
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
-const clerkClient = process.env.CLERK_SECRET_KEY
-  ? createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY })
-  : null;
+const clerkClient =
+  process.env.NODE_ENV !== "production" && process.env.CLERK_SECRET_KEY
+    ? createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY })
+    : null;
 
 async function syncClerkUser(email: string): Promise<string | null> {
   if (!clerkClient) {
-    console.warn("  CLERK_SECRET_KEY が未設定のため Clerk ユーザー作成をスキップします");
+    if (process.env.NODE_ENV === "production") {
+      console.warn("  本番環境のため Clerk ユーザー作成をスキップします");
+    } else {
+      console.warn("  CLERK_SECRET_KEY が未設定のため Clerk ユーザー作成をスキップします");
+    }
     return null;
   }
 

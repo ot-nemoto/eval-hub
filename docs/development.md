@@ -68,6 +68,8 @@ npx prisma db seed
 | suzuki@example.com | 鈴木花子 | member | EvalHub#Dev2026! |
 | sato@example.com | 佐藤健 | member | EvalHub#Dev2026! |
 
+> **注意**: Clerk へのユーザー作成は `NODE_ENV !== 'production'` の場合のみ実行されます。本番環境ではスキップされます。
+>
 > シードスクリプトの詳細は `docs/seed.md` を参照。
 
 ### 5. 開発サーバーを起動
