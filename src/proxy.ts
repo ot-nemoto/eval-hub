@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-const isPublicRoute = createRouteMatcher(["/login(.*)"]);
+const isPublicRoute = createRouteMatcher(["/login(.*)", "/auth-error"]);
 
 export default clerkMiddleware(async (auth, request) => {
   // ローカル開発時: MOCK_USER_ID が設定されている場合はバイパス

@@ -1,4 +1,5 @@
 import { SignOutButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
@@ -9,7 +10,12 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await getSession();
-  if (!session) redirect("/login");
+  if (!session) {
+    const { userId } = await auth();
+    // Clerk セッションはあるが DB セッションが取得できない場合は競合エラーページへ
+    if (userId) redirect("/auth-error");
+    redirect("/login");
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

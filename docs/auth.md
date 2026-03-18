@@ -1,6 +1,6 @@
 # auth.md — 認証フロー・移行手順
 
-最終更新: 2026-03-18（Clerk 削除時のデータ保持方針を追記）
+最終更新: 2026-03-18（認証競合時のエラーページ対応を追記）
 
 ---
 
@@ -13,7 +13,7 @@ Clerk を使用した認証基盤。`@clerk/nextjs` v7 系。
 ## getSession() のフロー
 
 ```
-Clerk にユーザーがいない → null
+Clerk にユーザーがいない → null → /login へリダイレクト
          ↓
 clerk_id で DB 検索
   → ヒット → セッション返却
@@ -22,10 +22,22 @@ clerk_id で DB 検索
     Clerk のメールアドレス取得
        ↓
     メールで DB 検索
-      → 未ヒット（新規サインアップ） → DB にユーザー自動作成（role: member）
-      → ヒット・clerk_id なし（既存ユーザー初回ログイン） → clerk_id を紐付け
-      → ヒット・clerk_id あり（別 Clerk ID に紐付き済み） → null
+      → 未ヒット（新規サインアップ）   → DB にユーザー自動作成（role: member）
+      → ヒット・clerk_id なし         → clerk_id を紐付けてセッション返却
+      → ヒット・clerk_id あり         → null
+（既存ユーザー初回ログイン）
+（別 Clerk ID に紐付き済み）
 ```
+
+`getSession()` が null を返した場合、ダッシュボード layout が以下のように振り分ける：
+
+- **Clerk セッションなし**（未認証）→ `/login` へリダイレクト
+- **Clerk セッションあり**（認証競合）→ `/auth-error` へリダイレクト
+
+### /auth-error ページ
+
+`src/app/auth-error/page.tsx` にエラーメッセージとサインアウトボタンを表示する。
+Clerk middleware では公開ルートとして設定しているため、未認証状態でもアクセス可能。
 
 ---
 
