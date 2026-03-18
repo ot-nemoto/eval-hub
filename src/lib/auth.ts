@@ -1,6 +1,5 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { Prisma } from "@prisma/client";
-import type { UserRole } from "@prisma/client";
+import { Prisma, type UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type Session = {
@@ -55,11 +54,25 @@ export async function getSession(): Promise<Session | null> {
     } else if (existingUser.clerk_id) {
       return null; // 既に別の Clerk ID に紐付き済み
     } else {
-      user = await prisma.user.update({
-        where: { email },
+      // clerk_id: null の場合のみ更新（並行リクエストによる上書き防止）
+      const { count } = await prisma.user.updateMany({
+        where: { email, clerk_id: null },
         data: { clerk_id: userId },
-        select: { id: true, name: true, role: true },
       });
+      if (count === 0) {
+        // 別リクエストが先に紐付けを完了した場合は再取得して返す
+        user = await prisma.user.findUnique({
+          where: { email },
+          select: { id: true, name: true, role: true },
+        });
+        if (!user) return null;
+      } else {
+        user = await prisma.user.findUnique({
+          where: { email },
+          select: { id: true, name: true, role: true },
+        });
+        if (!user) return null;
+      }
     }
   }
 

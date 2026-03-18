@@ -10,7 +10,7 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     user: {
       findUnique: vi.fn(),
-      update: vi.fn(),
+      updateMany: vi.fn(),
       create: vi.fn(),
     },
   },
@@ -23,7 +23,7 @@ import { getSession } from "@/lib/auth";
 const mockAuth = vi.mocked(auth);
 const mockCurrentUser = vi.mocked(currentUser);
 const mockFindUnique = vi.mocked(prisma.user.findUnique);
-const mockUpdate = vi.mocked(prisma.user.update);
+const mockUpdateMany = vi.mocked(prisma.user.updateMany);
 const mockCreate = vi.mocked(prisma.user.create);
 
 beforeEach(() => {
@@ -75,22 +75,46 @@ describe("getSession", () => {
       mockFindUnique
         .mockResolvedValueOnce(null) // clerk_id 検索 → 未ヒット
         // @ts-ignore
-        .mockResolvedValueOnce({ id: "user-uuid", name: "田中太郎", role: "member", clerk_id: null }); // email 検索
+        .mockResolvedValueOnce({ id: "user-uuid", name: "田中太郎", role: "member", clerk_id: null }) // email 検索
+        // @ts-ignore
+        .mockResolvedValueOnce({ id: "user-uuid", name: "田中太郎", role: "member" }); // updateMany 後の再取得
       // @ts-ignore
       mockCurrentUser.mockResolvedValue({
         emailAddresses: [{ emailAddress: "tanaka@example.com" }],
       });
       // @ts-ignore
-      mockUpdate.mockResolvedValue({ id: "user-uuid", name: "田中太郎", role: "member" });
+      mockUpdateMany.mockResolvedValue({ count: 1 });
 
       const result = await getSession();
       expect(result).toEqual({
         user: { id: "user-uuid", name: "田中太郎", role: "member" },
       });
-      expect(mockUpdate).toHaveBeenCalledWith({
-        where: { email: "tanaka@example.com" },
+      expect(mockUpdateMany).toHaveBeenCalledWith({
+        where: { email: "tanaka@example.com", clerk_id: null },
         data: { clerk_id: "clerk_new123" },
-        select: { id: true, name: true, role: true },
+      });
+    });
+
+    it("並行リクエストで先に clerk_id が紐付け済みの場合は既存レコードを返す", async () => {
+      // @ts-ignore
+      mockAuth.mockResolvedValue({ userId: "clerk_new123" });
+      // @ts-ignore
+      mockFindUnique
+        .mockResolvedValueOnce(null) // clerk_id 検索 → 未ヒット
+        // @ts-ignore
+        .mockResolvedValueOnce({ id: "user-uuid", name: "田中太郎", role: "member", clerk_id: null }) // email 検索
+        // @ts-ignore
+        .mockResolvedValueOnce({ id: "user-uuid", name: "田中太郎", role: "member" }); // updateMany count=0 後の再取得
+      // @ts-ignore
+      mockCurrentUser.mockResolvedValue({
+        emailAddresses: [{ emailAddress: "tanaka@example.com" }],
+      });
+      // @ts-ignore
+      mockUpdateMany.mockResolvedValue({ count: 0 }); // 別リクエストが先に紐付け済み
+
+      const result = await getSession();
+      expect(result).toEqual({
+        user: { id: "user-uuid", name: "田中太郎", role: "member" },
       });
     });
 
@@ -118,7 +142,7 @@ describe("getSession", () => {
         data: { clerk_id: "clerk_new123", email: "new@example.com", name: "新規ユーザー", role: "member" },
         select: { id: true, name: true, role: true },
       });
-      expect(mockUpdate).not.toHaveBeenCalled();
+      expect(mockUpdateMany).not.toHaveBeenCalled();
     });
 
     it("既に別の clerk_id に紐付き済みのDBユーザーはnullを返す", async () => {
@@ -136,7 +160,7 @@ describe("getSession", () => {
 
       const result = await getSession();
       expect(result).toBeNull();
-      expect(mockUpdate).not.toHaveBeenCalled();
+      expect(mockUpdateMany).not.toHaveBeenCalled();
     });
 
     it("Clerkのメールアドレスが取得できない場合はnullを返す", async () => {
@@ -149,7 +173,7 @@ describe("getSession", () => {
 
       const result = await getSession();
       expect(result).toBeNull();
-      expect(mockUpdate).not.toHaveBeenCalled();
+      expect(mockUpdateMany).not.toHaveBeenCalled();
     });
   });
 });
