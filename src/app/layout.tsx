@@ -1,6 +1,7 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { APP_NAME } from "@/lib/constants";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,11 +14,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const appName = process.env.NEXT_PUBLIC_APP_NAME ?? "Eval Hub";
-
 export const metadata: Metadata = {
-  title: appName,
-  description: appName,
+  title: APP_NAME,
+  description: APP_NAME,
 };
 
 export default function RootLayout({
