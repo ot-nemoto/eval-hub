@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@clerk/nextjs/server", () => ({
   auth: vi.fn(),
@@ -31,6 +31,40 @@ beforeEach(() => {
 });
 
 describe("getSession", () => {
+  describe("MOCK_USER_ID モード（非本番環境）", () => {
+    const originalEnv = process.env;
+
+    beforeEach(() => {
+      process.env = { ...originalEnv, NODE_ENV: "development", MOCK_USER_ID: "mock-user-id" };
+    });
+
+    afterEach(() => {
+      process.env = originalEnv;
+    });
+
+    it("MOCK_USER_ID に対応する DB ユーザーのセッションを返す", async () => {
+      // @ts-ignore
+      mockFindUnique.mockResolvedValue({ id: "mock-user-id", name: "モックユーザー", role: "admin" });
+
+      const result = await getSession();
+      expect(result).toEqual({ user: { id: "mock-user-id", name: "モックユーザー", role: "admin" } });
+      expect(mockAuth).not.toHaveBeenCalled();
+      expect(mockFindUnique).toHaveBeenCalledWith({
+        where: { id: "mock-user-id" },
+        select: { id: true, name: true, role: true },
+      });
+    });
+
+    it("MOCK_USER_ID に対応する DB ユーザーが存在しない場合は null を返す", async () => {
+      // @ts-ignore
+      mockFindUnique.mockResolvedValue(null);
+
+      const result = await getSession();
+      expect(result).toBeNull();
+      expect(mockAuth).not.toHaveBeenCalled();
+    });
+  });
+
   it("Clerkにユーザーがいない場合はnullを返す", async () => {
     // @ts-ignore
     mockAuth.mockResolvedValue({ userId: null });

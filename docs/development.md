@@ -91,8 +91,7 @@ MOCK_USER_ID="<DB の users.id>"
 ```
 
 - `NODE_ENV !== 'production'` の場合のみ有効（本番環境では設定しても無視される）
-- 設定すると Clerk の認証フローが完全にバイパスされる
-- **注意**: middleware のバイパスのみで、`getSession()` は Clerk の `auth()` を呼び出すため未認証扱いになる。`getSession()` も含めた完全なモックは未実装（#5 参照）
+- middleware の Clerk 認証と `getSession()` の両方をバイパスし、指定した DB ユーザーとして動作する
 
 ---
 
