@@ -23,7 +23,7 @@ export function NavLinks() {
             className={
               isActive
                 ? "font-semibold text-gray-900 border-b-2 border-gray-900 pb-0.5"
-                : "text-gray-500 hover:text-gray-900"
+                : "text-gray-500 hover:text-gray-900 border-b-2 border-transparent pb-0.5"
             }
           >
             {label}
