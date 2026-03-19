@@ -12,6 +12,7 @@ vi.mock("@/lib/prisma", () => ({
     },
     evaluationAssignment: { count: vi.fn() },
     evaluation: { count: vi.fn() },
+    evaluationSetting: { count: vi.fn() },
   },
 }));
 
@@ -137,6 +138,7 @@ describe("DELETE /api/admin/users/[id]", () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never);
     vi.mocked(prisma.evaluationAssignment.count).mockResolvedValue(0);
     vi.mocked(prisma.evaluation.count).mockResolvedValue(0);
+    vi.mocked(prisma.evaluationSetting.count).mockResolvedValue(0);
     vi.mocked(prisma.user.delete).mockResolvedValue(mockUser as never);
 
     const req = new Request("http://localhost/api/admin/users/user-2", { method: "DELETE" });
@@ -164,11 +166,25 @@ describe("DELETE /api/admin/users/[id]", () => {
     expect(res.status).toBe(404);
   });
 
-  it("関連データがあるユーザーは削除できない（409）", async () => {
+  it("evaluation_assignments があるユーザーは削除できない（409）", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never);
     vi.mocked(prisma.evaluationAssignment.count).mockResolvedValue(2);
     vi.mocked(prisma.evaluation.count).mockResolvedValue(0);
+    vi.mocked(prisma.evaluationSetting.count).mockResolvedValue(0);
+
+    const req = new Request("http://localhost/api/admin/users/user-2", { method: "DELETE" });
+    const res = await DELETE(req, makeParams("user-2"));
+
+    expect(res.status).toBe(409);
+  });
+
+  it("evaluation_settings があるユーザーは削除できない（409）", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never);
+    vi.mocked(prisma.evaluationAssignment.count).mockResolvedValue(0);
+    vi.mocked(prisma.evaluation.count).mockResolvedValue(0);
+    vi.mocked(prisma.evaluationSetting.count).mockResolvedValue(1);
 
     const req = new Request("http://localhost/api/admin/users/user-2", { method: "DELETE" });
     const res = await DELETE(req, makeParams("user-2"));

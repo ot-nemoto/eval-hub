@@ -74,14 +74,15 @@ export async function DELETE(
   }
 
   // 関連データが存在する場合は削除不可
-  const [assignmentCount, evaluationCount] = await Promise.all([
+  const [assignmentCount, evaluationCount, settingCount] = await Promise.all([
     prisma.evaluationAssignment.count({
       where: { OR: [{ evaluatee_id: id }, { evaluator_id: id }] },
     }),
     prisma.evaluation.count({ where: { evaluatee_id: id } }),
+    prisma.evaluationSetting.count({ where: { user_id: id } }),
   ]);
 
-  if (assignmentCount > 0 || evaluationCount > 0) {
+  if (assignmentCount > 0 || evaluationCount > 0 || settingCount > 0) {
     return errorResponse(
       "CONFLICT",
       "評価データまたはアサインデータが存在するため削除できません",
