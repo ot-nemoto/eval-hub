@@ -102,6 +102,18 @@ describe("PATCH /api/admin/fiscal-years/:year", () => {
     const res = await PATCH(req, makeParams("2026"));
     expect(res.status).toBe(403);
   });
+
+  it("すべてのフィールドが型不正の場合は 400", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
+
+    const req = new Request("http://localhost/api/admin/fiscal-years/2026", {
+      method: "PATCH",
+      body: JSON.stringify({ start_date: 123, end_date: 456 }),
+    });
+    const res = await PATCH(req, makeParams("2026"));
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("DELETE /api/admin/fiscal-years/:year", () => {

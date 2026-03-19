@@ -18,11 +18,6 @@ export async function PATCH(request: Request, { params }: Params) {
   const body = await request.json().catch(() => null);
   if (!body) return errorResponse("BAD_REQUEST", "リクエストボディが不正です", 400);
 
-  const allowedKeys = ["name", "start_date", "end_date", "is_current"];
-  const hasValidKey = allowedKeys.some((k) => k in body);
-  if (!hasValidKey)
-    return errorResponse("BAD_REQUEST", "更新可能なフィールドが指定されていません", 400);
-
   const target = await prisma.fiscalYear.findUnique({ where: { year } });
   if (!target) return errorResponse("NOT_FOUND", "年度が見つかりません", 404);
 
@@ -36,6 +31,9 @@ export async function PATCH(request: Request, { params }: Params) {
   if (typeof body.start_date === "string") data.start_date = new Date(body.start_date);
   if (typeof body.end_date === "string") data.end_date = new Date(body.end_date);
   if (typeof body.is_current === "boolean") data.is_current = body.is_current;
+
+  if (Object.keys(data).length === 0)
+    return errorResponse("BAD_REQUEST", "更新可能なフィールドが指定されていません", 400);
 
   const updated = await prisma.$transaction(async (tx) => {
     // is_current: true にする場合、他の年度を false に
