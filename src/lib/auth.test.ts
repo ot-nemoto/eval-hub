@@ -65,6 +65,53 @@ describe("getSession", () => {
     });
   });
 
+  describe("MOCK_USER_EMAIL モード（非本番環境）", () => {
+    const originalEnv = process.env;
+
+    beforeEach(() => {
+      process.env = { ...originalEnv, NODE_ENV: "development", MOCK_USER_EMAIL: "mock@example.com" };
+    });
+
+    afterEach(() => {
+      process.env = originalEnv;
+    });
+
+    it("MOCK_USER_EMAIL に対応する DB ユーザーのセッションを返す", async () => {
+      // @ts-ignore
+      mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "モックユーザー", role: "member" });
+
+      const result = await getSession();
+      expect(result).toEqual({ user: { id: "user-uuid", name: "モックユーザー", role: "member" } });
+      expect(mockAuth).not.toHaveBeenCalled();
+      expect(mockFindUnique).toHaveBeenCalledWith({
+        where: { email: "mock@example.com" },
+        select: { id: true, name: true, role: true },
+      });
+    });
+
+    it("MOCK_USER_EMAIL に対応する DB ユーザーが存在しない場合は null を返す", async () => {
+      // @ts-ignore
+      mockFindUnique.mockResolvedValue(null);
+
+      const result = await getSession();
+      expect(result).toBeNull();
+      expect(mockAuth).not.toHaveBeenCalled();
+    });
+
+    it("MOCK_USER_ID と MOCK_USER_EMAIL が両方設定された場合は MOCK_USER_ID が優先される", async () => {
+      process.env.MOCK_USER_ID = "priority-user-id";
+      // @ts-ignore
+      mockFindUnique.mockResolvedValue({ id: "priority-user-id", name: "優先ユーザー", role: "admin" });
+
+      const result = await getSession();
+      expect(mockFindUnique).toHaveBeenCalledWith({
+        where: { id: "priority-user-id" },
+        select: { id: true, name: true, role: true },
+      });
+      expect(result?.user.id).toBe("priority-user-id");
+    });
+  });
+
   it("Clerkにユーザーがいない場合はnullを返す", async () => {
     // @ts-ignore
     mockAuth.mockResolvedValue({ userId: null });

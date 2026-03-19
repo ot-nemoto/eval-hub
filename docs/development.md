@@ -37,8 +37,9 @@ CLERK_SECRET_KEY="sk_test_..."
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
 NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/evaluations
 
-# ローカル開発用認証バイパス（任意）
+# ローカル開発用認証バイパス（任意、どちらか一方を設定）
 # MOCK_USER_ID="<DB の users.id>"
+# MOCK_USER_EMAIL="doigaki@example.com"
 ```
 
 各値の取得先は以下を参照。
@@ -116,26 +117,30 @@ npm run dev
 
 ---
 
-## 認証バイパス（MOCK_USER_ID）
+## 認証バイパス（MOCK_USER_ID / MOCK_USER_EMAIL）
 
-Clerk を使わずにローカルで動作確認したい場合、`MOCK_USER_ID` を設定することで認証をスキップできる。
+Clerk を使わずにローカルで動作確認したい場合、`MOCK_USER_ID` または `MOCK_USER_EMAIL` を設定することで認証をスキップできる。
 
 ```bash
-# admin ユーザーとして起動（例：土井垣将または不知火守のID）
+# ID で指定（admin ユーザー例：土井垣将）
 MOCK_USER_ID=<uuid> npm run dev
 
-# member ユーザーとして起動（例：山田太郎のID）
-MOCK_USER_ID=<uuid> npm run dev
+# メールアドレスで指定（より簡単）
+MOCK_USER_EMAIL=doigaki@example.com npm run dev
+MOCK_USER_EMAIL=yamada@example.com npm run dev
 ```
 
 または `.env.local` に設定する：
 
 ```env
 MOCK_USER_ID="<DB の users.id>"
+# または
+MOCK_USER_EMAIL="doigaki@example.com"
 ```
 
 - `NODE_ENV !== 'production'` の場合のみ有効（本番環境では設定しても無視される）
 - middleware の Clerk 認証と `getSession()` の両方をバイパスし、指定した DB ユーザーとして動作する
+- `MOCK_USER_ID` と `MOCK_USER_EMAIL` を両方設定した場合は `MOCK_USER_ID` が優先される
 - UUID は `npx prisma studio` またはユーザー管理画面で確認できる
 
 ---
