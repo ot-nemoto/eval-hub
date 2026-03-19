@@ -8,7 +8,10 @@ const memberLinks = [
   { href: "/members", label: "社員一覧" },
 ];
 
-const adminLinks = [{ href: "/admin/users", label: "ユーザー管理" }];
+const adminLinks = [
+  { href: "/admin/users", label: "ユーザー管理" },
+  { href: "/admin/fiscal-years", label: "年度管理" },
+];
 
 type Props = { role: "admin" | "member" };
 

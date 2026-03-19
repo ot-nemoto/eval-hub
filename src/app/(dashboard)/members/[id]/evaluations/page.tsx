@@ -1,7 +1,8 @@
-import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import ManagerEvaluationTabs from "@/components/evaluation/ManagerEvaluationTabs";
+import { getSession } from "@/lib/auth";
+import { getCurrentFiscalYear } from "@/lib/fiscal-year";
+import { prisma } from "@/lib/prisma";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -12,7 +13,8 @@ export default async function MemberEvaluationsPage({ params }: Props) {
   const { id: evaluateeId } = await params;
   const evaluatorId = session.user.id;
   const isAdmin = session.user.role === "admin";
-  const fiscalYear = new Date().getFullYear();
+  const fiscalYear = await getCurrentFiscalYear();
+  if (!fiscalYear) notFound();
 
   // 権限確認: admin または当該年度にアサインされた評価者のみアクセス可
   if (!isAdmin) {

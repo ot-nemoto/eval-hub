@@ -1,7 +1,8 @@
-import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { getCurrentFiscalYear } from "@/lib/fiscal-year";
+import { prisma } from "@/lib/prisma";
 
 export default async function MembersPage() {
   const session = await getSession();
@@ -9,7 +10,7 @@ export default async function MembersPage() {
 
   const userId = session.user.id;
   const isAdmin = session.user.role === "admin";
-  const fiscalYear = new Date().getFullYear();
+  const fiscalYear = await getCurrentFiscalYear();
 
   type Member = { id: string; name: string; division: string | null };
   let members: Member[] = [];
