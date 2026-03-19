@@ -20,18 +20,22 @@ export function UserActions({ userId, currentRole, isActive, isSelf }: Props) {
     if (!confirm(`このユーザーを${label}しますか？`)) return;
 
     setLoading(true);
-    const res = await fetch(`/api/admin/users/${userId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: newRole }),
-    });
-    setLoading(false);
-
-    if (res.ok) {
-      router.refresh();
-    } else {
-      const json = await res.json().catch(() => ({}));
-      alert(json.error?.message ?? "ロールの変更に失敗しました");
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: newRole }),
+      });
+      if (res.ok) {
+        router.refresh();
+      } else {
+        const json = await res.json().catch(() => ({}));
+        alert(json.error?.message ?? "ロールの変更に失敗しました");
+      }
+    } catch {
+      alert("通信エラーが発生しました");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -40,18 +44,22 @@ export function UserActions({ userId, currentRole, isActive, isSelf }: Props) {
     if (!confirm(`このユーザーを${label}しますか？`)) return;
 
     setLoading(true);
-    const res = await fetch(`/api/admin/users/${userId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ is_active: !isActive }),
-    });
-    setLoading(false);
-
-    if (res.ok) {
-      router.refresh();
-    } else {
-      const json = await res.json().catch(() => ({}));
-      alert(json.error?.message ?? `${label}に失敗しました`);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_active: !isActive }),
+      });
+      if (res.ok) {
+        router.refresh();
+      } else {
+        const json = await res.json().catch(() => ({}));
+        alert(json.error?.message ?? `${label}に失敗しました`);
+      }
+    } catch {
+      alert("通信エラーが発生しました");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -59,14 +67,18 @@ export function UserActions({ userId, currentRole, isActive, isSelf }: Props) {
     if (!confirm("このユーザーを削除しますか？この操作は取り消せません。")) return;
 
     setLoading(true);
-    const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
-    setLoading(false);
-
-    if (res.status === 204) {
-      router.refresh();
-    } else {
-      const json = await res.json().catch(() => ({}));
-      alert(json.error?.message ?? "削除に失敗しました");
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
+      if (res.status === 204) {
+        router.refresh();
+      } else {
+        const json = await res.json().catch(() => ({}));
+        alert(json.error?.message ?? "削除に失敗しました");
+      }
+    } catch {
+      alert("通信エラーが発生しました");
+    } finally {
+      setLoading(false);
     }
   }
 

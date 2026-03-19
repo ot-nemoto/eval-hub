@@ -15,18 +15,22 @@ export function EvaluationSettingToggle({ userId, fiscalYear, enabled }: Props) 
 
   async function handleToggle() {
     setLoading(true);
-    const res = await fetch(`/api/members/${userId}/evaluation-settings/${fiscalYear}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ self_evaluation_enabled: !enabled }),
-    });
-    setLoading(false);
-
-    if (res.ok) {
-      router.refresh();
-    } else {
-      const json = await res.json().catch(() => ({}));
-      alert(json.error?.message ?? "更新に失敗しました");
+    try {
+      const res = await fetch(`/api/members/${userId}/evaluation-settings/${fiscalYear}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ self_evaluation_enabled: !enabled }),
+      });
+      if (res.ok) {
+        router.refresh();
+      } else {
+        const json = await res.json().catch(() => ({}));
+        alert(json.error?.message ?? "更新に失敗しました");
+      }
+    } catch {
+      alert("通信エラーが発生しました");
+    } finally {
+      setLoading(false);
     }
   }
 
