@@ -6,12 +6,15 @@ vi.mock("@/lib/auth", () => ({ getSession: vi.fn() }));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     evaluationAssignment: { findFirst: vi.fn() },
+    evaluationSetting: { findUnique: vi.fn() },
     evaluation: { upsert: vi.fn() },
   },
 }));
 
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+const enabledSetting = { id: "s-1", user_id: "user-2", fiscal_year: 2025, self_evaluation_enabled: true };
 
 const makeParams = (id: string, year: string, uid: string) =>
   Promise.resolve({ id, year, uid });
@@ -37,6 +40,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
 
   it("本人は self_score/self_reason を更新できる", async () => {
     vi.mocked(getSession).mockResolvedValue(selfSession as never);
+    vi.mocked(prisma.evaluationSetting.findUnique).mockResolvedValue(enabledSetting);
     vi.mocked(prisma.evaluation.upsert).mockResolvedValue(mockUpsertResult);
 
     const res = await PUT(
@@ -176,5 +180,40 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
     );
 
     expect(res.status).toBe(400);
+  });
+
+  it("自己評価不要のユーザーが self_score を更新しようとすると 403 を返す", async () => {
+    vi.mocked(getSession).mockResolvedValue(selfSession as never);
+    vi.mocked(prisma.evaluationSetting.findUnique).mockResolvedValue(null);
+
+    const res = await PUT(
+      new Request("http://localhost", {
+        method: "PUT",
+        body: JSON.stringify({ self_score: "ryo" }),
+      }),
+      { params: makeParams("user-2", "2025", "1-1-1") },
+    );
+
+    expect(res.status).toBe(403);
+    expect(prisma.evaluation.upsert).not.toHaveBeenCalled();
+  });
+
+  it("self_evaluation_enabled=false のユーザーが self_score を更新しようとすると 403 を返す", async () => {
+    vi.mocked(getSession).mockResolvedValue(selfSession as never);
+    vi.mocked(prisma.evaluationSetting.findUnique).mockResolvedValue({
+      ...enabledSetting,
+      self_evaluation_enabled: false,
+    });
+
+    const res = await PUT(
+      new Request("http://localhost", {
+        method: "PUT",
+        body: JSON.stringify({ self_score: "ryo" }),
+      }),
+      { params: makeParams("user-2", "2025", "1-1-1") },
+    );
+
+    expect(res.status).toBe(403);
+    expect(prisma.evaluation.upsert).not.toHaveBeenCalled();
   });
 });
