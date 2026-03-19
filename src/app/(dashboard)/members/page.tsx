@@ -20,7 +20,7 @@ export default async function MembersPage() {
       select: { id: true, name: true, division: true },
       orderBy: { name: "asc" },
     });
-  } else {
+  } else if (fiscalYear !== null) {
     const assignments = await prisma.evaluationAssignment.findMany({
       where: { evaluator_id: userId, fiscal_year: fiscalYear },
       include: { evaluatee: { select: { id: true, name: true, division: true } } },
