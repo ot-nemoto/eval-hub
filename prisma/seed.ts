@@ -39,12 +39,44 @@ async function syncClerkUser(email: string): Promise<string | null> {
   return created.id;
 }
 
+async function deleteClerkUser(email: string): Promise<void> {
+  if (!clerkClient) return;
+  const existing = await clerkClient.users.getUserList({ emailAddress: [email] });
+  for (const u of existing.data) {
+    await clerkClient.users.deleteUser(u.id);
+  }
+}
+
 async function main() {
+  // 0. 旧 seed ユーザーのクリーンアップ
+  const oldEmails = ["tanaka@example.com", "suzuki@example.com", "sato@example.com"];
+  for (const email of oldEmails) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (user) {
+      await prisma.evaluationAssignment.deleteMany({
+        where: { OR: [{ evaluatee_id: user.id }, { evaluator_id: user.id }] },
+      });
+      await prisma.evaluation.deleteMany({ where: { evaluatee_id: user.id } });
+      await prisma.user.delete({ where: { email } });
+      await deleteClerkUser(email);
+      console.log(`  deleted old user: ${email}`);
+    }
+  }
+
   // 1. users
+  //
+  // ユーザー構成（ドカベン）:
+  //   土井垣将  - admin / 評価アサインなし
+  //   不知火守  - admin / 山田太郎・里中智を評価
+  //   山田太郎  - member / 里中智を評価、不知火守に評価される（評価者かつ被評価者）
+  //   里中智    - member / 不知火守・山田太郎の2名から評価される（複数評価者）
+  //   岩鬼正美  - member / 評価者アサインなし
   const usersData = [
-    { email: "tanaka@example.com", name: "田中太郎", role: "admin" as const },
-    { email: "suzuki@example.com", name: "鈴木花子", role: "member" as const },
-    { email: "sato@example.com", name: "佐藤健", role: "member" as const },
+    { email: "doigaki@example.com", name: "土井垣将", role: "admin" as const },
+    { email: "shiranui@example.com", name: "不知火守", role: "admin" as const },
+    { email: "yamada@example.com", name: "山田太郎", role: "member" as const },
+    { email: "satonaka@example.com", name: "里中智", role: "member" as const },
+    { email: "iwaki@example.com", name: "岩鬼正美", role: "member" as const },
   ];
 
   const createdUsers: Record<string, { id: string }> = {};
@@ -59,13 +91,25 @@ async function main() {
     createdUsers[u.email] = user;
   }
 
-  console.log("users: 3 upserted");
+  console.log("users: 5 upserted");
 
   // 2. evaluation_assignments（2026年度）
+  //   不知火守 → 山田太郎を評価
+  //   不知火守 → 里中智を評価
+  //   山田太郎 → 里中智を評価
   const assignments = [
-    { evaluatee_id: createdUsers["suzuki@example.com"].id, evaluator_id: createdUsers["tanaka@example.com"].id },
-    { evaluatee_id: createdUsers["sato@example.com"].id, evaluator_id: createdUsers["suzuki@example.com"].id },
-    { evaluatee_id: createdUsers["sato@example.com"].id, evaluator_id: createdUsers["tanaka@example.com"].id },
+    {
+      evaluatee_id: createdUsers["yamada@example.com"].id,
+      evaluator_id: createdUsers["shiranui@example.com"].id,
+    },
+    {
+      evaluatee_id: createdUsers["satonaka@example.com"].id,
+      evaluator_id: createdUsers["shiranui@example.com"].id,
+    },
+    {
+      evaluatee_id: createdUsers["satonaka@example.com"].id,
+      evaluator_id: createdUsers["yamada@example.com"].id,
+    },
   ];
 
   for (const a of assignments) {
