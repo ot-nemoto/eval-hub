@@ -233,20 +233,28 @@ NextAuth.js による認証（ログイン・セッション管理）
 ```json
 {
   "data": [
-    { "id": "uuid", "name": "山田太郎", "email": "yamada@example.com", "role": "member", "division": "開発部", "joined_at": null, "created_at": "2026-01-01T00:00:00.000Z" }
+    { "id": "uuid", "name": "山田太郎", "email": "yamada@example.com", "role": "member", "division": "開発部", "joined_at": null, "created_at": "2026-01-01T00:00:00.000Z", "is_active": true }
   ]
 }
 ```
 
 ### PATCH /api/admin/users/:id
-ロール変更（admin のみ）
+ロール変更・有効/無効化（admin のみ）。`role` と `is_active` はどちらか一方、または同時に指定可。
 
-**Request**
+**Request（ロール変更）**
 ```json
 { "role": "admin" }
 ```
 
+**Request（無効化）**
+```json
+{ "is_active": false }
+```
+
 **Response**: `200 OK`
+```json
+{ "data": { "id": "uuid", "name": "山田太郎", "email": "yamada@example.com", "role": "member", "is_active": false } }
+```
 
 ### DELETE /api/admin/users/:id
 ユーザー削除（admin のみ）
