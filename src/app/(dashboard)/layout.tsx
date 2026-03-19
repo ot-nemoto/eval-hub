@@ -1,8 +1,9 @@
 import { SignOutButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import { NavLinks } from "@/components/NavLinks";
+import { APP_NAME } from "@/lib/constants";
 
 export default async function DashboardLayout({
   children,
@@ -22,22 +23,15 @@ export default async function DashboardLayout({
       <header className="border-b bg-white px-6 py-4">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <div className="flex items-center gap-6">
-            <h1 className="text-lg font-semibold text-gray-900">評価ハブ</h1>
-            <nav className="flex gap-4 text-sm">
-              <Link href="/evaluations" className="text-gray-600 hover:text-gray-900">
-                自己評価
-              </Link>
-              <Link href="/members" className="text-gray-600 hover:text-gray-900">
-                社員一覧
-              </Link>
-            </nav>
+            <h1 className="text-lg font-semibold text-gray-900">{APP_NAME}</h1>
+            <NavLinks role={session.user.role} />
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">{session.user.name}</span>
             <SignOutButton redirectUrl="/login">
               <button
                 type="button"
-                className="cursor-pointer text-sm text-gray-500 hover:text-gray-700"
+                className="cursor-pointer rounded border border-gray-300 px-3 py-1 text-sm text-gray-600 hover:bg-gray-100"
               >
                 ログアウト
               </button>

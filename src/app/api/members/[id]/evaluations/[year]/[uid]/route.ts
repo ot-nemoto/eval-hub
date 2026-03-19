@@ -56,6 +56,15 @@ export async function PUT(
     );
   }
 
+  if (hasSelfFields && isSelf) {
+    const setting = await prisma.evaluationSetting.findUnique({
+      where: { user_id_fiscal_year: { user_id: evaluateeId, fiscal_year: fiscalYear } },
+    });
+    if (!setting?.self_evaluation_enabled) {
+      return errorResponse("FORBIDDEN", "この年度は自己評価が不要に設定されています", 403);
+    }
+  }
+
   if (hasManagerFields && !isAdmin && !isAssignedEvaluator) {
     return errorResponse(
       "FORBIDDEN",

@@ -11,79 +11,93 @@ export type Session = {
 };
 
 export async function getSession(): Promise<Session | null> {
-  // 非本番環境: MOCK_USER_ID が設定されている場合は DB から直接セッションを返す
-  if (process.env.NODE_ENV !== "production" && process.env.MOCK_USER_ID) {
-    const user = await prisma.user.findUnique({
-      where: { id: process.env.MOCK_USER_ID },
-      select: { id: true, name: true, role: true },
-    });
-    return user ? { user } : null;
+  // 非本番環境: MOCK_USER_ID / MOCK_USER_EMAIL が設定されている場合は DB から直接セッションを返す
+  if (process.env.NODE_ENV !== "production") {
+    if (process.env.MOCK_USER_ID) {
+      const user = await prisma.user.findUnique({
+        where: { id: process.env.MOCK_USER_ID },
+        select: { id: true, name: true, role: true, is_active: true },
+      });
+      if (!user || !user.is_active) return null;
+      return { user: { id: user.id, name: user.name, role: user.role } };
+    }
+    if (process.env.MOCK_USER_EMAIL) {
+      const user = await prisma.user.findUnique({
+        where: { email: process.env.MOCK_USER_EMAIL },
+        select: { id: true, name: true, role: true, is_active: true },
+      });
+      if (!user || !user.is_active) return null;
+      return { user: { id: user.id, name: user.name, role: user.role } };
+    }
   }
 
   const { userId } = await auth();
   if (!userId) return null;
 
   // まず clerk_id で検索
-  let user = await prisma.user.findUnique({
+  const userByClerkId = await prisma.user.findUnique({
     where: { clerk_id: userId },
-    select: { id: true, name: true, role: true },
+    select: { id: true, name: true, role: true, is_active: true },
   });
 
+  if (userByClerkId) {
+    if (!userByClerkId.is_active) return null;
+    return { user: { id: userByClerkId.id, name: userByClerkId.name, role: userByClerkId.role } };
+  }
+
   // 見つからない場合、メールアドレスで突合して初回紐付け or 新規作成
-  if (!user) {
-    const clerkUser = await currentUser();
-    const email = clerkUser?.emailAddresses[0]?.emailAddress;
-    if (!email) return null;
+  const clerkUser = await currentUser();
+  const email = clerkUser?.emailAddresses[0]?.emailAddress;
+  if (!email) return null;
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-      select: { id: true, name: true, role: true, clerk_id: true },
-    });
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, name: true, role: true, clerk_id: true, is_active: true },
+  });
 
-    if (!existingUser) {
-      // DB に存在しない新規サインアップユーザーを自動作成
-      // 並行リクエストによるレースコンディション対策: P2002 をキャッチして既存レコードを返す
-      const name = clerkUser?.fullName ?? clerkUser?.firstName ?? email;
-      try {
-        user = await prisma.user.create({
-          data: { clerk_id: userId, email, name, role: "member" },
-          select: { id: true, name: true, role: true },
-        });
-      } catch (e) {
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-          user = await prisma.user.findUnique({
-            where: { email },
-            select: { id: true, name: true, role: true },
-          });
-          if (!user) return null;
-        } else {
-          throw e;
-        }
-      }
-    } else if (existingUser.clerk_id) {
-      return null; // 既に別の Clerk ID に紐付き済み
-    } else {
-      // clerk_id: null の場合のみ更新（並行リクエストによる上書き防止）
-      const { count } = await prisma.user.updateMany({
-        where: { email, clerk_id: null },
-        data: { clerk_id: userId },
+  if (!existingUser) {
+    // DB に存在しない新規サインアップユーザーを自動作成
+    // 並行リクエストによるレースコンディション対策: P2002 をキャッチして既存レコードを返す
+    const name = clerkUser?.fullName ?? clerkUser?.firstName ?? email;
+    try {
+      const created = await prisma.user.create({
+        data: { clerk_id: userId, email, name, role: "member" },
+        select: { id: true, name: true, role: true },
       });
-      if (count === 0) {
-        // 別リクエストが先に紐付けを完了した場合は再取得して返す
-        user = await prisma.user.findUnique({
+      return { user: created };
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        const user = await prisma.user.findUnique({
           where: { email },
-          select: { id: true, name: true, role: true },
+          select: { id: true, name: true, role: true, is_active: true },
         });
-        if (!user) return null;
-      } else {
-        user = await prisma.user.findUnique({
-          where: { email },
-          select: { id: true, name: true, role: true },
-        });
-        if (!user) return null;
+        if (!user || !user.is_active) return null;
+        return { user: { id: user.id, name: user.name, role: user.role } };
       }
+      throw e;
     }
   }
 
-  return { user };
+  if (existingUser.clerk_id) {
+    return null; // 既に別の Clerk ID に紐付き済み
+  }
+
+  if (!existingUser.is_active) return null;
+
+  // clerk_id: null の場合のみ更新（並行リクエストによる上書き防止）
+  const { count } = await prisma.user.updateMany({
+    where: { email, clerk_id: null },
+    data: { clerk_id: userId },
+  });
+  if (count === 0) {
+    // 別リクエストが先に紐付けを完了した場合は再取得して返す
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, name: true, role: true, is_active: true },
+    });
+    if (!user || !user.is_active) return null;
+    return { user: { id: user.id, name: user.name, role: user.role } };
+  }
+
+  return { user: { id: existingUser.id, name: existingUser.name, role: existingUser.role } };
 }

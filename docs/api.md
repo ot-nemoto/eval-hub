@@ -1,4 +1,4 @@
-> 最終更新: 2026-03-15 (MVPスコープを評価登録に絞り、APIを再設計)
+> 最終更新: 2026-03-19 (自己評価要否設定API追加、ユーザー管理API追加)
 
 # api.md — API 仕様
 
@@ -185,6 +185,84 @@ NextAuth.js による認証（ログイン・セッション管理）
   }
 }
 ```
+
+---
+
+## 自己評価要否設定
+
+### GET /api/members/:id/evaluation-settings
+ユーザーの自己評価要否設定一覧取得
+
+**Response**
+```json
+{
+  "data": [
+    { "fiscal_year": 2026, "self_evaluation_enabled": false },
+    { "fiscal_year": 2025, "self_evaluation_enabled": true }
+  ]
+}
+```
+
+**権限**: admin および本人のみ
+
+---
+
+### PUT /api/members/:id/evaluation-settings/:year
+年度ごとの自己評価要否を更新
+
+**Request**
+```json
+{ "self_evaluation_enabled": false }
+```
+
+**Response**: `200 OK`
+```json
+{ "data": { "fiscal_year": 2026, "self_evaluation_enabled": false } }
+```
+
+**権限**: admin のみ
+
+---
+
+## ユーザー管理（admin）
+
+### GET /api/admin/users
+ユーザー一覧取得（admin のみ）
+
+**Response**
+```json
+{
+  "data": [
+    { "id": "uuid", "name": "山田太郎", "email": "yamada@example.com", "role": "member", "division": "開発部", "joined_at": null, "created_at": "2026-01-01T00:00:00.000Z", "is_active": true }
+  ]
+}
+```
+
+### PATCH /api/admin/users/:id
+ロール変更・有効/無効化（admin のみ）。`role` と `is_active` はどちらか一方、または同時に指定可。
+
+**Request（ロール変更）**
+```json
+{ "role": "admin" }
+```
+
+**Request（無効化）**
+```json
+{ "is_active": false }
+```
+
+**Response**: `200 OK`
+```json
+{ "data": { "id": "uuid", "name": "山田太郎", "email": "yamada@example.com", "role": "member", "is_active": false } }
+```
+
+### DELETE /api/admin/users/:id
+ユーザー削除（admin のみ）
+
+- 評価データ・アサインデータが存在する場合は `409 Conflict`
+- 自分自身は削除不可（`403 Forbidden`）
+
+**Response**: `204 No Content`
 
 ---
 
