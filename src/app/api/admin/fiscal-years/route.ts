@@ -24,7 +24,9 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   if (
     !body ||
-    typeof body.year !== "number" ||
+    !Number.isInteger(body.year) ||
+    body.year < 1900 ||
+    body.year > 9999 ||
     typeof body.name !== "string" ||
     typeof body.start_date !== "string" ||
     typeof body.end_date !== "string"
