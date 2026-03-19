@@ -145,6 +145,28 @@ describe("POST /api/admin/fiscal-years", () => {
     expect(res.status).toBe(400);
   });
 
+  it("start_date が不正な日付文字列の場合は 400", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+
+    const req = new Request("http://localhost/api/admin/fiscal-years", {
+      method: "POST",
+      body: JSON.stringify({ year: 2028, name: "2028年度", start_date: "not-a-date", end_date: "2029-03-31" }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+
+  it("start_date が end_date より後の場合は 400", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+
+    const req = new Request("http://localhost/api/admin/fiscal-years", {
+      method: "POST",
+      body: JSON.stringify({ year: 2028, name: "2028年度", start_date: "2029-03-31", end_date: "2028-04-01" }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+
   it("直近年度の items をコピーする", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(null);

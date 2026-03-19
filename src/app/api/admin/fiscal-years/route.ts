@@ -34,6 +34,15 @@ export async function POST(request: Request) {
     return errorResponse("BAD_REQUEST", "year, name, start_date, end_date は必須です", 400);
   }
 
+  const startDate = new Date(body.start_date);
+  const endDate = new Date(body.end_date);
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return errorResponse("BAD_REQUEST", "start_date, end_date は有効な日付形式で指定してください", 400);
+  }
+  if (startDate > endDate) {
+    return errorResponse("BAD_REQUEST", "start_date は end_date 以前の日付を指定してください", 400);
+  }
+
   const existing = await prisma.fiscalYear.findUnique({ where: { year: body.year } });
   if (existing) return errorResponse("CONFLICT", "同じ年度がすでに存在します", 409);
 
@@ -49,8 +58,8 @@ export async function POST(request: Request) {
       data: {
         year: body.year,
         name: body.name,
-        start_date: new Date(body.start_date),
-        end_date: new Date(body.end_date),
+        start_date: startDate,
+        end_date: endDate,
       },
       select: { year: true, name: true, start_date: true, end_date: true, is_current: true },
     });
