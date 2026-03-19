@@ -31,6 +31,7 @@ model User {
   joined_at               DateTime? @db.Date
   role                    UserRole
   wants_president_meeting Boolean   @default(false)
+  is_active               Boolean   @default(true)
   created_at              DateTime  @default(now())
   updated_at              DateTime  @updatedAt
 

@@ -1,6 +1,6 @@
 // @vitest-environment node
-import { getSession } from "@/lib/auth";
 import { errorResponse, successResponse } from "@/lib/api-response";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -21,6 +21,7 @@ export async function GET() {
       division: true,
       joined_at: true,
       created_at: true,
+      is_active: true,
     },
     orderBy: { name: "asc" },
   });

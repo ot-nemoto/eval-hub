@@ -1,4 +1,4 @@
-> 最終更新: 2026-03-19 (evaluation_settings テーブル追加)
+> 最終更新: 2026-03-19 (users.is_active カラム追加)
 
 # schema.md — DB スキーマ定義
 
@@ -40,6 +40,7 @@ erDiagram
         DATE joined_at
         ENUM role
         BOOLEAN wants_president_meeting
+        BOOLEAN is_active
     }
     evaluation_assignments {
         TEXT id PK
@@ -100,6 +101,7 @@ erDiagram
 | joined_at | DATE | | 入社日 |
 | role | ENUM | NOT NULL | `admin` / `member` |
 | wants_president_meeting | BOOLEAN | DEFAULT false | 社長面談希望 |
+| is_active | BOOLEAN | DEFAULT true | 有効フラグ（false: ログイン不可） |
 | created_at | TIMESTAMP | DEFAULT now() | |
 | updated_at | TIMESTAMP | | |
 

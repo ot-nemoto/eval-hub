@@ -51,6 +51,22 @@ describe("PATCH /api/admin/users/[id]", () => {
     expect(body.data.role).toBe("admin");
   });
 
+  it("admin はユーザーを無効化できる", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never);
+    vi.mocked(prisma.user.update).mockResolvedValue({ ...mockUser, is_active: false } as never);
+
+    const req = new Request("http://localhost/api/admin/users/user-2", {
+      method: "PATCH",
+      body: JSON.stringify({ is_active: false }),
+    });
+    const res = await PATCH(req, makeParams("user-2"));
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.data.is_active).toBe(false);
+  });
+
   it("自分自身のロールは変更できない（403）", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
 
@@ -63,7 +79,7 @@ describe("PATCH /api/admin/users/[id]", () => {
     expect(res.status).toBe(403);
   });
 
-  it("role が不正な値の場合は 400 を返す", async () => {
+  it("role も is_active も指定しない場合は 400 を返す", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
 
     const req = new Request("http://localhost/api/admin/users/user-2", {

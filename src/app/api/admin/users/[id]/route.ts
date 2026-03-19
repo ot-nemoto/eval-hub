@@ -1,6 +1,6 @@
 // @vitest-environment node
-import { getSession } from "@/lib/auth";
 import { errorResponse, successResponse } from "@/lib/api-response";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function PATCH(
@@ -22,8 +22,14 @@ export async function PATCH(
   }
 
   const body = await request.json().catch(() => null);
-  if (!body || (body.role !== "admin" && body.role !== "member")) {
-    return errorResponse("BAD_REQUEST", "role は 'admin' または 'member' で指定してください", 400);
+  const validRole = body?.role === "admin" || body?.role === "member";
+  const validIsActive = body?.is_active === true || body?.is_active === false;
+  if (!body || (!validRole && !validIsActive)) {
+    return errorResponse(
+      "BAD_REQUEST",
+      "role は 'admin' または 'member'、is_active は true または false で指定してください",
+      400,
+    );
   }
 
   const target = await prisma.user.findUnique({ where: { id } });
@@ -31,10 +37,14 @@ export async function PATCH(
     return errorResponse("NOT_FOUND", "ユーザーが見つかりません", 404);
   }
 
+  const data: { role?: "admin" | "member"; is_active?: boolean } = {};
+  if (validRole) data.role = body.role;
+  if (validIsActive) data.is_active = body.is_active;
+
   const updated = await prisma.user.update({
     where: { id },
-    data: { role: body.role },
-    select: { id: true, name: true, email: true, role: true },
+    data,
+    select: { id: true, name: true, email: true, role: true, is_active: true },
   });
 
   return successResponse(updated);

@@ -1,8 +1,8 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { UserActions } from "@/components/admin/UserActions";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { UserActions } from "@/components/admin/UserActions";
 
 export default async function AdminUsersPage() {
   const session = await getSession();
@@ -18,6 +18,7 @@ export default async function AdminUsersPage() {
       division: true,
       joined_at: true,
       created_at: true,
+      is_active: true,
     },
     orderBy: { name: "asc" },
   });
@@ -44,7 +45,10 @@ export default async function AdminUsersPage() {
           </thead>
           <tbody className="divide-y">
             {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50">
+              <tr
+                key={user.id}
+                className={user.is_active ? "hover:bg-gray-50" : "bg-gray-50 opacity-60"}
+              >
                 <td className="px-4 py-3 font-medium text-gray-900">{user.name}</td>
                 <td className="px-4 py-3 text-gray-500">{user.email}</td>
                 <td className="px-4 py-3 text-gray-500">{user.division ?? "—"}</td>
@@ -74,6 +78,7 @@ export default async function AdminUsersPage() {
                   <UserActions
                     userId={user.id}
                     currentRole={user.role}
+                    isActive={user.is_active}
                     isSelf={user.id === session.user.id}
                   />
                 </td>
