@@ -37,8 +37,21 @@ model User {
   evaluatee_assignments EvaluationAssignment[] @relation("EvaluateeAssignments")
   evaluator_assignments EvaluationAssignment[] @relation("EvaluatorAssignments")
   evaluations           Evaluation[]
+  evaluation_settings   EvaluationSetting[]
 
   @@map("users")
+}
+
+model EvaluationSetting {
+  id                      String  @id @default(uuid())
+  user_id                 String
+  fiscal_year             Int
+  self_evaluation_enabled Boolean @default(true)
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, fiscal_year])
+  @@map("evaluation_settings")
 }
 
 model EvaluationAssignment {
