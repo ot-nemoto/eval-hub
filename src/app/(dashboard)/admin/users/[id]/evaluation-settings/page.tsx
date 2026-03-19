@@ -1,8 +1,8 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { EvaluationSettingToggle } from "@/components/admin/EvaluationSettingToggle";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { EvaluationSettingToggle } from "@/components/admin/EvaluationSettingToggle";
 
 export default async function UserEvaluationSettingsPage({
   params,
@@ -27,7 +27,9 @@ export default async function UserEvaluationSettingsPage({
   const settings = await prisma.evaluationSetting.findMany({
     where: { user_id: id },
   });
-  const settingMap = Object.fromEntries(settings.map((s) => [s.fiscal_year, s.self_evaluation_enabled]));
+  const settingMap = Object.fromEntries(
+    settings.map((s) => [s.fiscal_year, s.self_evaluation_enabled]),
+  );
 
   return (
     <div>
@@ -52,21 +54,15 @@ export default async function UserEvaluationSettingsPage({
           </thead>
           <tbody className="divide-y">
             {years.map((year) => {
-              // 未設定の場合はデフォルト true
+              // 未設定の場合はデフォルト false（自己評価なし）
               const enabled = settingMap[year] ?? false;
               return (
                 <tr key={year} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{year}年度</td>
                   <td className="px-4 py-3">
-                    <EvaluationSettingToggle
-                      userId={id}
-                      fiscalYear={year}
-                      enabled={enabled}
-                    />
+                    <EvaluationSettingToggle userId={id} fiscalYear={year} enabled={enabled} />
                   </td>
-                  <td className="px-4 py-3 text-gray-500">
-                    {enabled ? "必要" : "不要"}
-                  </td>
+                  <td className="px-4 py-3 text-gray-500">{enabled ? "必要" : "不要"}</td>
                 </tr>
               );
             })}

@@ -169,7 +169,7 @@ erDiagram
 | id | TEXT | PK, DEFAULT uuid() | UUID 値を TEXT で保存 |
 | user_id | TEXT | FK → users.id | 対象ユーザー |
 | fiscal_year | INTEGER | NOT NULL | 年度（例: 2026） |
-| self_evaluation_enabled | BOOLEAN | DEFAULT true | 自己評価の要否（true: 必要 / false: 不要） |
+| self_evaluation_enabled | BOOLEAN | DEFAULT false | 自己評価の要否（true: 必要 / false: 不要） |
 | UNIQUE | (user_id, fiscal_year) | | ユーザー×年度で1レコード |
 
 - 未設定の場合は `self_evaluation_enabled = false`（自己評価なし）として扱う
