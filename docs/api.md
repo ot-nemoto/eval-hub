@@ -1,4 +1,4 @@
-> 最終更新: 2026-03-19 (自己評価要否設定API追加、ユーザー管理API追加)
+> 最終更新: 2026-03-19 (年度管理API追加)
 
 # api.md — API 仕様
 
@@ -221,6 +221,130 @@ NextAuth.js による認証（ログイン・セッション管理）
 ```
 
 **権限**: admin のみ
+
+---
+
+## 年度管理（admin）
+
+### GET /api/admin/fiscal-years
+年度一覧取得（admin のみ）
+
+**Response**
+```json
+{
+  "data": [
+    {
+      "year": 2026,
+      "name": "2026年度",
+      "start_date": "2026-04-01T00:00:00.000Z",
+      "end_date": "2027-03-31T00:00:00.000Z",
+      "is_current": true
+    },
+    {
+      "year": 2025,
+      "name": "2025年度",
+      "start_date": "2025-04-01T00:00:00.000Z",
+      "end_date": "2026-03-31T00:00:00.000Z",
+      "is_current": false
+    }
+  ]
+}
+```
+
+### POST /api/admin/fiscal-years
+年度追加（admin のみ）。直近年度の評価項目紐付けを自動コピー。
+
+**Request**
+```json
+{
+  "year": 2027,
+  "name": "2027年度",
+  "start_date": "2027-04-01",
+  "end_date": "2028-03-31"
+}
+```
+
+**Response**: `201 Created`
+```json
+{
+  "data": {
+    "year": 2027,
+    "name": "2027年度",
+    "start_date": "2027-04-01T00:00:00.000Z",
+    "end_date": "2028-03-31T00:00:00.000Z",
+    "is_current": false
+  }
+}
+```
+
+### PATCH /api/admin/fiscal-years/:year
+年度編集（admin のみ）。`name`・`start_date`・`end_date`・`is_current` を更新可。
+`is_current: true` を設定すると他の年度の `is_current` は自動的に `false` になる。
+
+**Request**
+```json
+{
+  "is_current": true
+}
+```
+
+**Response**: `200 OK`
+```json
+{
+  "data": {
+    "year": 2026,
+    "name": "2026年度",
+    "start_date": "2026-04-01T00:00:00.000Z",
+    "end_date": "2027-03-31T00:00:00.000Z",
+    "is_current": true
+  }
+}
+```
+
+### DELETE /api/admin/fiscal-years/:year
+年度削除（admin のみ）
+
+- `evaluations`・`evaluation_assignments`・`evaluation_settings`・`fiscal_year_items` に紐づくデータがある場合は `409 Conflict`
+
+**Response**: `204 No Content`
+
+---
+
+### GET /api/admin/fiscal-years/:year/items
+年度に紐づく評価項目一覧（admin のみ）
+
+**Response**
+```json
+{
+  "data": [
+    {
+      "uid": "1-1-1",
+      "target": "employee",
+      "category": "engagement",
+      "name": "会社員としての基本姿勢",
+      "two_year_rule": false
+    }
+  ]
+}
+```
+
+### POST /api/admin/fiscal-years/:year/items
+年度に評価項目を追加（admin のみ）
+
+**Request**
+```json
+{ "evaluation_item_uid": "1-1-1" }
+```
+
+**Response**: `201 Created`
+```json
+{ "data": { "fiscal_year": 2026, "evaluation_item_uid": "1-1-1" } }
+```
+
+### DELETE /api/admin/fiscal-years/:year/items/:uid
+年度から評価項目を削除（admin のみ）
+
+**Response**: `204 No Content`
 
 ---
 

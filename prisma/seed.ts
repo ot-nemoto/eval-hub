@@ -58,6 +58,61 @@ async function cleanupUser(email: string): Promise<void> {
   console.log(`  deleted: ${email}`);
 }
 
+// ─── 年度マスタ ────────────────────────────────────────────────────────────────
+
+async function seedFiscalYears(allItemUids: string[]) {
+  const fiscalYearsData = [
+    {
+      year: 2025,
+      name: "2025年度",
+      start_date: new Date("2025-04-01"),
+      end_date: new Date("2026-03-31"),
+      is_current: false,
+    },
+    {
+      year: 2026,
+      name: "2026年度",
+      start_date: new Date("2026-04-01"),
+      end_date: new Date("2027-03-31"),
+      is_current: true,
+    },
+    {
+      year: 2027,
+      name: "2027年度",
+      start_date: new Date("2027-04-01"),
+      end_date: new Date("2028-03-31"),
+      is_current: false,
+    },
+  ];
+
+  for (const fy of fiscalYearsData) {
+    await prisma.fiscalYear.upsert({
+      where: { year: fy.year },
+      update: {
+        name: fy.name,
+        start_date: fy.start_date,
+        end_date: fy.end_date,
+        is_current: fy.is_current,
+      },
+      create: fy,
+    });
+
+    // 全評価項目を各年度に紐付け
+    await prisma.fiscalYearItem.createMany({
+      data: allItemUids.map((uid) => ({ fiscal_year: fy.year, evaluation_item_uid: uid })),
+      skipDuplicates: true,
+    });
+  }
+
+  // is_current の排他制御（2026年度のみ true）
+  await prisma.fiscalYear.updateMany({
+    where: { year: { not: 2026 } },
+    data: { is_current: false },
+  });
+
+  console.log(`fiscal_years: ${fiscalYearsData.length} upserted`);
+}
+
 // ─── メイン ────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -82,11 +137,11 @@ async function main() {
   // └─────────────┴────────┴──────────────────────────────────────────┘
   // =========================================================================
   const usersData = [
-    { email: "doigaki@example.com",  name: "土井垣将", role: "admin"  as const },
-    { email: "shiranui@example.com", name: "不知火守", role: "admin"  as const },
-    { email: "yamada@example.com",   name: "山田太郎", role: "member" as const },
-    { email: "satonaka@example.com", name: "里中智",   role: "member" as const },
-    { email: "iwaki@example.com",    name: "岩鬼正美", role: "member" as const },
+    { email: "doigaki@example.com", name: "土井垣将", role: "admin" as const },
+    { email: "shiranui@example.com", name: "不知火守", role: "admin" as const },
+    { email: "yamada@example.com", name: "山田太郎", role: "member" as const },
+    { email: "satonaka@example.com", name: "里中智", role: "member" as const },
+    { email: "iwaki@example.com", name: "岩鬼正美", role: "member" as const },
   ];
 
   const u: Record<string, { id: string }> = {};
@@ -95,7 +150,12 @@ async function main() {
     const user = await prisma.user.upsert({
       where: { email: data.email },
       update: { name: data.name, role: data.role, ...(clerkId ? { clerk_id: clerkId } : {}) },
-      create: { email: data.email, name: data.name, role: data.role, ...(clerkId ? { clerk_id: clerkId } : {}) },
+      create: {
+        email: data.email,
+        name: data.name,
+        role: data.role,
+        ...(clerkId ? { clerk_id: clerkId } : {}),
+      },
     });
     u[data.email] = user;
   }
@@ -114,20 +174,24 @@ async function main() {
   //  岩鬼正美    │ false │ false │ false  ← デフォルトのため登録不要
   // =========================================================================
   const settingsData: { email: string; fiscal_year: number; self_evaluation_enabled: boolean }[] = [
-    { email: "shiranui@example.com", fiscal_year: 2025, self_evaluation_enabled: true  },
-    { email: "yamada@example.com",   fiscal_year: 2025, self_evaluation_enabled: true  },
-    { email: "yamada@example.com",   fiscal_year: 2026, self_evaluation_enabled: true  },
-    { email: "yamada@example.com",   fiscal_year: 2027, self_evaluation_enabled: true  },
-    { email: "satonaka@example.com", fiscal_year: 2025, self_evaluation_enabled: true  },
-    { email: "satonaka@example.com", fiscal_year: 2026, self_evaluation_enabled: true  },
-    { email: "satonaka@example.com", fiscal_year: 2027, self_evaluation_enabled: true  },
+    { email: "shiranui@example.com", fiscal_year: 2025, self_evaluation_enabled: true },
+    { email: "yamada@example.com", fiscal_year: 2025, self_evaluation_enabled: true },
+    { email: "yamada@example.com", fiscal_year: 2026, self_evaluation_enabled: true },
+    { email: "yamada@example.com", fiscal_year: 2027, self_evaluation_enabled: true },
+    { email: "satonaka@example.com", fiscal_year: 2025, self_evaluation_enabled: true },
+    { email: "satonaka@example.com", fiscal_year: 2026, self_evaluation_enabled: true },
+    { email: "satonaka@example.com", fiscal_year: 2027, self_evaluation_enabled: true },
   ];
 
   for (const s of settingsData) {
     await prisma.evaluationSetting.upsert({
       where: { user_id_fiscal_year: { user_id: u[s.email].id, fiscal_year: s.fiscal_year } },
       update: { self_evaluation_enabled: s.self_evaluation_enabled },
-      create: { user_id: u[s.email].id, fiscal_year: s.fiscal_year, self_evaluation_enabled: s.self_evaluation_enabled },
+      create: {
+        user_id: u[s.email].id,
+        fiscal_year: s.fiscal_year,
+        self_evaluation_enabled: s.self_evaluation_enabled,
+      },
     });
   }
   console.log(`evaluation_settings: ${settingsData.length} upserted`);
@@ -148,15 +212,15 @@ async function main() {
   // =========================================================================
   const assignmentsData = [
     // 2025
-    { fiscal_year: 2025, evaluatee: "shiranui@example.com", evaluator: "doigaki@example.com"  },
-    { fiscal_year: 2025, evaluatee: "yamada@example.com",   evaluator: "doigaki@example.com"  },
+    { fiscal_year: 2025, evaluatee: "shiranui@example.com", evaluator: "doigaki@example.com" },
+    { fiscal_year: 2025, evaluatee: "yamada@example.com", evaluator: "doigaki@example.com" },
     { fiscal_year: 2025, evaluatee: "satonaka@example.com", evaluator: "shiranui@example.com" },
-    { fiscal_year: 2025, evaluatee: "satonaka@example.com", evaluator: "yamada@example.com"   },
+    { fiscal_year: 2025, evaluatee: "satonaka@example.com", evaluator: "yamada@example.com" },
     // 2026
-    { fiscal_year: 2026, evaluatee: "yamada@example.com",   evaluator: "doigaki@example.com"  },
-    { fiscal_year: 2026, evaluatee: "yamada@example.com",   evaluator: "shiranui@example.com" },
+    { fiscal_year: 2026, evaluatee: "yamada@example.com", evaluator: "doigaki@example.com" },
+    { fiscal_year: 2026, evaluatee: "yamada@example.com", evaluator: "shiranui@example.com" },
     { fiscal_year: 2026, evaluatee: "satonaka@example.com", evaluator: "shiranui@example.com" },
-    { fiscal_year: 2026, evaluatee: "satonaka@example.com", evaluator: "yamada@example.com"   },
+    { fiscal_year: 2026, evaluatee: "satonaka@example.com", evaluator: "yamada@example.com" },
   ];
 
   for (const a of assignmentsData) {
@@ -185,18 +249,24 @@ async function main() {
     await prisma.evaluationItem.upsert({
       where: { uid: item.uid },
       update: {
-        target: item.target, target_no: item.target_no,
-        category: item.category, category_no: item.category_no,
-        item_no: item.item_no, name: item.name,
+        target: item.target,
+        target_no: item.target_no,
+        category: item.category,
+        category_no: item.category_no,
+        item_no: item.item_no,
+        name: item.name,
         description: item.description ?? null,
         eval_criteria: item.eval_criteria ?? null,
         two_year_rule: item.two_year_rule,
       },
       create: {
         uid: item.uid,
-        target: item.target, target_no: item.target_no,
-        category: item.category, category_no: item.category_no,
-        item_no: item.item_no, name: item.name,
+        target: item.target,
+        target_no: item.target_no,
+        category: item.category,
+        category_no: item.category_no,
+        item_no: item.item_no,
+        name: item.name,
         description: item.description ?? null,
         eval_criteria: item.eval_criteria ?? null,
         two_year_rule: item.two_year_rule,
@@ -204,8 +274,19 @@ async function main() {
     });
   }
   console.log(`evaluation_items: ${evaluationItemsData.length} upserted`);
+
+  // =========================================================================
+  // 5. 年度マスタ（fiscal_years + fiscal_year_items）
+  // =========================================================================
+  const allItemUids = evaluationItemsData.map((item) => item.uid);
+  await seedFiscalYears(allItemUids);
 }
 
 main()
-  .catch((e) => { console.error(e); process.exit(1); })
-  .finally(async () => { await prisma.$disconnect(); });
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

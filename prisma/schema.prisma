@@ -43,13 +43,41 @@ model User {
   @@map("users")
 }
 
+model FiscalYear {
+  year       Int      @id
+  name       String   @db.VarChar(50)
+  start_date DateTime @db.Date
+  end_date   DateTime @db.Date
+  is_current Boolean  @default(false) // 部分ユニークインデックスで true は最大1件（migration で管理）
+  created_at DateTime @default(now())
+
+  fiscal_year_items    FiscalYearItem[]
+  evaluation_settings  EvaluationSetting[]
+  evaluation_assignments EvaluationAssignment[]
+  evaluations          Evaluation[]
+
+  @@map("fiscal_years")
+}
+
+model FiscalYearItem {
+  fiscal_year          Int
+  evaluation_item_uid  String @db.VarChar(20)
+
+  fiscal_year_rel  FiscalYear     @relation(fields: [fiscal_year], references: [year])
+  evaluation_item  EvaluationItem @relation(fields: [evaluation_item_uid], references: [uid])
+
+  @@id([fiscal_year, evaluation_item_uid])
+  @@map("fiscal_year_items")
+}
+
 model EvaluationSetting {
   id                      String  @id @default(uuid())
   user_id                 String
   fiscal_year             Int
   self_evaluation_enabled Boolean @default(false)
 
-  user User @relation(fields: [user_id], references: [id])
+  user        User       @relation(fields: [user_id], references: [id])
+  fiscal_year_rel FiscalYear @relation(fields: [fiscal_year], references: [year])
 
   @@unique([user_id, fiscal_year])
   @@map("evaluation_settings")
@@ -61,8 +89,9 @@ model EvaluationAssignment {
   evaluatee_id String
   evaluator_id String
 
-  evaluatee User @relation("EvaluateeAssignments", fields: [evaluatee_id], references: [id])
-  evaluator User @relation("EvaluatorAssignments", fields: [evaluator_id], references: [id])
+  evaluatee       User       @relation("EvaluateeAssignments", fields: [evaluatee_id], references: [id])
+  evaluator       User       @relation("EvaluatorAssignments", fields: [evaluator_id], references: [id])
+  fiscal_year_rel FiscalYear @relation(fields: [fiscal_year], references: [year])
 
   @@unique([fiscal_year, evaluatee_id, evaluator_id])
   @@map("evaluation_assignments")
@@ -80,7 +109,8 @@ model EvaluationItem {
   eval_criteria String? @db.Text
   two_year_rule Boolean @default(false)
 
-  evaluations Evaluation[]
+  evaluations       Evaluation[]
+  fiscal_year_items FiscalYearItem[]
 
   @@map("evaluation_items")
 }
@@ -97,6 +127,7 @@ model Evaluation {
 
   evaluatee       User           @relation(fields: [evaluatee_id], references: [id])
   evaluation_item EvaluationItem @relation(fields: [eval_uid], references: [uid])
+  fiscal_year_rel FiscalYear     @relation(fields: [fiscal_year], references: [year])
 
   @@unique([fiscal_year, evaluatee_id, eval_uid])
   @@map("evaluations")

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EvaluationSettingToggle } from "@/components/admin/EvaluationSettingToggle";
 import { getSession } from "@/lib/auth";
+import { getCurrentFiscalYear } from "@/lib/fiscal-year";
 import { prisma } from "@/lib/prisma";
 
 export default async function UserEvaluationSettingsPage({
@@ -21,8 +22,8 @@ export default async function UserEvaluationSettingsPage({
   });
   if (!user) redirect("/admin/users");
 
-  const currentYear = new Date().getFullYear();
-  const years = [currentYear - 1, currentYear, currentYear + 1];
+  const currentFiscalYear = (await getCurrentFiscalYear()) ?? new Date().getFullYear();
+  const years = [currentFiscalYear - 1, currentFiscalYear, currentFiscalYear + 1];
 
   const settings = await prisma.evaluationSetting.findMany({
     where: { user_id: id },

@@ -57,9 +57,23 @@ npx prisma migrate deploy
 
 ### 4. シードデータを投入
 
+**ローカル環境**（`.env.local` の接続先を使う場合）：
+
 ```bash
 npx prisma db seed
 ```
+
+`.env` が空の場合、`seed.ts` は自動的に `.env.local` を読み込む。
+
+**別の DB・Clerk テナントに投入したい場合**（インラインで接続先を上書き）：
+
+```bash
+DATABASE_URL=<接続先> CLERK_SECRET_KEY=<key> npx prisma db seed
+```
+
+> **仕組み**: `seed.ts` は `dotenv.config({ path: ".env.local" })` でファイルを読み込むが、
+> dotenv はすでに設定済みの環境変数を上書きしないため、インライン指定した値が優先される。
+> `CLERK_SECRET_KEY` が未設定の場合、Clerk へのユーザー登録はスキップされ DB のみ更新される。
 
 シードで作成されるユーザーとパスワードは以下の通り（開発用）：
 
