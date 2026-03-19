@@ -114,6 +114,30 @@ describe("PATCH /api/admin/fiscal-years/:year", () => {
     const res = await PATCH(req, makeParams("2026"));
     expect(res.status).toBe(400);
   });
+
+  it("start_date が不正な日付文字列の場合は 400", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
+
+    const req = new Request("http://localhost/api/admin/fiscal-years/2026", {
+      method: "PATCH",
+      body: JSON.stringify({ start_date: "not-a-date" }),
+    });
+    const res = await PATCH(req, makeParams("2026"));
+    expect(res.status).toBe(400);
+  });
+
+  it("start_date が end_date より後の場合は 400", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
+
+    const req = new Request("http://localhost/api/admin/fiscal-years/2026", {
+      method: "PATCH",
+      body: JSON.stringify({ start_date: "2028-01-01" }),
+    });
+    const res = await PATCH(req, makeParams("2026"));
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("DELETE /api/admin/fiscal-years/:year", () => {

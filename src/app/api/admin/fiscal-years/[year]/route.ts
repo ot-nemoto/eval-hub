@@ -35,6 +35,17 @@ export async function PATCH(request: Request, { params }: Params) {
   if (Object.keys(data).length === 0)
     return errorResponse("BAD_REQUEST", "更新可能なフィールドが指定されていません", 400);
 
+  if (data.start_date && Number.isNaN(data.start_date.getTime()))
+    return errorResponse("BAD_REQUEST", "start_date は有効な日付形式で指定してください", 400);
+  if (data.end_date && Number.isNaN(data.end_date.getTime()))
+    return errorResponse("BAD_REQUEST", "end_date は有効な日付形式で指定してください", 400);
+
+  // 両方指定された場合、または片方が指定されてもう一方が既存値から取れる場合の整合性チェック
+  const effectiveStart = data.start_date ?? target.start_date;
+  const effectiveEnd = data.end_date ?? target.end_date;
+  if (effectiveStart > effectiveEnd)
+    return errorResponse("BAD_REQUEST", "start_date は end_date 以前の日付を指定してください", 400);
+
   const updated = await prisma.$transaction(async (tx) => {
     // is_current: true にする場合、他の年度を false に
     if (data.is_current === true) {
