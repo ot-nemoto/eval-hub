@@ -236,15 +236,15 @@ NextAuth.js による認証（ログイン・セッション管理）
     {
       "year": 2026,
       "name": "2026年度",
-      "start_date": "2026-04-01",
-      "end_date": "2027-03-31",
+      "start_date": "2026-04-01T00:00:00.000Z",
+      "end_date": "2027-03-31T00:00:00.000Z",
       "is_current": true
     },
     {
       "year": 2025,
       "name": "2025年度",
-      "start_date": "2025-04-01",
-      "end_date": "2026-03-31",
+      "start_date": "2025-04-01T00:00:00.000Z",
+      "end_date": "2026-03-31T00:00:00.000Z",
       "is_current": false
     }
   ]
@@ -270,8 +270,8 @@ NextAuth.js による認証（ログイン・セッション管理）
   "data": {
     "year": 2027,
     "name": "2027年度",
-    "start_date": "2027-04-01",
-    "end_date": "2028-03-31",
+    "start_date": "2027-04-01T00:00:00.000Z",
+    "end_date": "2028-03-31T00:00:00.000Z",
     "is_current": false
   }
 }
@@ -294,8 +294,8 @@ NextAuth.js による認証（ログイン・セッション管理）
   "data": {
     "year": 2026,
     "name": "2026年度",
-    "start_date": "2026-04-01",
-    "end_date": "2027-03-31",
+    "start_date": "2026-04-01T00:00:00.000Z",
+    "end_date": "2027-03-31T00:00:00.000Z",
     "is_current": true
   }
 }
