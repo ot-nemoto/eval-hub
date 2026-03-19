@@ -48,7 +48,7 @@ model FiscalYear {
   name       String   @db.VarChar(50)
   start_date DateTime @db.Date
   end_date   DateTime @db.Date
-  is_current Boolean  @default(false)
+  is_current Boolean  @default(false) // 部分ユニークインデックスで true は最大1件（migration で管理）
   created_at DateTime @default(now())
 
   fiscal_year_items    FiscalYearItem[]
