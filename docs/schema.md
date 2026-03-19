@@ -170,7 +170,7 @@ erDiagram
 | self_evaluation_enabled | BOOLEAN | DEFAULT true | 自己評価の要否（true: 必要 / false: 不要） |
 | UNIQUE | (user_id, fiscal_year) | | ユーザー×年度で1レコード |
 
-- 未設定の場合は `self_evaluation_enabled = true`（自己評価あり）として扱う
+- 未設定の場合は `self_evaluation_enabled = false`（自己評価なし）として扱う
 - admin が年度ごとに設定する
 
 ---

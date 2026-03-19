@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { UserActions } from "@/components/admin/UserActions";
 
 export default async function AdminUsersPage() {
@@ -37,6 +38,7 @@ export default async function AdminUsersPage() {
               <th className="px-4 py-3 text-left font-medium text-gray-700">部署</th>
               <th className="px-4 py-3 text-left font-medium text-gray-700">ロール</th>
               <th className="px-4 py-3 text-left font-medium text-gray-700">登録日</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-700">自己評価設定</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -59,6 +61,14 @@ export default async function AdminUsersPage() {
                 </td>
                 <td className="px-4 py-3 text-gray-500">
                   {user.created_at.toLocaleDateString("ja-JP")}
+                </td>
+                <td className="px-4 py-3">
+                  <Link
+                    href={`/admin/users/${user.id}/evaluation-settings`}
+                    className="text-blue-600 hover:underline text-xs"
+                  >
+                    設定 →
+                  </Link>
                 </td>
                 <td className="px-4 py-3">
                   <UserActions

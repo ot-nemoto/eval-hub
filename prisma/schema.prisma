@@ -46,7 +46,7 @@ model EvaluationSetting {
   id                      String  @id @default(uuid())
   user_id                 String
   fiscal_year             Int
-  self_evaluation_enabled Boolean @default(true)
+  self_evaluation_enabled Boolean @default(false)
 
   user User @relation(fields: [user_id], references: [id])
 
