@@ -181,8 +181,8 @@ describe("POST /api/admin/fiscal-years", () => {
     vi.mocked(prisma.$transaction).mockImplementation(async (fn) => fn(prisma as never));
     vi.mocked(prisma.fiscalYear.create).mockResolvedValue(newFy as never);
     vi.mocked(prisma.fiscalYearItem.findMany).mockResolvedValue([
-      { evaluation_item_uid: "1-1-1" },
-      { evaluation_item_uid: "1-1-2" },
+      { evaluation_item_id: 1 },
+      { evaluation_item_id: 2 },
     ] as never);
     vi.mocked(prisma.fiscalYearItem.createMany).mockResolvedValue({ count: 2 } as never);
 
@@ -199,8 +199,8 @@ describe("POST /api/admin/fiscal-years", () => {
     expect(res.status).toBe(201);
     expect(prisma.fiscalYearItem.createMany).toHaveBeenCalledWith({
       data: [
-        { fiscal_year: 2027, evaluation_item_uid: "1-1-1" },
-        { fiscal_year: 2027, evaluation_item_uid: "1-1-2" },
+        { fiscal_year: 2027, evaluation_item_id: 1 },
+        { fiscal_year: 2027, evaluation_item_id: 2 },
       ],
     });
   });

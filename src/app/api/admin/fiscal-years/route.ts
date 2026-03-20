@@ -67,13 +67,13 @@ export async function POST(request: Request) {
     if (latestFy) {
       const sourceItems = await tx.fiscalYearItem.findMany({
         where: { fiscal_year: latestFy.year },
-        select: { evaluation_item_uid: true },
+        select: { evaluation_item_id: true },
       });
       if (sourceItems.length > 0) {
         await tx.fiscalYearItem.createMany({
           data: sourceItems.map((item) => ({
             fiscal_year: body.year,
-            evaluation_item_uid: item.evaluation_item_uid,
+            evaluation_item_id: item.evaluation_item_id,
           })),
         });
       }

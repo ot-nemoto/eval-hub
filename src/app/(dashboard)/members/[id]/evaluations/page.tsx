@@ -38,24 +38,26 @@ export default async function MemberEvaluationsPage({ params }: Props) {
 
   const [items, evaluations] = await Promise.all([
     prisma.evaluationItem.findMany({
-      orderBy: [{ target_no: "asc" }, { category_no: "asc" }, { item_no: "asc" }],
+      orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
+      include: { target: true, category: true },
     }),
     prisma.evaluation.findMany({
       where: { evaluatee_id: evaluateeId, fiscal_year: fiscalYear },
     }),
   ]);
 
-  const evalMap = Object.fromEntries(evaluations.map((e) => [e.eval_uid, e]));
+  const evalMap = Object.fromEntries(evaluations.map((e) => [e.eval_item_id, e]));
 
   const itemsWithEval = items.map((item) => {
-    const ev = evalMap[item.uid];
+    const ev = evalMap[item.id];
     return {
-      uid: item.uid,
+      id: item.id,
+      uid: `${item.target.no}-${item.category.no}-${item.no}`,
       name: item.name,
       description: item.description,
       eval_criteria: item.eval_criteria,
-      category: item.category,
-      target: item.target,
+      category: item.category.name,
+      target: item.target.name,
       self_score: (ev?.self_score ?? null) as "none" | "ka" | "ryo" | "yu" | null,
       self_reason: ev?.self_reason ?? null,
       manager_score: (ev?.manager_score ?? null) as "none" | "ka" | "ryo" | "yu" | null,

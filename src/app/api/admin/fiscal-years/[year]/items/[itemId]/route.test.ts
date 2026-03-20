@@ -14,13 +14,13 @@ import { prisma } from "@/lib/prisma";
 
 const adminSession = { user: { id: "admin-1", role: "admin" } };
 const memberSession = { user: { id: "member-1", role: "member" } };
-const mockItem = { fiscal_year: 2026, evaluation_item_uid: "1-1-1" };
+const mockItem = { fiscal_year: 2026, evaluation_item_id: 1 };
 
-function makeParams(year: string, uid: string) {
-  return { params: Promise.resolve({ year, uid }) };
+function makeParams(year: string, itemId: string) {
+  return { params: Promise.resolve({ year, itemId }) };
 }
 
-describe("DELETE /api/admin/fiscal-years/:year/items/:uid", () => {
+describe("DELETE /api/admin/fiscal-years/:year/items/:itemId", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("紐づきを削除して 204 を返す", async () => {
@@ -28,30 +28,30 @@ describe("DELETE /api/admin/fiscal-years/:year/items/:uid", () => {
     vi.mocked(prisma.fiscalYearItem.findUnique).mockResolvedValue(mockItem as never);
     vi.mocked(prisma.fiscalYearItem.delete).mockResolvedValue(mockItem as never);
 
-    const req = new Request("http://localhost/api/admin/fiscal-years/2026/items/1-1-1", {
+    const req = new Request("http://localhost/api/admin/fiscal-years/2026/items/1", {
       method: "DELETE",
     });
-    const res = await DELETE(req, makeParams("2026", "1-1-1"));
+    const res = await DELETE(req, makeParams("2026", "1"));
     expect(res.status).toBe(204);
   });
 
   it("未認証の場合は 401", async () => {
     vi.mocked(getSession).mockResolvedValue(null);
 
-    const req = new Request("http://localhost/api/admin/fiscal-years/2026/items/1-1-1", {
+    const req = new Request("http://localhost/api/admin/fiscal-years/2026/items/1", {
       method: "DELETE",
     });
-    const res = await DELETE(req, makeParams("2026", "1-1-1"));
+    const res = await DELETE(req, makeParams("2026", "1"));
     expect(res.status).toBe(401);
   });
 
   it("admin 以外は 403", async () => {
     vi.mocked(getSession).mockResolvedValue(memberSession as never);
 
-    const req = new Request("http://localhost/api/admin/fiscal-years/2026/items/1-1-1", {
+    const req = new Request("http://localhost/api/admin/fiscal-years/2026/items/1", {
       method: "DELETE",
     });
-    const res = await DELETE(req, makeParams("2026", "1-1-1"));
+    const res = await DELETE(req, makeParams("2026", "1"));
     expect(res.status).toBe(403);
   });
 
@@ -59,10 +59,10 @@ describe("DELETE /api/admin/fiscal-years/:year/items/:uid", () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.fiscalYearItem.findUnique).mockResolvedValue(null);
 
-    const req = new Request("http://localhost/api/admin/fiscal-years/2026/items/9-9-9", {
+    const req = new Request("http://localhost/api/admin/fiscal-years/2026/items/999", {
       method: "DELETE",
     });
-    const res = await DELETE(req, makeParams("2026", "9-9-9"));
+    const res = await DELETE(req, makeParams("2026", "999"));
     expect(res.status).toBe(404);
   });
 });

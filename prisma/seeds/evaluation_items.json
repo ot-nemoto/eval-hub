@@ -1045,12 +1045,12 @@
     "eval_criteria": "サービスやシステムの機能やインターフェース改善に提案を行った・・・可\nサービスやシステムの機能やインターフェース改善を行った。実際に採用され効果が出た・・・良\nサポートや営業視点でサービスの不具合を防いだ、品質を向上した・・・良\nサポートやクライアント、サービス利用者の要望意見を集約し、機能に反映する仕組みを作った・・・優"
   },
   {
-    "uid": "3-3-99",
+    "uid": "3-2-100",
     "target_no": 3,
     "target": "customer",
-    "category_no": 3,
+    "category_no": 2,
     "category": "sales",
-    "item_no": 99,
+    "item_no": 100,
     "name": "",
     "description": null,
     "eval_criteria": null

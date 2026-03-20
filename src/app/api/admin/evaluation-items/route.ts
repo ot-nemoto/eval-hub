@@ -1,6 +1,19 @@
+// @vitest-environment node
 import { errorResponse, successResponse } from "@/lib/api-response";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+const itemSelect = {
+  id: true,
+  target_id: true,
+  category_id: true,
+  no: true,
+  name: true,
+  description: true,
+  eval_criteria: true,
+  target: { select: { id: true, name: true, no: true } },
+  category: { select: { id: true, target_id: true, name: true, no: true } },
+} as const;
 
 export async function GET() {
   const session = await getSession();
@@ -8,18 +21,8 @@ export async function GET() {
   if (session.user.role !== "admin") return errorResponse("FORBIDDEN", "管理者のみアクセス可能です", 403);
 
   const items = await prisma.evaluationItem.findMany({
-    orderBy: [{ target_no: "asc" }, { category_no: "asc" }, { item_no: "asc" }],
-    select: {
-      uid: true,
-      target: true,
-      target_no: true,
-      category: true,
-      category_no: true,
-      item_no: true,
-      name: true,
-      description: true,
-      eval_criteria: true,
-    },
+    orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
+    select: itemSelect,
   });
 
   return successResponse(items);
@@ -31,32 +34,45 @@ export async function POST(request: Request) {
   if (session.user.role !== "admin") return errorResponse("FORBIDDEN", "管理者のみアクセス可能です", 403);
 
   const body = await request.json().catch(() => null);
-  if (!body) return errorResponse("BAD_REQUEST", "リクエストボディが不正です", 400);
+  if (
+    !body ||
+    !Number.isInteger(body.target_id) ||
+    body.target_id < 1 ||
+    !Number.isInteger(body.category_id) ||
+    body.category_id < 1 ||
+    typeof body.name !== "string" ||
+    !body.name
+  ) {
+    return errorResponse("BAD_REQUEST", "target_id, category_id, name は必須です", 400);
+  }
 
-  const { uid, target, target_no, category, category_no, item_no, name, description, eval_criteria } = body;
+  const target = await prisma.target.findUnique({ where: { id: body.target_id } });
+  if (!target) return errorResponse("NOT_FOUND", "大分類が見つかりません", 404);
 
-  if (!uid || typeof uid !== "string") return errorResponse("BAD_REQUEST", "uid は必須です", 400);
-  if (!target || typeof target !== "string") return errorResponse("BAD_REQUEST", "target は必須です", 400);
-  if (!category || typeof category !== "string") return errorResponse("BAD_REQUEST", "category は必須です", 400);
-  if (!Number.isInteger(item_no)) return errorResponse("BAD_REQUEST", "item_no は整数で指定してください", 400);
-  if (!name || typeof name !== "string") return errorResponse("BAD_REQUEST", "name は必須です", 400);
+  const category = await prisma.category.findUnique({ where: { id: body.category_id } });
+  if (!category) return errorResponse("NOT_FOUND", "中分類が見つかりません", 404);
 
-  const existing = await prisma.evaluationItem.findUnique({ where: { uid } });
-  if (existing) return errorResponse("CONFLICT", "指定した UID はすでに存在します", 409);
+  if (category.target_id !== body.target_id) {
+    return errorResponse("BAD_REQUEST", "category_id が target_id と一致しません", 400);
+  }
+
+  const maxItem = await prisma.evaluationItem.findFirst({
+    where: { category_id: body.category_id },
+    orderBy: { no: "desc" },
+    select: { no: true },
+  });
+  const no = (maxItem?.no ?? 0) + 1;
 
   const item = await prisma.evaluationItem.create({
     data: {
-      uid,
-      target,
-      target_no: Number.isInteger(target_no) ? target_no : null,
-      category,
-      category_no: Number.isInteger(category_no) ? category_no : null,
-      item_no,
-      name,
-      description: typeof description === "string" ? description : null,
-      eval_criteria: typeof eval_criteria === "string" ? eval_criteria : null,
+      target_id: body.target_id,
+      category_id: body.category_id,
+      no,
+      name: body.name,
+      description: typeof body.description === "string" ? body.description : null,
+      eval_criteria: typeof body.eval_criteria === "string" ? body.eval_criteria : null,
     },
-    select: { uid: true, target: true, target_no: true, category: true, category_no: true, item_no: true, name: true, description: true, eval_criteria: true },
+    select: itemSelect,
   });
 
   return successResponse(item, undefined, 201);
