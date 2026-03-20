@@ -243,16 +243,68 @@ async function main() {
   console.log(`evaluation_assignments: ${assignmentsData.length} upserted`);
 
   // =========================================================================
-  // 4. 評価項目マスタ（evaluation_items）
+  // 4. 大分類マスタ（targets）
   // =========================================================================
+  const targetsData = [
+    ...new Map(
+      evaluationItemsData.map((d) => [d.target, { name: d.target, sort_no: d.target_no ?? 0 }]),
+    ).values(),
+  ].sort((a, b) => a.sort_no - b.sort_no);
+
+  for (const t of targetsData) {
+    await prisma.target.upsert({
+      where: { id: (await prisma.target.findFirst({ where: { name: t.name } }))?.id ?? 0 },
+      update: { sort_no: t.sort_no },
+      create: { name: t.name, sort_no: t.sort_no },
+    });
+  }
+  console.log(`targets: ${targetsData.length} upserted`);
+
+  // =========================================================================
+  // 5. 中分類マスタ（categories）
+  // =========================================================================
+  const allTargets = await prisma.target.findMany();
+  const targetByName = Object.fromEntries(allTargets.map((t) => [t.name, t]));
+
+  const categoriesData = [
+    ...new Map(
+      evaluationItemsData.map((d) => [
+        `${d.target}|${d.category}`,
+        { target: d.target, name: d.category, sort_no: d.category_no ?? 0 },
+      ]),
+    ).values(),
+  ].sort((a, b) => a.sort_no - b.sort_no);
+
+  for (const c of categoriesData) {
+    const target = targetByName[c.target];
+    const existing = await prisma.category.findFirst({
+      where: { target_id: target.id, name: c.name },
+    });
+    await prisma.category.upsert({
+      where: { id: existing?.id ?? 0 },
+      update: { sort_no: c.sort_no },
+      create: { target_id: target.id, name: c.name, sort_no: c.sort_no },
+    });
+  }
+  console.log(`categories: ${categoriesData.length} upserted`);
+
+  // =========================================================================
+  // 6. 評価項目マスタ（evaluation_items）
+  // =========================================================================
+  const allCategories = await prisma.category.findMany({ include: { target: true } });
+  const categoryKey = (targetName: string, categoryName: string) => `${targetName}|${categoryName}`;
+  const categoryByKey = Object.fromEntries(
+    allCategories.map((c) => [categoryKey(c.target.name, c.name), c]),
+  );
+
   for (const item of evaluationItemsData) {
+    const target = targetByName[item.target];
+    const category = categoryByKey[categoryKey(item.target, item.category)];
     await prisma.evaluationItem.upsert({
       where: { uid: item.uid },
       update: {
-        target: item.target,
-        target_no: item.target_no,
-        category: item.category,
-        category_no: item.category_no,
+        target_id: target.id,
+        category_id: category.id,
         item_no: item.item_no,
         name: item.name,
         description: item.description ?? null,
@@ -260,10 +312,8 @@ async function main() {
       },
       create: {
         uid: item.uid,
-        target: item.target,
-        target_no: item.target_no,
-        category: item.category,
-        category_no: item.category_no,
+        target_id: target.id,
+        category_id: category.id,
         item_no: item.item_no,
         name: item.name,
         description: item.description ?? null,
@@ -274,7 +324,7 @@ async function main() {
   console.log(`evaluation_items: ${evaluationItemsData.length} upserted`);
 
   // =========================================================================
-  // 5. 年度マスタ（fiscal_years + fiscal_year_items）
+  // 7. 年度マスタ（fiscal_years + fiscal_year_items）
   // =========================================================================
   const allItemUids = evaluationItemsData.map((item) => item.uid);
   await seedFiscalYears(allItemUids);
