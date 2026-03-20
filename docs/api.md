@@ -1,4 +1,4 @@
-> 最終更新: 2026-03-20 (targets・categories API追加、evaluation-items の外部キー対応)
+> 最終更新: 2026-03-19 (自己評価要否設定API追加、ユーザー管理API追加)
 
 # api.md — API 仕様
 
@@ -51,180 +51,29 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 ---
 
-## 大分類マスタ
-
-### GET /api/admin/targets
-大分類一覧取得（admin のみ）
-
-**Response**
-```json
-{
-  "data": [
-    { "id": 1, "name": "employee", "no": 1 },
-    { "id": 2, "name": "projects", "no": 2 }
-  ]
-}
-```
-
-### POST /api/admin/targets
-大分類追加（admin のみ）
-
-**Request**
-```json
-{ "name": "新しい大分類", "no": 3 }
-```
-
-**Response**: `201 Created`
-
-### PATCH /api/admin/targets/:id
-大分類編集（admin のみ）。`name`・`no` を更新可。
-
-**Request**
-```json
-{ "name": "更新後の名称" }
-```
-
-**Response**: `200 OK`
-
-### DELETE /api/admin/targets/:id
-大分類削除（admin のみ）
-
-- `categories` が紐づいている場合は `409 Conflict`
-
-**Response**: `204 No Content`
-
----
-
-## 中分類マスタ
-
-### GET /api/admin/categories
-中分類一覧取得（admin のみ）
-
-**Query**: `?target_id=1`
-
-**Response**
-```json
-{
-  "data": [
-    { "id": 1, "target_id": 1, "name": "engagement", "no": 1 },
-    { "id": 2, "target_id": 1, "name": "skill", "no": 2 }
-  ]
-}
-```
-
-### POST /api/admin/categories
-中分類追加（admin のみ）
-
-**Request**
-```json
-{ "target_id": 1, "name": "新しい中分類", "no": 3 }
-```
-
-**Response**: `201 Created`
-
-### PATCH /api/admin/categories/:id
-中分類編集（admin のみ）。`name`・`no` を更新可。
-
-**Request**
-```json
-{ "name": "更新後の名称" }
-```
-
-**Response**: `200 OK`
-
-### DELETE /api/admin/categories/:id
-中分類削除（admin のみ）
-
-- `evaluation_items` が紐づいている場合は `409 Conflict`
-
-**Response**: `204 No Content`
-
----
-
 ## 評価項目マスタ
-
-### GET /api/admin/evaluation-items
-評価項目一覧取得（admin のみ）
-
-**Response**
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "target_id": 1,
-      "category_id": 1,
-      "no": 1,
-      "name": "会社員としての基本姿勢",
-      "description": "...",
-      "eval_criteria": "...",
-      "target": { "id": 1, "name": "employee", "no": 1 },
-      "category": { "id": 1, "target_id": 1, "name": "engagement", "no": 1 }
-    }
-  ]
-}
-```
-
-### POST /api/admin/evaluation-items
-評価項目追加（admin のみ）。no はカテゴリ内の最大値 +1 でサーバー側自動採番。uid（`{target.no}-{category.no}-{no}`）は表示用に動的算出。
-
-**Request**
-```json
-{
-  "target_id": 1,
-  "category_id": 1,
-  "name": "新しい評価項目",
-  "description": null,
-  "eval_criteria": null
-}
-```
-
-**Response**: `201 Created`
-
-### PATCH /api/admin/evaluation-items/:id
-評価項目編集（admin のみ）。`name`・`description`・`eval_criteria` を更新可。
-
-**Request**
-```json
-{ "name": "更新後の名称" }
-```
-
-**Response**: `200 OK`
-
-### DELETE /api/admin/evaluation-items/:id
-評価項目削除（admin のみ）
-
-- 年度（`fiscal_year_items`）に紐づいている場合は `409 Conflict`
-
-**Response**: `204 No Content`
-
----
 
 ### GET /api/evaluation-items
 評価項目一覧
 
-**Query**: `?target_id=1&category_id=1`
+**Query**: `?target=employee&category=engagement`
 
 **Response**
 ```json
 {
   "data": [
     {
-      "id": 1,
-      "target_id": 1,
-      "category_id": 1,
-      "no": 1,
+      "uid": "1-1-1",
+      "target": "employee",
+      "category": "engagement",
       "name": "会社員としての基本姿勢",
       "description": "...",
       "eval_criteria": "...",
-      "target": { "id": 1, "name": "employee", "no": 1 },
-      "category": { "id": 1, "target_id": 1, "name": "engagement", "no": 1 }
+      "two_year_rule": false
     }
   ]
 }
 ```
-
-**クエリ**: `?target_id=1&category_id=1`
 
 **権限**: 認証済みユーザー全員
 
@@ -372,129 +221,6 @@ NextAuth.js による認証（ログイン・セッション管理）
 ```
 
 **権限**: admin のみ
-
----
-
-## 年度管理（admin）
-
-### GET /api/admin/fiscal-years
-年度一覧取得（admin のみ）
-
-**Response**
-```json
-{
-  "data": [
-    {
-      "year": 2026,
-      "name": "2026年度",
-      "start_date": "2026-04-01T00:00:00.000Z",
-      "end_date": "2027-03-31T00:00:00.000Z",
-      "is_current": true
-    },
-    {
-      "year": 2025,
-      "name": "2025年度",
-      "start_date": "2025-04-01T00:00:00.000Z",
-      "end_date": "2026-03-31T00:00:00.000Z",
-      "is_current": false
-    }
-  ]
-}
-```
-
-### POST /api/admin/fiscal-years
-年度追加（admin のみ）。直近年度の評価項目紐付けを自動コピー。
-
-**Request**
-```json
-{
-  "year": 2027,
-  "name": "2027年度",
-  "start_date": "2027-04-01",
-  "end_date": "2028-03-31"
-}
-```
-
-**Response**: `201 Created`
-```json
-{
-  "data": {
-    "year": 2027,
-    "name": "2027年度",
-    "start_date": "2027-04-01T00:00:00.000Z",
-    "end_date": "2028-03-31T00:00:00.000Z",
-    "is_current": false
-  }
-}
-```
-
-### PATCH /api/admin/fiscal-years/:year
-年度編集（admin のみ）。`name`・`start_date`・`end_date`・`is_current` を更新可。
-`is_current: true` を設定すると他の年度の `is_current` は自動的に `false` になる。
-
-**Request**
-```json
-{
-  "is_current": true
-}
-```
-
-**Response**: `200 OK`
-```json
-{
-  "data": {
-    "year": 2026,
-    "name": "2026年度",
-    "start_date": "2026-04-01T00:00:00.000Z",
-    "end_date": "2027-03-31T00:00:00.000Z",
-    "is_current": true
-  }
-}
-```
-
-### DELETE /api/admin/fiscal-years/:year
-年度削除（admin のみ）
-
-- `evaluations`・`evaluation_assignments`・`evaluation_settings`・`fiscal_year_items` に紐づくデータがある場合は `409 Conflict`
-
-**Response**: `204 No Content`
-
----
-
-### GET /api/admin/fiscal-years/:year/items
-年度に紐づく評価項目一覧（admin のみ）
-
-**Response**
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "target_id": 1,
-      "category_id": 1,
-      "name": "会社員としての基本姿勢"
-    }
-  ]
-}
-```
-
-### POST /api/admin/fiscal-years/:year/items
-年度に評価項目を追加（admin のみ）
-
-**Request**
-```json
-{ "evaluation_item_id": 1 }
-```
-
-**Response**: `201 Created`
-```json
-{ "data": { "fiscal_year": 2026, "evaluation_item_id": 1 } }
-```
-
-### DELETE /api/admin/fiscal-years/:year/items/:itemId
-年度から評価項目を削除（admin のみ）
-
-**Response**: `204 No Content`
 
 ---
 

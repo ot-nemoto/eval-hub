@@ -1,4 +1,4 @@
-> 最終更新: 2026-03-19 (Phase 5〜7・継続的改善を追加)
+> 最終更新: 2026-03-16 (Phase 4 デプロイ先を Vercel に変更)
 
 # tasks.md — 実装タスク設計図
 
@@ -30,20 +30,26 @@
 
 - [Issues — Phase 4: デプロイ](https://github.com/ot-nemoto/eval-hub/milestone/4)
 
-## Phase 5: Admin管理機能の整備
-
-- [Issues — Phase 5: Admin管理機能の整備](https://github.com/ot-nemoto/eval-hub/milestone/5)
-
-## Phase 6: 評価フロー完成
-
-- [Issues — Phase 6: 評価フロー完成](https://github.com/ot-nemoto/eval-hub/milestone/6)
-
-## Phase 7: 年度管理
-
-- [Issues — Phase 7: 年度管理](https://github.com/ot-nemoto/eval-hub/milestone/7)
+> **方針変更（2026-03-16）**: Cloudflare Workers は無料プランの 3 MiB サイズ制限を超過するため、**Vercel** にデプロイ先を変更。
+>
+> - T31: Cloudflare Workers 関連コードの削除（`@opennextjs/cloudflare`・`wrangler`・`wrangler.toml`）
+> - T32: Vercel デプロイ設定（プロジェクト作成・環境変数設定）
 
 ---
 
-## 継続的改善
+## v1.1 以降
 
-- [Issues — 継続的改善](https://github.com/ot-nemoto/eval-hub/milestone/8)
+フェーズ構成・優先順位は v1.1 着手時に改めて検討する。以下は候補タスク（順不同）。
+
+- 実績管理・集計
+  - 月次実績 API（GET/PUT /api/members/:id/records）
+  - 月次実績入力画面（月×プロダクト×タスクのグリッド）
+  - 配点管理 API（admin 用）
+  - 年度切り替え処理（２年ルール項目の自動コピー）
+- UI 整備・仕上げ
+  - ダッシュボード（評価進捗・ロール認定状況のサマリ）
+  - 印刷・PDF エクスポート（Overview 画面）
+  - バリデーション強化・エラーハンドリング整備
+  - レスポンシブ対応（タブレット）
+  - E2E テスト（Playwright）主要フロー
+  - ユーザー管理 API（admin による POST/DELETE /api/members）

@@ -13,7 +13,6 @@ const SCORE_LABELS: Record<Score, string> = {
 };
 
 type Item = {
-  id: number;
   uid: string;
   name: string;
   description: string | null;
@@ -36,16 +35,16 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
   const categories = [...new Set(items.map((i) => i.category))];
   const [activeCategory, setActiveCategory] = useState(categories[0] ?? "");
 
-  const [scores, setScores] = useState<Record<number, Score>>(
-    Object.fromEntries(items.map((i) => [i.id, i.manager_score ?? "none"])),
+  const [scores, setScores] = useState<Record<string, Score>>(
+    Object.fromEntries(items.map((i) => [i.uid, i.manager_score ?? "none"])),
   );
-  const [reasons, setReasons] = useState<Record<number, string>>(
-    Object.fromEntries(items.map((i) => [i.id, i.manager_reason ?? ""])),
+  const [reasons, setReasons] = useState<Record<string, string>>(
+    Object.fromEntries(items.map((i) => [i.uid, i.manager_reason ?? ""])),
   );
-  const [saving, setSaving] = useState<Record<number, boolean>>({});
-  const [saved, setSaved] = useState<Record<number, boolean>>({});
-  const [errors, setErrors] = useState<Record<number, string>>({});
-  const savedTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+  const [saving, setSaving] = useState<Record<string, boolean>>({});
+  const [saved, setSaved] = useState<Record<string, boolean>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const savedTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
     const timers = savedTimers.current;
@@ -58,32 +57,32 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
 
   const activeItems = items.filter((i) => i.category === activeCategory);
 
-  async function handleSave(id: number) {
-    setSaving((s) => ({ ...s, [id]: true }));
-    setErrors((e) => ({ ...e, [id]: "" }));
+  async function handleSave(uid: string) {
+    setSaving((s) => ({ ...s, [uid]: true }));
+    setErrors((e) => ({ ...e, [uid]: "" }));
     try {
       const res = await fetch(
-        `/api/members/${evaluateeId}/evaluations/${fiscalYear}/${id}`,
+        `/api/members/${evaluateeId}/evaluations/${fiscalYear}/${uid}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            manager_score: scores[id] ?? "none",
-            manager_reason: reasons[id] ?? "",
+            manager_score: scores[uid] ?? "none",
+            manager_reason: reasons[uid] ?? "",
           }),
         },
       );
       if (!res.ok) throw new Error();
-      setSaved((s) => ({ ...s, [id]: true }));
-      clearTimeout(savedTimers.current[id]);
-      savedTimers.current[id] = setTimeout(
-        () => setSaved((s) => ({ ...s, [id]: false })),
+      setSaved((s) => ({ ...s, [uid]: true }));
+      clearTimeout(savedTimers.current[uid]);
+      savedTimers.current[uid] = setTimeout(
+        () => setSaved((s) => ({ ...s, [uid]: false })),
         2000,
       );
     } catch {
-      setErrors((e) => ({ ...e, [id]: "保存に失敗しました" }));
+      setErrors((e) => ({ ...e, [uid]: "保存に失敗しました" }));
     } finally {
-      setSaving((s) => ({ ...s, [id]: false }));
+      setSaving((s) => ({ ...s, [uid]: false }));
     }
   }
 
@@ -114,7 +113,7 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
       {/* Items */}
       <div className="space-y-6">
         {activeItems.map((item) => (
-          <div key={item.id} className="rounded-lg border bg-white p-5">
+          <div key={item.uid} className="rounded-lg border bg-white p-5">
             <div className="mb-4">
               <span className="text-xs font-medium text-gray-400">{item.uid}</span>
               <h3 className="text-base font-semibold text-gray-900">{item.name}</h3>
@@ -153,10 +152,10 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
                       key={score}
                       type="button"
                       role="radio"
-                      aria-checked={scores[item.id] === score}
-                      onClick={() => setScores((s) => ({ ...s, [item.id]: score }))}
+                      aria-checked={scores[item.uid] === score}
+                      onClick={() => setScores((s) => ({ ...s, [item.uid]: score }))}
                       className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                        scores[item.id] === score
+                        scores[item.uid] === score
                           ? "bg-blue-600 text-white"
                           : "border border-gray-300 text-gray-700 hover:bg-gray-50"
                       }`}
@@ -169,16 +168,16 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
 
               {/* 評価者採点理由 */}
               <div>
-                <label htmlFor={`${item.id}-manager-reason`} className="block text-sm font-medium text-gray-700">
+                <label htmlFor={`${item.uid}-manager-reason`} className="block text-sm font-medium text-gray-700">
                   評価者採点理由
                 </label>
                 <textarea
-                  id={`${item.id}-manager-reason`}
+                  id={`${item.uid}-manager-reason`}
                   className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   rows={3}
-                  value={reasons[item.id] ?? ""}
+                  value={reasons[item.uid] ?? ""}
                   onChange={(e) =>
-                    setReasons((r) => ({ ...r, [item.id]: e.target.value }))
+                    setReasons((r) => ({ ...r, [item.uid]: e.target.value }))
                   }
                 />
               </div>
@@ -186,16 +185,16 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
               <div className="flex items-center gap-3">
                 <Button
                   size="sm"
-                  onClick={() => handleSave(item.id)}
-                  disabled={saving[item.id]}
+                  onClick={() => handleSave(item.uid)}
+                  disabled={saving[item.uid]}
                 >
-                  {saving[item.id] ? "保存中..." : "保存"}
+                  {saving[item.uid] ? "保存中..." : "保存"}
                 </Button>
-                {saved[item.id] && (
+                {saved[item.uid] && (
                   <span className="text-sm text-green-600">保存しました</span>
                 )}
-                {errors[item.id] && (
-                  <span className="text-sm text-red-600">{errors[item.id]}</span>
+                {errors[item.uid] && (
+                  <span className="text-sm text-red-600">{errors[item.uid]}</span>
                 )}
               </div>
             </div>
