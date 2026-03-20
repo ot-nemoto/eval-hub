@@ -54,7 +54,7 @@ describe("GET /api/evaluation-items", () => {
     expect(body.data).toHaveLength(2);
   });
 
-  it("?target_id でフィルタできる", async () => {
+  it("?targetId でフィルタできる", async () => {
     vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
     vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue([mockItems[0]] as never);
 
@@ -69,7 +69,7 @@ describe("GET /api/evaluation-items", () => {
     );
   });
 
-  it("?category_id でフィルタできる", async () => {
+  it("?categoryId でフィルタできる", async () => {
     vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
     vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue(mockItems as never);
 
@@ -84,13 +84,13 @@ describe("GET /api/evaluation-items", () => {
     );
   });
 
-  it("?target_id が不正値の場合は 400", async () => {
+  it("?targetId が不正値の場合は 400", async () => {
     vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
     const res = await GET(new Request("http://localhost/api/evaluation-items?targetId=abc"));
     expect(res.status).toBe(400);
   });
 
-  it("?category_id が不正値の場合は 400", async () => {
+  it("?categoryId が不正値の場合は 400", async () => {
     vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
     const res = await GET(new Request("http://localhost/api/evaluation-items?categoryId=abc"));
     expect(res.status).toBe(400);

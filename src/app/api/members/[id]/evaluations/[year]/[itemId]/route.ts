@@ -47,6 +47,7 @@ export async function PUT(
   if (!body || typeof body !== "object") {
     return errorResponse("BAD_REQUEST", "リクエストボディが不正です", 400);
   }
+  // このエンドポイントのリクエスト/レスポンスキーは snake_case を維持する（API contract）
   const { self_score, self_reason, manager_score, manager_reason } = body;
 
   const hasSelfFields = self_score !== undefined || self_reason !== undefined;

@@ -31,7 +31,7 @@ export async function PATCH(request: Request, { params }: Params) {
     const conflict = await prisma.category.findUnique({
       where: { targetId_no: { targetId: category.targetId, no: data.no } },
     });
-    if (conflict) return errorResponse("CONFLICT", "同じ target_id と no の中分類がすでに存在します", 409);
+    if (conflict) return errorResponse("CONFLICT", "同じ targetId と no の中分類がすでに存在します", 409);
   }
 
   const updated = await prisma.category.update({

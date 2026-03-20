@@ -70,7 +70,7 @@ describe("PUT /api/members/:id/evaluation-settings/:year", () => {
     expect(res.status).toBe(400);
   });
 
-  it("self_evaluation_enabled が boolean 以外の場合は 400 を返す", async () => {
+  it("selfEvaluationEnabled が boolean 以外の場合は 400 を返す", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
 
     const req = new Request("http://localhost", {
