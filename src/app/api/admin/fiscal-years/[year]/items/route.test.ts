@@ -18,8 +18,8 @@ const adminSession = { user: { id: "admin-1", role: "admin" } };
 const mockFy = { year: 2026 };
 const mockItem = {
   id: 1,
-  target_id: 1,
-  category_id: 1,
+  targetId: 1,
+  categoryId: 1,
   no: 1,
   name: "基本姿勢",
 };
@@ -35,7 +35,7 @@ describe("GET /api/admin/fiscal-years/:year/items", () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
     vi.mocked(prisma.fiscalYearItem.findMany).mockResolvedValue([
-      { evaluation_item: mockItem },
+      { evaluationItem: mockItem },
     ] as never);
 
     const req = new Request("http://localhost/api/admin/fiscal-years/2026/items");
@@ -67,13 +67,13 @@ describe("POST /api/admin/fiscal-years/:year/items", () => {
     vi.mocked(prisma.evaluationItem.findUnique).mockResolvedValue(mockItem as never);
     vi.mocked(prisma.fiscalYearItem.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.fiscalYearItem.create).mockResolvedValue({
-      fiscal_year: 2026,
-      evaluation_item_id: 1,
+      fiscalYear: 2026,
+      evaluationItemId: 1,
     } as never);
 
     const req = new Request("http://localhost/api/admin/fiscal-years/2026/items", {
       method: "POST",
-      body: JSON.stringify({ evaluation_item_id: 1 }),
+      body: JSON.stringify({ evaluationItemId: 1 }),
     });
     const res = await POST(req, makeParams("2026"));
     expect(res.status).toBe(201);
@@ -84,19 +84,19 @@ describe("POST /api/admin/fiscal-years/:year/items", () => {
     vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
     vi.mocked(prisma.evaluationItem.findUnique).mockResolvedValue(mockItem as never);
     vi.mocked(prisma.fiscalYearItem.findUnique).mockResolvedValue({
-      fiscal_year: 2026,
-      evaluation_item_id: 1,
+      fiscalYear: 2026,
+      evaluationItemId: 1,
     } as never);
 
     const req = new Request("http://localhost/api/admin/fiscal-years/2026/items", {
       method: "POST",
-      body: JSON.stringify({ evaluation_item_id: 1 }),
+      body: JSON.stringify({ evaluationItemId: 1 }),
     });
     const res = await POST(req, makeParams("2026"));
     expect(res.status).toBe(409);
   });
 
-  it("evaluation_item_id が未指定の場合は 400", async () => {
+  it("evaluationItemId が未指定の場合は 400", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
 
     const req = new Request("http://localhost/api/admin/fiscal-years/2026/items", {

@@ -17,11 +17,11 @@ type Item = {
   uid: string;
   name: string;
   description: string | null;
-  eval_criteria: string | null;
+  evalCriteria: string | null;
   category: string;
   target: string;
-  self_score: Score | null;
-  self_reason: string | null;
+  selfScore: Score | null;
+  selfReason: string | null;
 };
 
 type Props = {
@@ -35,10 +35,10 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
   const [activeCategory, setActiveCategory] = useState(categories[0] ?? "");
 
   const [scores, setScores] = useState<Record<number, Score>>(
-    Object.fromEntries(items.map((i) => [i.id, i.self_score ?? "none"])),
+    Object.fromEntries(items.map((i) => [i.id, i.selfScore ?? "none"])),
   );
   const [reasons, setReasons] = useState<Record<number, string>>(
-    Object.fromEntries(items.map((i) => [i.id, i.self_reason ?? ""])),
+    Object.fromEntries(items.map((i) => [i.id, i.selfReason ?? ""])),
   );
   const [saving, setSaving] = useState<Record<number, boolean>>({});
   const [saved, setSaved] = useState<Record<number, boolean>>({});
@@ -107,9 +107,9 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
               {item.description && (
                 <p className="mt-1 text-sm text-gray-600">{item.description}</p>
               )}
-              {item.eval_criteria && (
+              {item.evalCriteria && (
                 <p className="mt-1 text-xs text-gray-400">
-                  評価基準: {item.eval_criteria}
+                  評価基準: {item.evalCriteria}
                 </p>
               )}
             </div>

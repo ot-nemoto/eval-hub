@@ -8,23 +8,23 @@ export async function GET(request: Request) {
   if (!session) return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
 
   const { searchParams } = new URL(request.url);
-  const targetIdStr = searchParams.get("target_id");
-  const categoryIdStr = searchParams.get("category_id");
+  const targetIdStr = searchParams.get("targetId");
+  const categoryIdStr = searchParams.get("categoryId");
 
-  const where: { target_id?: number; category_id?: number } = {};
+  const where: { targetId?: number; categoryId?: number } = {};
   if (targetIdStr !== null) {
     const targetId = Number(targetIdStr);
     if (!Number.isInteger(targetId) || targetId < 1) {
-      return errorResponse("BAD_REQUEST", "target_id は正の整数で指定してください", 400);
+      return errorResponse("BAD_REQUEST", "targetId は正の整数で指定してください", 400);
     }
-    where.target_id = targetId;
+    where.targetId = targetId;
   }
   if (categoryIdStr !== null) {
     const categoryId = Number(categoryIdStr);
     if (!Number.isInteger(categoryId) || categoryId < 1) {
-      return errorResponse("BAD_REQUEST", "category_id は正の整数で指定してください", 400);
+      return errorResponse("BAD_REQUEST", "categoryId は正の整数で指定してください", 400);
     }
-    where.category_id = categoryId;
+    where.categoryId = categoryId;
   }
 
   const items = await prisma.evaluationItem.findMany({
@@ -32,14 +32,14 @@ export async function GET(request: Request) {
     orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
     select: {
       id: true,
-      target_id: true,
-      category_id: true,
+      targetId: true,
+      categoryId: true,
       no: true,
       name: true,
       description: true,
-      eval_criteria: true,
+      evalCriteria: true,
       target: { select: { id: true, name: true, no: true } },
-      category: { select: { id: true, target_id: true, name: true, no: true } },
+      category: { select: { id: true, targetId: true, name: true, no: true } },
     },
   });
 

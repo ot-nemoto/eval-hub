@@ -53,7 +53,7 @@ export async function DELETE(_request: Request, { params }: Params) {
   const target = await prisma.target.findUnique({ where: { id } });
   if (!target) return errorResponse("NOT_FOUND", "大分類が見つかりません", 404);
 
-  const categoryCount = await prisma.category.count({ where: { target_id: id } });
+  const categoryCount = await prisma.category.count({ where: { targetId: id } });
   if (categoryCount > 0) return errorResponse("CONFLICT", "紐づく中分類が存在するため削除できません", 409);
 
   await prisma.target.delete({ where: { id } });

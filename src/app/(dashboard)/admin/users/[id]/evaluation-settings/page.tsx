@@ -26,10 +26,10 @@ export default async function UserEvaluationSettingsPage({
   const years = [currentFiscalYear - 1, currentFiscalYear, currentFiscalYear + 1];
 
   const settings = await prisma.evaluationSetting.findMany({
-    where: { user_id: id },
+    where: { userId: id },
   });
   const settingMap = Object.fromEntries(
-    settings.map((s) => [s.fiscal_year, s.self_evaluation_enabled]),
+    settings.map((s) => [s.fiscalYear, s.selfEvaluationEnabled]),
   );
 
   return (

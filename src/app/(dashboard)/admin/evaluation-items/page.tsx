@@ -11,7 +11,7 @@ export default async function EvaluationItemsPage() {
 
   const [targets, categories] = await Promise.all([
     prisma.target.findMany({ orderBy: { no: "asc" }, select: { id: true, name: true } }),
-    prisma.category.findMany({ orderBy: { no: "asc" }, select: { id: true, target_id: true, name: true } }),
+    prisma.category.findMany({ orderBy: { no: "asc" }, select: { id: true, targetId: true, name: true } }),
   ]);
 
   const items = await prisma.evaluationItem.findMany({
@@ -21,10 +21,10 @@ export default async function EvaluationItemsPage() {
       no: true,
       name: true,
       description: true,
-      eval_criteria: true,
+      evalCriteria: true,
       target: { select: { name: true, no: true } },
       category: { select: { name: true, no: true } },
-      _count: { select: { fiscal_year_items: true } },
+      _count: { select: { fiscalYearItems: true } },
     },
   });
 
@@ -65,7 +65,7 @@ export default async function EvaluationItemsPage() {
                   <td className="px-4 py-3 text-gray-700">{item.category.name}</td>
                   <td className="px-4 py-3 text-gray-900">{item.name}</td>
                   <td className="px-4 py-3 text-right">
-                    <EvaluationItemActions item={item} hasEvaluations={item._count.fiscal_year_items > 0} />
+                    <EvaluationItemActions item={item} hasEvaluations={item._count.fiscalYearItems > 0} />
                   </td>
                 </tr>
               ))

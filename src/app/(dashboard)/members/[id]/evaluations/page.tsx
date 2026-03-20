@@ -20,10 +20,10 @@ export default async function MemberEvaluationsPage({ params }: Props) {
   if (!isAdmin) {
     const assignment = await prisma.evaluationAssignment.findUnique({
       where: {
-        fiscal_year_evaluatee_id_evaluator_id: {
-          fiscal_year: fiscalYear,
-          evaluatee_id: evaluateeId,
-          evaluator_id: evaluatorId,
+        fiscalYear_evaluateeId_evaluatorId: {
+          fiscalYear: fiscalYear,
+          evaluateeId: evaluateeId,
+          evaluatorId: evaluatorId,
         },
       },
     });
@@ -42,11 +42,11 @@ export default async function MemberEvaluationsPage({ params }: Props) {
       include: { target: true, category: true },
     }),
     prisma.evaluation.findMany({
-      where: { evaluatee_id: evaluateeId, fiscal_year: fiscalYear },
+      where: { evaluateeId: evaluateeId, fiscalYear: fiscalYear },
     }),
   ]);
 
-  const evalMap = Object.fromEntries(evaluations.map((e) => [e.eval_item_id, e]));
+  const evalMap = Object.fromEntries(evaluations.map((e) => [e.evalItemId, e]));
 
   const itemsWithEval = items.map((item) => {
     const ev = evalMap[item.id];
@@ -55,13 +55,13 @@ export default async function MemberEvaluationsPage({ params }: Props) {
       uid: `${item.target.no}-${item.category.no}-${item.no}`,
       name: item.name,
       description: item.description,
-      eval_criteria: item.eval_criteria,
+      evalCriteria: item.evalCriteria,
       category: item.category.name,
       target: item.target.name,
-      self_score: (ev?.self_score ?? null) as "none" | "ka" | "ryo" | "yu" | null,
-      self_reason: ev?.self_reason ?? null,
-      manager_score: (ev?.manager_score ?? null) as "none" | "ka" | "ryo" | "yu" | null,
-      manager_reason: ev?.manager_reason ?? null,
+      selfScore: (ev?.selfScore ?? null) as "none" | "ka" | "ryo" | "yu" | null,
+      selfReason: ev?.selfReason ?? null,
+      managerScore: (ev?.managerScore ?? null) as "none" | "ka" | "ryo" | "yu" | null,
+      managerReason: ev?.managerReason ?? null,
     };
   });
 

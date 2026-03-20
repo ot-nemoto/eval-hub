@@ -5,14 +5,14 @@ import { prisma } from "@/lib/prisma";
 
 const itemSelect = {
   id: true,
-  target_id: true,
-  category_id: true,
+  targetId: true,
+  categoryId: true,
   no: true,
   name: true,
   description: true,
-  eval_criteria: true,
+  evalCriteria: true,
   target: { select: { id: true, name: true, no: true } },
-  category: { select: { id: true, target_id: true, name: true, no: true } },
+  category: { select: { id: true, targetId: true, name: true, no: true } },
 } as const;
 
 export async function GET() {
@@ -36,28 +36,28 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   if (
     !body ||
-    !Number.isInteger(body.target_id) ||
-    body.target_id < 1 ||
-    !Number.isInteger(body.category_id) ||
-    body.category_id < 1 ||
+    !Number.isInteger(body.targetId) ||
+    body.targetId < 1 ||
+    !Number.isInteger(body.categoryId) ||
+    body.categoryId < 1 ||
     typeof body.name !== "string" ||
     !body.name
   ) {
-    return errorResponse("BAD_REQUEST", "target_id, category_id, name は必須です", 400);
+    return errorResponse("BAD_REQUEST", "targetId, categoryId, name は必須です", 400);
   }
 
-  const target = await prisma.target.findUnique({ where: { id: body.target_id } });
+  const target = await prisma.target.findUnique({ where: { id: body.targetId } });
   if (!target) return errorResponse("NOT_FOUND", "大分類が見つかりません", 404);
 
-  const category = await prisma.category.findUnique({ where: { id: body.category_id } });
+  const category = await prisma.category.findUnique({ where: { id: body.categoryId } });
   if (!category) return errorResponse("NOT_FOUND", "中分類が見つかりません", 404);
 
-  if (category.target_id !== body.target_id) {
-    return errorResponse("BAD_REQUEST", "category_id が target_id と一致しません", 400);
+  if (category.targetId !== body.targetId) {
+    return errorResponse("BAD_REQUEST", "categoryId が targetId と一致しません", 400);
   }
 
   const maxItem = await prisma.evaluationItem.findFirst({
-    where: { category_id: body.category_id },
+    where: { categoryId: body.categoryId },
     orderBy: { no: "desc" },
     select: { no: true },
   });
@@ -65,12 +65,12 @@ export async function POST(request: Request) {
 
   const item = await prisma.evaluationItem.create({
     data: {
-      target_id: body.target_id,
-      category_id: body.category_id,
+      targetId: body.targetId,
+      categoryId: body.categoryId,
       no,
       name: body.name,
       description: typeof body.description === "string" ? body.description : null,
-      eval_criteria: typeof body.eval_criteria === "string" ? body.eval_criteria : null,
+      evalCriteria: typeof body.evalCriteria === "string" ? body.evalCriteria : null,
     },
     select: itemSelect,
   });

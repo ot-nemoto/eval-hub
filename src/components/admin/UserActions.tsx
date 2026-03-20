@@ -48,7 +48,7 @@ export function UserActions({ userId, currentRole, isActive, isSelf }: Props) {
       const res = await fetch(`/api/admin/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_active: !isActive }),
+        body: JSON.stringify({ isActive: !isActive }),
       });
       if (res.ok) {
         router.refresh();

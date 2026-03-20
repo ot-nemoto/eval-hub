@@ -17,7 +17,7 @@ export default async function TargetsPage() {
       _count: { select: { categories: true } },
       categories: {
         orderBy: { no: "asc" },
-        include: { _count: { select: { evaluation_items: true } } },
+        include: { _count: { select: { evaluationItems: true } } },
       },
     },
   });
@@ -78,8 +78,8 @@ export default async function TargetsPage() {
                           <td className="py-2 text-gray-700">{cat.name}</td>
                           <td className="py-2 text-right">
                             <CategoryActions
-                              category={{ id: cat.id, target_id: cat.target_id, name: cat.name, no: cat.no }}
-                              canDelete={cat._count.evaluation_items === 0}
+                              category={{ id: cat.id, targetId: cat.targetId, name: cat.name, no: cat.no }}
+                              canDelete={cat._count.evaluationItems === 0}
                             />
                           </td>
                         </tr>

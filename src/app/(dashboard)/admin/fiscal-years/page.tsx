@@ -11,7 +11,7 @@ export default async function FiscalYearsPage() {
 
   const fiscalYears = await prisma.fiscalYear.findMany({
     orderBy: { year: "desc" },
-    select: { year: true, name: true, start_date: true, end_date: true, is_current: true },
+    select: { year: true, name: true, startDate: true, endDate: true, isCurrent: true },
   });
 
   return (
@@ -46,17 +46,17 @@ export default async function FiscalYearsPage() {
               </tr>
             ) : (
               fiscalYears.map((fy) => (
-                <tr key={fy.year} className={fy.is_current ? "bg-blue-50" : "hover:bg-gray-50"}>
+                <tr key={fy.year} className={fy.isCurrent ? "bg-blue-50" : "hover:bg-gray-50"}>
                   <td className="px-4 py-3 font-medium text-gray-900">{fy.year}</td>
                   <td className="px-4 py-3 text-gray-700">{fy.name}</td>
                   <td className="px-4 py-3 text-gray-500">
-                    {fy.start_date.toLocaleDateString("ja-JP")}
+                    {fy.startDate.toLocaleDateString("ja-JP")}
                   </td>
                   <td className="px-4 py-3 text-gray-500">
-                    {fy.end_date.toLocaleDateString("ja-JP")}
+                    {fy.endDate.toLocaleDateString("ja-JP")}
                   </td>
                   <td className="px-4 py-3">
-                    {fy.is_current ? (
+                    {fy.isCurrent ? (
                       <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
                         現在
                       </span>

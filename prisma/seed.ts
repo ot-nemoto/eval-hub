@@ -49,10 +49,10 @@ async function cleanupUser(email: string): Promise<void> {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) return;
   await prisma.evaluationAssignment.deleteMany({
-    where: { OR: [{ evaluatee_id: user.id }, { evaluator_id: user.id }] },
+    where: { OR: [{ evaluateeId: user.id }, { evaluatorId: user.id }] },
   });
-  await prisma.evaluation.deleteMany({ where: { evaluatee_id: user.id } });
-  await prisma.evaluationSetting.deleteMany({ where: { user_id: user.id } });
+  await prisma.evaluation.deleteMany({ where: { evaluateeId: user.id } });
+  await prisma.evaluationSetting.deleteMany({ where: { userId: user.id } });
   await prisma.user.delete({ where: { email } });
   await deleteClerkUser(email);
   console.log(`  deleted: ${email}`);
@@ -64,7 +64,7 @@ async function seedFiscalYearItems(allItemIds: number[]) {
   const years = [2025, 2026, 2027];
   for (const year of years) {
     await prisma.fiscalYearItem.createMany({
-      data: allItemIds.map((id) => ({ fiscal_year: year, evaluation_item_id: id })),
+      data: allItemIds.map((id) => ({ fiscalYear: year, evaluationItemId: id })),
       skipDuplicates: true,
     });
   }
@@ -107,12 +107,12 @@ async function main() {
     const clerkId = await syncClerkUser(data.email);
     const user = await prisma.user.upsert({
       where: { email: data.email },
-      update: { name: data.name, role: data.role, ...(clerkId ? { clerk_id: clerkId } : {}) },
+      update: { name: data.name, role: data.role, ...(clerkId ? { clerkId } : {}) },
       create: {
         email: data.email,
         name: data.name,
         role: data.role,
-        ...(clerkId ? { clerk_id: clerkId } : {}),
+        ...(clerkId ? { clerkId } : {}),
       },
     });
     u[data.email] = user;
@@ -123,18 +123,18 @@ async function main() {
   // 2. 年度マスタ（fiscal_years のみ、fiscal_year_items は後で登録）
   // =========================================================================
   const fiscalYearsBase = [
-    { year: 2025, name: "2025年度", start_date: new Date("2025-04-01"), end_date: new Date("2026-03-31"), is_current: false },
-    { year: 2026, name: "2026年度", start_date: new Date("2026-04-01"), end_date: new Date("2027-03-31"), is_current: true },
-    { year: 2027, name: "2027年度", start_date: new Date("2027-04-01"), end_date: new Date("2028-03-31"), is_current: false },
+    { year: 2025, name: "2025年度", startDate: new Date("2025-04-01"), endDate: new Date("2026-03-31"), isCurrent: false },
+    { year: 2026, name: "2026年度", startDate: new Date("2026-04-01"), endDate: new Date("2027-03-31"), isCurrent: true },
+    { year: 2027, name: "2027年度", startDate: new Date("2027-04-01"), endDate: new Date("2028-03-31"), isCurrent: false },
   ];
   for (const fy of fiscalYearsBase) {
     await prisma.fiscalYear.upsert({
       where: { year: fy.year },
-      update: { name: fy.name, start_date: fy.start_date, end_date: fy.end_date, is_current: fy.is_current },
+      update: { name: fy.name, startDate: fy.startDate, endDate: fy.endDate, isCurrent: fy.isCurrent },
       create: fy,
     });
   }
-  await prisma.fiscalYear.updateMany({ where: { year: { not: 2026 } }, data: { is_current: false } });
+  await prisma.fiscalYear.updateMany({ where: { year: { not: 2026 } }, data: { isCurrent: false } });
   console.log(`fiscal_years: ${fiscalYearsBase.length} upserted`);
 
   // =========================================================================
@@ -149,24 +149,24 @@ async function main() {
   //  里中智      │ true  │ true  │ true
   //  岩鬼正美    │ false │ false │ false  ← デフォルトのため登録不要
   // =========================================================================
-  const settingsData: { email: string; fiscal_year: number; self_evaluation_enabled: boolean }[] = [
-    { email: "shiranui@example.com", fiscal_year: 2025, self_evaluation_enabled: true },
-    { email: "yamada@example.com", fiscal_year: 2025, self_evaluation_enabled: true },
-    { email: "yamada@example.com", fiscal_year: 2026, self_evaluation_enabled: true },
-    { email: "yamada@example.com", fiscal_year: 2027, self_evaluation_enabled: true },
-    { email: "satonaka@example.com", fiscal_year: 2025, self_evaluation_enabled: true },
-    { email: "satonaka@example.com", fiscal_year: 2026, self_evaluation_enabled: true },
-    { email: "satonaka@example.com", fiscal_year: 2027, self_evaluation_enabled: true },
+  const settingsData: { email: string; fiscalYear: number; selfEvaluationEnabled: boolean }[] = [
+    { email: "shiranui@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
+    { email: "yamada@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
+    { email: "yamada@example.com", fiscalYear: 2026, selfEvaluationEnabled: true },
+    { email: "yamada@example.com", fiscalYear: 2027, selfEvaluationEnabled: true },
+    { email: "satonaka@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
+    { email: "satonaka@example.com", fiscalYear: 2026, selfEvaluationEnabled: true },
+    { email: "satonaka@example.com", fiscalYear: 2027, selfEvaluationEnabled: true },
   ];
 
   for (const s of settingsData) {
     await prisma.evaluationSetting.upsert({
-      where: { user_id_fiscal_year: { user_id: u[s.email].id, fiscal_year: s.fiscal_year } },
-      update: { self_evaluation_enabled: s.self_evaluation_enabled },
+      where: { userId_fiscalYear: { userId: u[s.email].id, fiscalYear: s.fiscalYear } },
+      update: { selfEvaluationEnabled: s.selfEvaluationEnabled },
       create: {
-        user_id: u[s.email].id,
-        fiscal_year: s.fiscal_year,
-        self_evaluation_enabled: s.self_evaluation_enabled,
+        userId: u[s.email].id,
+        fiscalYear: s.fiscalYear,
+        selfEvaluationEnabled: s.selfEvaluationEnabled,
       },
     });
   }
@@ -188,31 +188,31 @@ async function main() {
   // =========================================================================
   const assignmentsData = [
     // 2025
-    { fiscal_year: 2025, evaluatee: "shiranui@example.com", evaluator: "doigaki@example.com" },
-    { fiscal_year: 2025, evaluatee: "yamada@example.com", evaluator: "doigaki@example.com" },
-    { fiscal_year: 2025, evaluatee: "satonaka@example.com", evaluator: "shiranui@example.com" },
-    { fiscal_year: 2025, evaluatee: "satonaka@example.com", evaluator: "yamada@example.com" },
+    { fiscalYear: 2025, evaluatee: "shiranui@example.com", evaluator: "doigaki@example.com" },
+    { fiscalYear: 2025, evaluatee: "yamada@example.com", evaluator: "doigaki@example.com" },
+    { fiscalYear: 2025, evaluatee: "satonaka@example.com", evaluator: "shiranui@example.com" },
+    { fiscalYear: 2025, evaluatee: "satonaka@example.com", evaluator: "yamada@example.com" },
     // 2026
-    { fiscal_year: 2026, evaluatee: "yamada@example.com", evaluator: "doigaki@example.com" },
-    { fiscal_year: 2026, evaluatee: "yamada@example.com", evaluator: "shiranui@example.com" },
-    { fiscal_year: 2026, evaluatee: "satonaka@example.com", evaluator: "shiranui@example.com" },
-    { fiscal_year: 2026, evaluatee: "satonaka@example.com", evaluator: "yamada@example.com" },
+    { fiscalYear: 2026, evaluatee: "yamada@example.com", evaluator: "doigaki@example.com" },
+    { fiscalYear: 2026, evaluatee: "yamada@example.com", evaluator: "shiranui@example.com" },
+    { fiscalYear: 2026, evaluatee: "satonaka@example.com", evaluator: "shiranui@example.com" },
+    { fiscalYear: 2026, evaluatee: "satonaka@example.com", evaluator: "yamada@example.com" },
   ];
 
   for (const a of assignmentsData) {
     await prisma.evaluationAssignment.upsert({
       where: {
-        fiscal_year_evaluatee_id_evaluator_id: {
-          fiscal_year: a.fiscal_year,
-          evaluatee_id: u[a.evaluatee].id,
-          evaluator_id: u[a.evaluator].id,
+        fiscalYear_evaluateeId_evaluatorId: {
+          fiscalYear: a.fiscalYear,
+          evaluateeId: u[a.evaluatee].id,
+          evaluatorId: u[a.evaluator].id,
         },
       },
       update: {},
       create: {
-        fiscal_year: a.fiscal_year,
-        evaluatee_id: u[a.evaluatee].id,
-        evaluator_id: u[a.evaluator].id,
+        fiscalYear: a.fiscalYear,
+        evaluateeId: u[a.evaluatee].id,
+        evaluatorId: u[a.evaluator].id,
       },
     });
   }
@@ -254,9 +254,9 @@ async function main() {
   for (const c of categoriesData) {
     const target = targetByName[c.target];
     await prisma.category.upsert({
-      where: { target_id_no: { target_id: target.id, no: c.no } },
+      where: { targetId_no: { targetId: target.id, no: c.no } },
       update: { name: c.name },
-      create: { target_id: target.id, name: c.name, no: c.no },
+      create: { targetId: target.id, name: c.name, no: c.no },
     });
   }
   console.log(`categories: ${categoriesData.length} upserted`);
@@ -274,20 +274,20 @@ async function main() {
     const target = targetByName[item.target];
     const category = categoryByKey[categoryKey(item.target, item.category)];
     await prisma.evaluationItem.upsert({
-      where: { category_id_no: { category_id: category.id, no: item.item_no } },
+      where: { categoryId_no: { categoryId: category.id, no: item.item_no } },
       update: {
-        target_id: target.id,
+        targetId: target.id,
         name: item.name,
         description: item.description ?? null,
-        eval_criteria: item.eval_criteria ?? null,
+        evalCriteria: item.eval_criteria ?? null,
       },
       create: {
-        target_id: target.id,
-        category_id: category.id,
+        targetId: target.id,
+        categoryId: category.id,
         no: item.item_no,
         name: item.name,
         description: item.description ?? null,
-        eval_criteria: item.eval_criteria ?? null,
+        evalCriteria: item.eval_criteria ?? null,
       },
     });
   }

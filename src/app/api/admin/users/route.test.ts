@@ -22,8 +22,8 @@ const mockUsers = [
     email: "tanaka@example.com",
     role: "admin",
     division: "開発部",
-    joined_at: null,
-    created_at: new Date("2025-01-01"),
+    joinedAt: null,
+    createdAt: new Date("2025-01-01"),
   },
   {
     id: "user-2",
@@ -31,8 +31,8 @@ const mockUsers = [
     email: "suzuki@example.com",
     role: "member",
     division: null,
-    joined_at: null,
-    created_at: new Date("2025-02-01"),
+    joinedAt: null,
+    createdAt: new Date("2025-02-01"),
   },
 ];
 

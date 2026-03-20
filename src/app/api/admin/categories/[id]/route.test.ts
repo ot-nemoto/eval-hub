@@ -16,7 +16,7 @@ import { prisma } from "@/lib/prisma";
 const adminSession = { user: { id: "admin-1", role: "admin" } };
 const memberSession = { user: { id: "member-1", role: "member" } };
 
-const mockCategory = { id: 1, target_id: 1, name: "engagement", no: 1 };
+const mockCategory = { id: 1, targetId: 1, name: "engagement", no: 1 };
 
 function makeRequest(body: unknown) {
   return new Request("http://localhost/api/admin/categories/1", {
@@ -71,7 +71,7 @@ describe("PATCH /api/admin/categories/:id", () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.category.findUnique)
       .mockResolvedValueOnce(mockCategory as never)
-      .mockResolvedValueOnce({ id: 2, target_id: 1, name: "other", no: 2 } as never);
+      .mockResolvedValueOnce({ id: 2, targetId: 1, name: "other", no: 2 } as never);
 
     const res = await PATCH(makeRequest({ no: 2 }), { params: Promise.resolve({ id: "1" }) });
     expect(res.status).toBe(409);

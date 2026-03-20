@@ -23,77 +23,77 @@ enum Score {
 // ─── Models ───────────────────────────────────────────────────────────────────
 
 model User {
-  id                      String    @id @default(uuid())
-  clerk_id                String?   @unique @db.VarChar(255)
-  email                   String    @unique @db.VarChar(255)
-  name                    String    @db.VarChar(100)
-  division                String?   @db.VarChar(100)
-  joined_at               DateTime? @db.Date
-  role                    UserRole
-  wants_president_meeting Boolean   @default(false)
-  is_active               Boolean   @default(true)
-  created_at              DateTime  @default(now())
-  updated_at              DateTime  @updatedAt
+  id                    String    @id @default(uuid())
+  clerkId               String?   @unique @map("clerk_id") @db.VarChar(255)
+  email                 String    @unique @db.VarChar(255)
+  name                  String    @db.VarChar(100)
+  division              String?   @db.VarChar(100)
+  joinedAt              DateTime? @map("joined_at") @db.Date
+  role                  UserRole
+  wantsPresidentMeeting Boolean   @default(false) @map("wants_president_meeting")
+  isActive              Boolean   @default(true) @map("is_active")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
-  evaluatee_assignments EvaluationAssignment[] @relation("EvaluateeAssignments")
-  evaluator_assignments EvaluationAssignment[] @relation("EvaluatorAssignments")
-  evaluations           Evaluation[]
-  evaluation_settings   EvaluationSetting[]
+  evaluateeAssignments EvaluationAssignment[] @relation("EvaluateeAssignments")
+  evaluatorAssignments EvaluationAssignment[] @relation("EvaluatorAssignments")
+  evaluations          Evaluation[]
+  evaluationSettings   EvaluationSetting[]
 
   @@map("users")
 }
 
 model FiscalYear {
-  year       Int      @id
-  name       String   @db.VarChar(50)
-  start_date DateTime @db.Date
-  end_date   DateTime @db.Date
-  is_current Boolean  @default(false) // 部分ユニークインデックスで true は最大1件（migration で管理）
-  created_at DateTime @default(now())
+  year      Int      @id
+  name      String   @db.VarChar(50)
+  startDate DateTime @map("start_date") @db.Date
+  endDate   DateTime @map("end_date") @db.Date
+  isCurrent Boolean  @default(false) @map("is_current") // 部分ユニークインデックスで true は最大1件（migration で管理）
+  createdAt DateTime @default(now()) @map("created_at")
 
-  fiscal_year_items    FiscalYearItem[]
-  evaluation_settings  EvaluationSetting[]
-  evaluation_assignments EvaluationAssignment[]
+  fiscalYearItems      FiscalYearItem[]
+  evaluationSettings   EvaluationSetting[]
+  evaluationAssignments EvaluationAssignment[]
   evaluations          Evaluation[]
 
   @@map("fiscal_years")
 }
 
 model FiscalYearItem {
-  fiscal_year         Int
-  evaluation_item_id  Int
+  fiscalYear       Int @map("fiscal_year")
+  evaluationItemId Int @map("evaluation_item_id")
 
-  fiscal_year_rel  FiscalYear     @relation(fields: [fiscal_year], references: [year])
-  evaluation_item  EvaluationItem @relation(fields: [evaluation_item_id], references: [id])
+  fiscalYearRel  FiscalYear     @relation(fields: [fiscalYear], references: [year])
+  evaluationItem EvaluationItem @relation(fields: [evaluationItemId], references: [id])
 
-  @@id([fiscal_year, evaluation_item_id])
+  @@id([fiscalYear, evaluationItemId])
   @@map("fiscal_year_items")
 }
 
 model EvaluationSetting {
-  id                      String  @id @default(uuid())
-  user_id                 String
-  fiscal_year             Int
-  self_evaluation_enabled Boolean @default(false)
+  id                    String  @id @default(uuid())
+  userId                String  @map("user_id")
+  fiscalYear            Int     @map("fiscal_year")
+  selfEvaluationEnabled Boolean @default(false) @map("self_evaluation_enabled")
 
-  user        User       @relation(fields: [user_id], references: [id])
-  fiscal_year_rel FiscalYear @relation(fields: [fiscal_year], references: [year])
+  user          User       @relation(fields: [userId], references: [id])
+  fiscalYearRel FiscalYear @relation(fields: [fiscalYear], references: [year])
 
-  @@unique([user_id, fiscal_year])
+  @@unique([userId, fiscalYear])
   @@map("evaluation_settings")
 }
 
 model EvaluationAssignment {
-  id           String @id @default(uuid())
-  fiscal_year  Int
-  evaluatee_id String
-  evaluator_id String
+  id          String @id @default(uuid())
+  fiscalYear  Int    @map("fiscal_year")
+  evaluateeId String @map("evaluatee_id")
+  evaluatorId String @map("evaluator_id")
 
-  evaluatee       User       @relation("EvaluateeAssignments", fields: [evaluatee_id], references: [id])
-  evaluator       User       @relation("EvaluatorAssignments", fields: [evaluator_id], references: [id])
-  fiscal_year_rel FiscalYear @relation(fields: [fiscal_year], references: [year])
+  evaluatee     User       @relation("EvaluateeAssignments", fields: [evaluateeId], references: [id])
+  evaluator     User       @relation("EvaluatorAssignments", fields: [evaluatorId], references: [id])
+  fiscalYearRel FiscalYear @relation(fields: [fiscalYear], references: [year])
 
-  @@unique([fiscal_year, evaluatee_id, evaluator_id])
+  @@unique([fiscalYear, evaluateeId, evaluatorId])
   @@map("evaluation_assignments")
 }
 
@@ -102,57 +102,57 @@ model Target {
   name String @db.VarChar(100)
   no   Int    @unique
 
-  categories       Category[]
-  evaluation_items EvaluationItem[]
+  categories      Category[]
+  evaluationItems EvaluationItem[]
 
   @@map("targets")
 }
 
 model Category {
-  id        Int    @id @default(autoincrement())
-  target_id Int
-  name      String @db.VarChar(100)
-  no        Int
+  id       Int    @id @default(autoincrement())
+  targetId Int    @map("target_id")
+  name     String @db.VarChar(100)
+  no       Int
 
-  target           Target           @relation(fields: [target_id], references: [id])
-  evaluation_items EvaluationItem[]
+  target          Target           @relation(fields: [targetId], references: [id])
+  evaluationItems EvaluationItem[]
 
-  @@unique([target_id, no])
+  @@unique([targetId, no])
   @@map("categories")
 }
 
 model EvaluationItem {
-  id            Int     @id @default(autoincrement())
-  target_id     Int
-  category_id   Int
-  no            Int
-  name          String  @db.VarChar(255)
-  description   String? @db.Text
-  eval_criteria String? @db.Text
+  id           Int     @id @default(autoincrement())
+  targetId     Int     @map("target_id")
+  categoryId   Int     @map("category_id")
+  no           Int
+  name         String  @db.VarChar(255)
+  description  String? @db.Text
+  evalCriteria String? @map("eval_criteria") @db.Text
 
-  target            Target           @relation(fields: [target_id], references: [id])
-  category          Category         @relation(fields: [category_id], references: [id])
-  evaluations       Evaluation[]
-  fiscal_year_items FiscalYearItem[]
+  target          Target           @relation(fields: [targetId], references: [id])
+  category        Category         @relation(fields: [categoryId], references: [id])
+  evaluations     Evaluation[]
+  fiscalYearItems FiscalYearItem[]
 
-  @@unique([category_id, no])
+  @@unique([categoryId, no])
   @@map("evaluation_items")
 }
 
 model Evaluation {
-  id             String  @id @default(uuid())
-  fiscal_year    Int
-  evaluatee_id   String
-  eval_item_id   Int
-  self_score     Score?
-  self_reason    String? @db.Text
-  manager_score  Score?
-  manager_reason String? @db.Text
+  id            String  @id @default(uuid())
+  fiscalYear    Int     @map("fiscal_year")
+  evaluateeId   String  @map("evaluatee_id")
+  evalItemId    Int     @map("eval_item_id")
+  selfScore     Score?  @map("self_score")
+  selfReason    String? @map("self_reason") @db.Text
+  managerScore  Score?  @map("manager_score")
+  managerReason String? @map("manager_reason") @db.Text
 
-  evaluatee       User           @relation(fields: [evaluatee_id], references: [id])
-  evaluation_item EvaluationItem @relation(fields: [eval_item_id], references: [id])
-  fiscal_year_rel FiscalYear     @relation(fields: [fiscal_year], references: [year])
+  evaluatee     User           @relation(fields: [evaluateeId], references: [id])
+  evaluationItem EvaluationItem @relation(fields: [evalItemId], references: [id])
+  fiscalYearRel FiscalYear     @relation(fields: [fiscalYear], references: [year])
 
-  @@unique([fiscal_year, evaluatee_id, eval_item_id])
+  @@unique([fiscalYear, evaluateeId, evalItemId])
   @@map("evaluations")
 }

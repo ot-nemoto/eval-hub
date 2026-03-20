@@ -112,6 +112,20 @@ npm run dev
 - コメント: 自明でないロジックにのみ付ける（過剰なコメント不要）
 - エラーハンドリング: 外部入力・APIレスポンスの境界でのみ行う
 
+## Prisma スキーマのカラム名ルール
+
+- Prisma フィールド名は **camelCase**（TypeScript との一貫性）
+- DB カラム名は **snake_case**（PostgreSQL の慣習）
+- 必ず `@map("snake_case_name")` で明示的にマッピングする
+
+```prisma
+// 例
+clerkId      String?  @unique @map("clerk_id")
+isActive     Boolean  @default(true) @map("is_active")
+createdAt    DateTime @default(now()) @map("created_at")
+invitedById  String   @map("invited_by_id")
+```
+
 ---
 
 ## GitHub Issues 管理ルール

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type Target = { id: number; name: string };
-type Category = { id: number; target_id: number; name: string };
+type Category = { id: number; targetId: number; name: string };
 
 type Props = {
   targets: Target[];
@@ -16,21 +16,21 @@ export function EvaluationItemForm({ targets, categories }: Props) {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    target_id: "",
-    category_id: "",
+    targetId: "",
+    categoryId: "",
     name: "",
     description: "",
-    eval_criteria: "",
+    evalCriteria: "",
   });
 
-  const filteredCategories = form.target_id
-    ? categories.filter((c) => c.target_id === Number(form.target_id))
+  const filteredCategories = form.targetId
+    ? categories.filter((c) => c.targetId === Number(form.targetId))
     : [];
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value } = e.target;
-    if (name === "target_id") {
-      setForm((prev) => ({ ...prev, target_id: value, category_id: "" }));
+    if (name === "targetId") {
+      setForm((prev) => ({ ...prev, targetId: value, categoryId: "" }));
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
@@ -44,16 +44,16 @@ export function EvaluationItemForm({ targets, categories }: Props) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          target_id: Number(form.target_id),
-          category_id: Number(form.category_id),
+          targetId: Number(form.targetId),
+          categoryId: Number(form.categoryId),
           name: form.name,
           description: form.description || null,
-          eval_criteria: form.eval_criteria || null,
+          evalCriteria: form.evalCriteria || null,
         }),
       });
       if (res.ok) {
         setOpen(false);
-        setForm({ target_id: "", category_id: "", name: "", description: "", eval_criteria: "" });
+        setForm({ targetId: "", categoryId: "", name: "", description: "", evalCriteria: "" });
         router.refresh();
       } else {
         const json = await res.json().catch(() => ({}));
@@ -83,14 +83,14 @@ export function EvaluationItemForm({ targets, categories }: Props) {
       <h3 className="mb-4 font-medium text-gray-900">新しい評価項目を追加</h3>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="target_id" className="mb-1 block text-xs font-medium text-gray-700">
+          <label htmlFor="targetId" className="mb-1 block text-xs font-medium text-gray-700">
             大分類 <span className="text-red-500">*</span>
           </label>
           <select
-            id="target_id"
-            name="target_id"
+            id="targetId"
+            name="targetId"
             required
-            value={form.target_id}
+            value={form.targetId}
             onChange={handleChange}
             className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
           >
@@ -101,16 +101,16 @@ export function EvaluationItemForm({ targets, categories }: Props) {
           </select>
         </div>
         <div>
-          <label htmlFor="category_id" className="mb-1 block text-xs font-medium text-gray-700">
+          <label htmlFor="categoryId" className="mb-1 block text-xs font-medium text-gray-700">
             中分類 <span className="text-red-500">*</span>
           </label>
           <select
-            id="category_id"
-            name="category_id"
+            id="categoryId"
+            name="categoryId"
             required
-            value={form.category_id}
+            value={form.categoryId}
             onChange={handleChange}
-            disabled={!form.target_id}
+            disabled={!form.targetId}
             className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none disabled:bg-gray-50 disabled:text-gray-400"
           >
             <option value="">選択してください</option>
@@ -147,13 +147,13 @@ export function EvaluationItemForm({ targets, categories }: Props) {
           />
         </div>
         <div className="col-span-2">
-          <label htmlFor="eval_criteria" className="mb-1 block text-xs font-medium text-gray-700">
+          <label htmlFor="evalCriteria" className="mb-1 block text-xs font-medium text-gray-700">
             評価基準
           </label>
           <textarea
-            id="eval_criteria"
-            name="eval_criteria"
-            value={form.eval_criteria}
+            id="evalCriteria"
+            name="evalCriteria"
+            value={form.evalCriteria}
             onChange={handleChange}
             rows={2}
             className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"

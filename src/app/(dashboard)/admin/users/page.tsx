@@ -16,9 +16,9 @@ export default async function AdminUsersPage() {
       email: true,
       role: true,
       division: true,
-      joined_at: true,
-      created_at: true,
-      is_active: true,
+      joinedAt: true,
+      createdAt: true,
+      isActive: true,
     },
     orderBy: { name: "asc" },
   });
@@ -47,7 +47,7 @@ export default async function AdminUsersPage() {
             {users.map((user) => (
               <tr
                 key={user.id}
-                className={user.is_active ? "hover:bg-gray-50" : "bg-gray-50 opacity-60"}
+                className={user.isActive ? "hover:bg-gray-50" : "bg-gray-50 opacity-60"}
               >
                 <td className="px-4 py-3 font-medium text-gray-900">{user.name}</td>
                 <td className="px-4 py-3 text-gray-500">{user.email}</td>
@@ -64,7 +64,7 @@ export default async function AdminUsersPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-gray-500">
-                  {user.created_at.toLocaleDateString("ja-JP")}
+                  {user.createdAt.toLocaleDateString("ja-JP")}
                 </td>
                 <td className="px-4 py-3">
                   <Link
@@ -78,7 +78,7 @@ export default async function AdminUsersPage() {
                   <UserActions
                     userId={user.id}
                     currentRole={user.role}
-                    isActive={user.is_active}
+                    isActive={user.isActive}
                     isSelf={user.id === session.user.id}
                   />
                 </td>

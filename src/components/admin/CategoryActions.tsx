@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-type Category = { id: number; target_id: number; name: string; no: number };
+type Category = { id: number; targetId: number; name: string; no: number };
 type Props = { category: Category; canDelete: boolean };
 
 export function CategoryActions({ category, canDelete }: Props) {

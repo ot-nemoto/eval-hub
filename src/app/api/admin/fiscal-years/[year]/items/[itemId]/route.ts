@@ -20,12 +20,12 @@ export async function DELETE(_request: Request, { params }: Params) {
     return errorResponse("BAD_REQUEST", "itemId は正の整数で指定してください", 400);
 
   const existing = await prisma.fiscalYearItem.findUnique({
-    where: { fiscal_year_evaluation_item_id: { fiscal_year: year, evaluation_item_id: itemId } },
+    where: { fiscalYear_evaluationItemId: { fiscalYear: year, evaluationItemId: itemId } },
   });
   if (!existing) return errorResponse("NOT_FOUND", "紐づきが見つかりません", 404);
 
   await prisma.fiscalYearItem.delete({
-    where: { fiscal_year_evaluation_item_id: { fiscal_year: year, evaluation_item_id: itemId } },
+    where: { fiscalYear_evaluationItemId: { fiscalYear: year, evaluationItemId: itemId } },
   });
 
   return new Response(null, { status: 204 });

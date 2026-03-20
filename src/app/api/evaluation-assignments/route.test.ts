@@ -22,9 +22,9 @@ const memberSession = { user: { id: "member-1", role: "member" } };
 const mockAssignments = [
   {
     id: "assign-1",
-    fiscal_year: 2025,
-    evaluatee_id: "user-2",
-    evaluator_id: "user-1",
+    fiscalYear: 2025,
+    evaluateeId: "user-2",
+    evaluatorId: "user-1",
     evaluatee: { id: "user-2", name: "鈴木花子" },
     evaluator: { id: "user-1", name: "田中太郎" },
   },
@@ -43,25 +43,25 @@ describe("GET /api/evaluation-assignments", () => {
 
     expect(res.status).toBe(200);
     expect(body.data).toHaveLength(1);
-    expect(body.data[0]).toMatchObject({ id: "assign-1", fiscal_year: 2025 });
+    expect(body.data[0]).toMatchObject({ id: "assign-1", fiscalYear: 2025 });
   });
 
-  it("fiscal_year クエリで絞り込みができる", async () => {
+  it("fiscalYear クエリで絞り込みができる", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.evaluationAssignment.findMany).mockResolvedValue(mockAssignments);
 
-    const req = new Request("http://localhost/api/evaluation-assignments?fiscal_year=2025");
+    const req = new Request("http://localhost/api/evaluation-assignments?fiscalYear=2025");
     await GET(req);
 
     expect(prisma.evaluationAssignment.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { fiscal_year: 2025 } }),
+      expect.objectContaining({ where: { fiscalYear: 2025 } }),
     );
   });
 
-  it("fiscal_year が数値以外の場合は 400 を返す", async () => {
+  it("fiscalYear が数値以外の場合は 400 を返す", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
 
-    const req = new Request("http://localhost/api/evaluation-assignments?fiscal_year=abc");
+    const req = new Request("http://localhost/api/evaluation-assignments?fiscalYear=abc");
     const res = await GET(req);
 
     expect(res.status).toBe(400);
@@ -94,20 +94,20 @@ describe("POST /api/evaluation-assignments", () => {
     vi.mocked(prisma.evaluationAssignment.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.evaluationAssignment.create).mockResolvedValue({
       id: "assign-new",
-      fiscal_year: 2025,
-      evaluatee_id: "user-2",
-      evaluator_id: "user-1",
+      fiscalYear: 2025,
+      evaluateeId: "user-2",
+      evaluatorId: "user-1",
     });
 
     const req = new Request("http://localhost/api/evaluation-assignments", {
       method: "POST",
-      body: JSON.stringify({ fiscal_year: 2025, evaluatee_id: "user-2", evaluator_id: "user-1" }),
+      body: JSON.stringify({ fiscalYear: 2025, evaluateeId: "user-2", evaluatorId: "user-1" }),
     });
     const res = await POST(req);
     const body = await res.json();
 
     expect(res.status).toBe(201);
-    expect(body.data).toMatchObject({ fiscal_year: 2025 });
+    expect(body.data).toMatchObject({ fiscalYear: 2025 });
   });
 
   it("必須項目が欠けている場合は 400 を返す", async () => {
@@ -115,7 +115,7 @@ describe("POST /api/evaluation-assignments", () => {
 
     const req = new Request("http://localhost/api/evaluation-assignments", {
       method: "POST",
-      body: JSON.stringify({ fiscal_year: 2025 }),
+      body: JSON.stringify({ fiscalYear: 2025 }),
     });
     const res = await POST(req);
 
@@ -128,7 +128,7 @@ describe("POST /api/evaluation-assignments", () => {
 
     const req = new Request("http://localhost/api/evaluation-assignments", {
       method: "POST",
-      body: JSON.stringify({ fiscal_year: 2025, evaluatee_id: "user-2", evaluator_id: "user-1" }),
+      body: JSON.stringify({ fiscalYear: 2025, evaluateeId: "user-2", evaluatorId: "user-1" }),
     });
     const res = await POST(req);
 
@@ -140,7 +140,7 @@ describe("POST /api/evaluation-assignments", () => {
 
     const req = new Request("http://localhost/api/evaluation-assignments", {
       method: "POST",
-      body: JSON.stringify({ fiscal_year: 2025, evaluatee_id: "user-2", evaluator_id: "user-1" }),
+      body: JSON.stringify({ fiscalYear: 2025, evaluateeId: "user-2", evaluatorId: "user-1" }),
     });
     const res = await POST(req);
 
@@ -152,7 +152,7 @@ describe("POST /api/evaluation-assignments", () => {
 
     const req = new Request("http://localhost/api/evaluation-assignments", {
       method: "POST",
-      body: JSON.stringify({ fiscal_year: 2025, evaluatee_id: "user-2", evaluator_id: "user-1" }),
+      body: JSON.stringify({ fiscalYear: 2025, evaluateeId: "user-2", evaluatorId: "user-1" }),
     });
     const res = await POST(req);
 

@@ -22,9 +22,9 @@ const memberSession = { user: { id: "member-1", role: "member" } };
 const mockFy = {
   year: 2026,
   name: "2026年度",
-  start_date: new Date("2026-04-01"),
-  end_date: new Date("2027-03-31"),
-  is_current: false,
+  startDate: new Date("2026-04-01"),
+  endDate: new Date("2027-03-31"),
+  isCurrent: false,
 };
 
 function makeParams(year: string) {
@@ -52,22 +52,22 @@ describe("PATCH /api/admin/fiscal-years/:year", () => {
     expect(res.status).toBe(200);
   });
 
-  it("is_current: true にすると他年度が false になる", async () => {
+  it("isCurrent: true にすると他年度が false になる", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
     vi.mocked(prisma.$transaction).mockImplementation(async (fn) => fn(prisma as never));
     vi.mocked(prisma.fiscalYear.updateMany).mockResolvedValue({ count: 1 } as never);
-    vi.mocked(prisma.fiscalYear.update).mockResolvedValue({ ...mockFy, is_current: true } as never);
+    vi.mocked(prisma.fiscalYear.update).mockResolvedValue({ ...mockFy, isCurrent: true } as never);
 
     const req = new Request("http://localhost/api/admin/fiscal-years/2026", {
       method: "PATCH",
-      body: JSON.stringify({ is_current: true }),
+      body: JSON.stringify({ isCurrent: true }),
     });
     const res = await PATCH(req, makeParams("2026"));
     expect(res.status).toBe(200);
     expect(prisma.fiscalYear.updateMany).toHaveBeenCalledWith({
-      where: { is_current: true, year: { not: 2026 } },
-      data: { is_current: false },
+      where: { isCurrent: true, year: { not: 2026 } },
+      data: { isCurrent: false },
     });
   });
 
@@ -109,31 +109,31 @@ describe("PATCH /api/admin/fiscal-years/:year", () => {
 
     const req = new Request("http://localhost/api/admin/fiscal-years/2026", {
       method: "PATCH",
-      body: JSON.stringify({ start_date: 123, end_date: 456 }),
+      body: JSON.stringify({ startDate: 123, endDate: 456 }),
     });
     const res = await PATCH(req, makeParams("2026"));
     expect(res.status).toBe(400);
   });
 
-  it("start_date が不正な日付文字列の場合は 400", async () => {
+  it("startDate が不正な日付文字列の場合は 400", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
 
     const req = new Request("http://localhost/api/admin/fiscal-years/2026", {
       method: "PATCH",
-      body: JSON.stringify({ start_date: "not-a-date" }),
+      body: JSON.stringify({ startDate: "not-a-date" }),
     });
     const res = await PATCH(req, makeParams("2026"));
     expect(res.status).toBe(400);
   });
 
-  it("start_date が end_date より後の場合は 400", async () => {
+  it("startDate が endDate より後の場合は 400", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
 
     const req = new Request("http://localhost/api/admin/fiscal-years/2026", {
       method: "PATCH",
-      body: JSON.stringify({ start_date: "2028-01-01" }),
+      body: JSON.stringify({ startDate: "2028-01-01" }),
     });
     const res = await PATCH(req, makeParams("2026"));
     expect(res.status).toBe(400);

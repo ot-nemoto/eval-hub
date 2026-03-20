@@ -13,27 +13,27 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const mockTarget = { id: 1, name: "employee", no: 1 };
-const mockCategory = { id: 1, target_id: 1, name: "engagement", no: 1 };
+const mockCategory = { id: 1, targetId: 1, name: "engagement", no: 1 };
 const mockItems = [
   {
     id: 1,
-    target_id: 1,
-    category_id: 1,
+    targetId: 1,
+    categoryId: 1,
     no: 1,
     name: "会社員としての基本姿勢",
     description: "説明",
-    eval_criteria: "基準",
+    evalCriteria: "基準",
     target: mockTarget,
     category: mockCategory,
   },
   {
     id: 2,
-    target_id: 1,
-    category_id: 1,
+    targetId: 1,
+    categoryId: 1,
     no: 2,
     name: "積極性",
     description: null,
-    eval_criteria: null,
+    evalCriteria: null,
     target: mockTarget,
     category: mockCategory,
   },
@@ -58,13 +58,13 @@ describe("GET /api/evaluation-items", () => {
     vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
     vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue([mockItems[0]] as never);
 
-    const req = new Request("http://localhost/api/evaluation-items?target_id=1");
+    const req = new Request("http://localhost/api/evaluation-items?targetId=1");
     const res = await GET(req);
 
     expect(res.status).toBe(200);
     expect(prisma.evaluationItem.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ target_id: 1 }),
+        where: expect.objectContaining({ targetId: 1 }),
       }),
     );
   });
@@ -73,26 +73,26 @@ describe("GET /api/evaluation-items", () => {
     vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
     vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue(mockItems as never);
 
-    const req = new Request("http://localhost/api/evaluation-items?category_id=1");
+    const req = new Request("http://localhost/api/evaluation-items?categoryId=1");
     const res = await GET(req);
 
     expect(res.status).toBe(200);
     expect(prisma.evaluationItem.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ category_id: 1 }),
+        where: expect.objectContaining({ categoryId: 1 }),
       }),
     );
   });
 
   it("?target_id が不正値の場合は 400", async () => {
     vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
-    const res = await GET(new Request("http://localhost/api/evaluation-items?target_id=abc"));
+    const res = await GET(new Request("http://localhost/api/evaluation-items?targetId=abc"));
     expect(res.status).toBe(400);
   });
 
   it("?category_id が不正値の場合は 400", async () => {
     vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
-    const res = await GET(new Request("http://localhost/api/evaluation-items?category_id=abc"));
+    const res = await GET(new Request("http://localhost/api/evaluation-items?categoryId=abc"));
     expect(res.status).toBe(400);
   });
 

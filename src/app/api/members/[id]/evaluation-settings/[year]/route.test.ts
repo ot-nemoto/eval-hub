@@ -30,20 +30,20 @@ describe("PUT /api/members/:id/evaluation-settings/:year", () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never);
     vi.mocked(prisma.evaluationSetting.upsert).mockResolvedValue({
       id: "setting-1",
-      user_id: "member-1",
-      fiscal_year: 2026,
-      self_evaluation_enabled: false,
+      userId: "member-1",
+      fiscalYear: 2026,
+      selfEvaluationEnabled: false,
     } as never);
 
     const req = new Request("http://localhost", {
       method: "PUT",
-      body: JSON.stringify({ self_evaluation_enabled: false }),
+      body: JSON.stringify({ selfEvaluationEnabled: false }),
     });
     const res = await PUT(req, makeParams("member-1", "2026"));
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.data).toMatchObject({ fiscal_year: 2026, self_evaluation_enabled: false });
+    expect(body.data).toMatchObject({ fiscalYear: 2026, selfEvaluationEnabled: false });
   });
 
   it("member は更新できない（403）", async () => {
@@ -51,7 +51,7 @@ describe("PUT /api/members/:id/evaluation-settings/:year", () => {
 
     const req = new Request("http://localhost", {
       method: "PUT",
-      body: JSON.stringify({ self_evaluation_enabled: false }),
+      body: JSON.stringify({ selfEvaluationEnabled: false }),
     });
     const res = await PUT(req, makeParams("member-1", "2026"));
 
@@ -63,7 +63,7 @@ describe("PUT /api/members/:id/evaluation-settings/:year", () => {
 
     const req = new Request("http://localhost", {
       method: "PUT",
-      body: JSON.stringify({ self_evaluation_enabled: false }),
+      body: JSON.stringify({ selfEvaluationEnabled: false }),
     });
     const res = await PUT(req, makeParams("member-1", "abc"));
 
@@ -75,7 +75,7 @@ describe("PUT /api/members/:id/evaluation-settings/:year", () => {
 
     const req = new Request("http://localhost", {
       method: "PUT",
-      body: JSON.stringify({ self_evaluation_enabled: "yes" }),
+      body: JSON.stringify({ selfEvaluationEnabled: "yes" }),
     });
     const res = await PUT(req, makeParams("member-1", "2026"));
 
@@ -88,7 +88,7 @@ describe("PUT /api/members/:id/evaluation-settings/:year", () => {
 
     const req = new Request("http://localhost", {
       method: "PUT",
-      body: JSON.stringify({ self_evaluation_enabled: false }),
+      body: JSON.stringify({ selfEvaluationEnabled: false }),
     });
     const res = await PUT(req, makeParams("not-exist", "2026"));
 
@@ -100,7 +100,7 @@ describe("PUT /api/members/:id/evaluation-settings/:year", () => {
 
     const req = new Request("http://localhost", {
       method: "PUT",
-      body: JSON.stringify({ self_evaluation_enabled: false }),
+      body: JSON.stringify({ selfEvaluationEnabled: false }),
     });
     const res = await PUT(req, makeParams("member-1", "2026"));
 

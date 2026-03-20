@@ -22,8 +22,8 @@ export async function PUT(
   }
 
   const body = await request.json().catch(() => null);
-  if (!body || typeof body.self_evaluation_enabled !== "boolean") {
-    return errorResponse("BAD_REQUEST", "self_evaluation_enabled は boolean で指定してください", 400);
+  if (!body || typeof body.selfEvaluationEnabled !== "boolean") {
+    return errorResponse("BAD_REQUEST", "selfEvaluationEnabled は boolean で指定してください", 400);
   }
 
   const target = await prisma.user.findUnique({ where: { id } });
@@ -32,13 +32,13 @@ export async function PUT(
   }
 
   const setting = await prisma.evaluationSetting.upsert({
-    where: { user_id_fiscal_year: { user_id: id, fiscal_year: fiscalYear } },
-    update: { self_evaluation_enabled: body.self_evaluation_enabled },
-    create: { user_id: id, fiscal_year: fiscalYear, self_evaluation_enabled: body.self_evaluation_enabled },
+    where: { userId_fiscalYear: { userId: id, fiscalYear: fiscalYear } },
+    update: { selfEvaluationEnabled: body.selfEvaluationEnabled },
+    create: { userId: id, fiscalYear: fiscalYear, selfEvaluationEnabled: body.selfEvaluationEnabled },
   });
 
   return successResponse({
-    fiscal_year: setting.fiscal_year,
-    self_evaluation_enabled: setting.self_evaluation_enabled,
+    fiscalYear: setting.fiscalYear,
+    selfEvaluationEnabled: setting.selfEvaluationEnabled,
   });
 }

@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
  */
 export async function getCurrentFiscalYear(): Promise<number | null> {
   const fy = await prisma.fiscalYear.findFirst({
-    where: { is_current: true },
+    where: { isCurrent: true },
     select: { year: true },
   });
   return fy?.year ?? null;
