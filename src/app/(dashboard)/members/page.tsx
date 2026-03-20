@@ -1,7 +1,8 @@
-import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { getCurrentFiscalYear } from "@/lib/fiscal-year";
+import { prisma } from "@/lib/prisma";
 
 export default async function MembersPage() {
   const session = await getSession();
@@ -9,7 +10,7 @@ export default async function MembersPage() {
 
   const userId = session.user.id;
   const isAdmin = session.user.role === "admin";
-  const fiscalYear = new Date().getFullYear();
+  const fiscalYear = await getCurrentFiscalYear();
 
   type Member = { id: string; name: string; division: string | null };
   let members: Member[] = [];
@@ -19,7 +20,7 @@ export default async function MembersPage() {
       select: { id: true, name: true, division: true },
       orderBy: { name: "asc" },
     });
-  } else {
+  } else if (fiscalYear !== null) {
     const assignments = await prisma.evaluationAssignment.findMany({
       where: { evaluator_id: userId, fiscal_year: fiscalYear },
       include: { evaluatee: { select: { id: true, name: true, division: true } } },
@@ -32,10 +33,12 @@ export default async function MembersPage() {
     <div>
       <div className="mb-6">
         <h2 className="text-xl font-bold text-gray-900">社員一覧</h2>
-        <p className="text-sm text-gray-500">{fiscalYear}年度</p>
+        {fiscalYear !== null && <p className="text-sm text-gray-500">{fiscalYear}年度</p>}
       </div>
 
-      {members.length === 0 ? (
+      {!isAdmin && fiscalYear === null ? (
+        <p className="text-gray-500">現在年度が設定されていません。管理者に確認してください。</p>
+      ) : members.length === 0 ? (
         <p className="text-gray-500">担当する被評価者がいません。</p>
       ) : (
         <div className="overflow-hidden rounded-lg border bg-white">

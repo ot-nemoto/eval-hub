@@ -13,6 +13,7 @@ const SCORE_LABELS: Record<Score, string> = {
 };
 
 type Item = {
+  id: number;
   uid: string;
   name: string;
   description: string | null;
@@ -33,42 +34,42 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
   const categories = [...new Set(items.map((i) => i.category))];
   const [activeCategory, setActiveCategory] = useState(categories[0] ?? "");
 
-  const [scores, setScores] = useState<Record<string, Score>>(
-    Object.fromEntries(items.map((i) => [i.uid, i.self_score ?? "none"])),
+  const [scores, setScores] = useState<Record<number, Score>>(
+    Object.fromEntries(items.map((i) => [i.id, i.self_score ?? "none"])),
   );
-  const [reasons, setReasons] = useState<Record<string, string>>(
-    Object.fromEntries(items.map((i) => [i.uid, i.self_reason ?? ""])),
+  const [reasons, setReasons] = useState<Record<number, string>>(
+    Object.fromEntries(items.map((i) => [i.id, i.self_reason ?? ""])),
   );
-  const [saving, setSaving] = useState<Record<string, boolean>>({});
-  const [saved, setSaved] = useState<Record<string, boolean>>({});
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const savedTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const [saving, setSaving] = useState<Record<number, boolean>>({});
+  const [saved, setSaved] = useState<Record<number, boolean>>({});
+  const [errors, setErrors] = useState<Record<number, string>>({});
+  const savedTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 
   const activeItems = items.filter((i) => i.category === activeCategory);
 
-  async function handleSave(uid: string) {
-    setSaving((s) => ({ ...s, [uid]: true }));
-    setErrors((e) => ({ ...e, [uid]: "" }));
+  async function handleSave(id: number) {
+    setSaving((s) => ({ ...s, [id]: true }));
+    setErrors((e) => ({ ...e, [id]: "" }));
     try {
       const res = await fetch(
-        `/api/members/${userId}/evaluations/${fiscalYear}/${uid}`,
+        `/api/members/${userId}/evaluations/${fiscalYear}/${id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            self_score: scores[uid] ?? "none",
-            self_reason: reasons[uid] ?? "",
+            self_score: scores[id] ?? "none",
+            self_reason: reasons[id] ?? "",
           }),
         },
       );
       if (!res.ok) throw new Error();
-      setSaved((s) => ({ ...s, [uid]: true }));
-      clearTimeout(savedTimers.current[uid]);
-      savedTimers.current[uid] = setTimeout(() => setSaved((s) => ({ ...s, [uid]: false })), 2000);
+      setSaved((s) => ({ ...s, [id]: true }));
+      clearTimeout(savedTimers.current[id]);
+      savedTimers.current[id] = setTimeout(() => setSaved((s) => ({ ...s, [id]: false })), 2000);
     } catch {
-      setErrors((e) => ({ ...e, [uid]: "保存に失敗しました" }));
+      setErrors((e) => ({ ...e, [id]: "保存に失敗しました" }));
     } finally {
-      setSaving((s) => ({ ...s, [uid]: false }));
+      setSaving((s) => ({ ...s, [id]: false }));
     }
   }
 
@@ -99,7 +100,7 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
       {/* Items */}
       <div className="space-y-6">
         {activeItems.map((item) => (
-          <div key={item.uid} className="rounded-lg border bg-white p-5">
+          <div key={item.id} className="rounded-lg border bg-white p-5">
             <div className="mb-4">
               <span className="text-xs font-medium text-gray-400">{item.uid}</span>
               <h3 className="text-base font-semibold text-gray-900">{item.name}</h3>
@@ -125,10 +126,10 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
                       key={score}
                       type="button"
                       onClick={() =>
-                        setScores((s) => ({ ...s, [item.uid]: score }))
+                        setScores((s) => ({ ...s, [item.id]: score }))
                       }
                       className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                        scores[item.uid] === score
+                        scores[item.id] === score
                           ? "bg-blue-600 text-white"
                           : "border border-gray-300 text-gray-700 hover:bg-gray-50"
                       }`}
@@ -147,9 +148,9 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
                 <textarea
                   className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   rows={3}
-                  value={reasons[item.uid] ?? ""}
+                  value={reasons[item.id] ?? ""}
                   onChange={(e) =>
-                    setReasons((r) => ({ ...r, [item.uid]: e.target.value }))
+                    setReasons((r) => ({ ...r, [item.id]: e.target.value }))
                   }
                 />
               </div>
@@ -157,16 +158,16 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
               <div className="flex items-center gap-3">
                 <Button
                   size="sm"
-                  onClick={() => handleSave(item.uid)}
-                  disabled={saving[item.uid]}
+                  onClick={() => handleSave(item.id)}
+                  disabled={saving[item.id]}
                 >
-                  {saving[item.uid] ? "保存中..." : "保存"}
+                  {saving[item.id] ? "保存中..." : "保存"}
                 </Button>
-                {saved[item.uid] && (
+                {saved[item.id] && (
                   <span className="text-sm text-green-600">保存しました</span>
                 )}
-                {errors[item.uid] && (
-                  <span className="text-sm text-red-600">{errors[item.uid]}</span>
+                {errors[item.id] && (
+                  <span className="text-sm text-red-600">{errors[item.id]}</span>
                 )}
               </div>
             </div>

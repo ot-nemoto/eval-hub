@@ -1,5 +1,5 @@
-import { getSession } from "@/lib/auth";
 import { errorResponse, successResponse } from "@/lib/api-response";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
@@ -39,12 +39,12 @@ export async function GET(
   const evaluations = await prisma.evaluation.findMany({
     where: { fiscal_year: fiscalYear, evaluatee_id: evaluateeId },
     include: { evaluation_item: { select: { name: true } } },
-    orderBy: { eval_uid: "asc" },
+    orderBy: { eval_item_id: "asc" },
   });
 
   return successResponse(
     evaluations.map((e) => ({
-      eval_uid: e.eval_uid,
+      eval_item_id: e.eval_item_id,
       item_name: e.evaluation_item.name,
       self_score: e.self_score,
       self_reason: e.self_reason,

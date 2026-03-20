@@ -1,17 +1,32 @@
-import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import EvaluationTabs from "@/components/evaluation/EvaluationTabs";
+import { getSession } from "@/lib/auth";
+import { getCurrentFiscalYear } from "@/lib/fiscal-year";
+import { prisma } from "@/lib/prisma";
 
 export default async function EvaluationsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
   const userId = session.user.id;
-  const fiscalYear = new Date().getFullYear();
+  const fiscalYear = await getCurrentFiscalYear();
+
+  if (!fiscalYear) {
+    return (
+      <div>
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900">自己評価</h2>
+        </div>
+        <div className="rounded-lg border bg-white p-8 text-center text-gray-500">
+          現在年度が設定されていません。管理者に確認してください。
+        </div>
+      </div>
+    );
+  }
 
   const [items, evaluations, setting] = await Promise.all([
     prisma.evaluationItem.findMany({
-      orderBy: [{ target_no: "asc" }, { category_no: "asc" }, { item_no: "asc" }],
+      orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
+      include: { target: true, category: true },
     }),
     prisma.evaluation.findMany({
       where: { evaluatee_id: userId, fiscal_year: fiscalYear },
@@ -37,17 +52,18 @@ export default async function EvaluationsPage() {
     );
   }
 
-  const evalMap = Object.fromEntries(evaluations.map((e) => [e.eval_uid, e]));
+  const evalMap = Object.fromEntries(evaluations.map((e) => [e.eval_item_id, e]));
 
   const itemsWithEval = items.map((item) => {
-    const ev = evalMap[item.uid];
+    const ev = evalMap[item.id];
     return {
-      uid: item.uid,
+      id: item.id,
+      uid: `${item.target.no}-${item.category.no}-${item.no}`,
       name: item.name,
       description: item.description,
       eval_criteria: item.eval_criteria,
-      category: item.category,
-      target: item.target,
+      category: item.category.name,
+      target: item.target.name,
       self_score: (ev?.self_score ?? null) as "none" | "ka" | "ryo" | "yu" | null,
       self_reason: ev?.self_reason ?? null,
     };
@@ -59,11 +75,7 @@ export default async function EvaluationsPage() {
         <h2 className="text-xl font-bold text-gray-900">自己評価</h2>
         <p className="text-sm text-gray-500">{fiscalYear}年度</p>
       </div>
-      <EvaluationTabs
-        items={itemsWithEval}
-        userId={userId}
-        fiscalYear={fiscalYear}
-      />
+      <EvaluationTabs items={itemsWithEval} userId={userId} fiscalYear={fiscalYear} />
     </div>
   );
 }
