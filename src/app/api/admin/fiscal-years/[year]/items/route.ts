@@ -24,11 +24,9 @@ export async function GET(_request: Request, { params }: Params) {
       evaluation_item: {
         select: {
           uid: true,
-          target: true,
-          target_no: true,
-          category: true,
-          category_no: true,
-          item_no: true,
+          target_id: true,
+          category_id: true,
+          no: true,
           name: true,
         },
       },

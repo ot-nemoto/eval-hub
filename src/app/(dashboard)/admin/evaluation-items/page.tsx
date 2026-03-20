@@ -10,14 +10,14 @@ export default async function EvaluationItemsPage() {
   if (session.user.role !== "admin") redirect("/evaluations");
 
   const items = await prisma.evaluationItem.findMany({
-    orderBy: [{ target_no: "asc" }, { category_no: "asc" }, { item_no: "asc" }],
+    orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
     select: {
       uid: true,
-      target: true,
-      category: true,
       name: true,
       description: true,
       eval_criteria: true,
+      target: { select: { name: true } },
+      category: { select: { name: true } },
       _count: { select: { fiscal_year_items: true } },
     },
   });
@@ -55,8 +55,8 @@ export default async function EvaluationItemsPage() {
               items.map((item) => (
                 <tr key={item.uid} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-mono text-xs text-gray-500">{item.uid}</td>
-                  <td className="px-4 py-3 text-gray-700">{item.target}</td>
-                  <td className="px-4 py-3 text-gray-700">{item.category}</td>
+                  <td className="px-4 py-3 text-gray-700">{item.target.name}</td>
+                  <td className="px-4 py-3 text-gray-700">{item.category.name}</td>
                   <td className="px-4 py-3 text-gray-900">{item.name}</td>
                   <td className="px-4 py-3 text-right">
                     <EvaluationItemActions item={item} hasEvaluations={item._count.fiscal_year_items > 0} />
