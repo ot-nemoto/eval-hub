@@ -1,8 +1,7 @@
+import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import ManagerEvaluationTabs from "@/components/evaluation/ManagerEvaluationTabs";
-import { getSession } from "@/lib/auth";
-import { getCurrentFiscalYear } from "@/lib/fiscal-year";
-import { prisma } from "@/lib/prisma";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -13,8 +12,7 @@ export default async function MemberEvaluationsPage({ params }: Props) {
   const { id: evaluateeId } = await params;
   const evaluatorId = session.user.id;
   const isAdmin = session.user.role === "admin";
-  const fiscalYear = await getCurrentFiscalYear();
-  if (!fiscalYear) notFound();
+  const fiscalYear = new Date().getFullYear();
 
   // 権限確認: admin または当該年度にアサインされた評価者のみアクセス可
   if (!isAdmin) {
@@ -38,26 +36,24 @@ export default async function MemberEvaluationsPage({ params }: Props) {
 
   const [items, evaluations] = await Promise.all([
     prisma.evaluationItem.findMany({
-      orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
-      include: { target: true, category: true },
+      orderBy: [{ target_no: "asc" }, { category_no: "asc" }, { item_no: "asc" }],
     }),
     prisma.evaluation.findMany({
       where: { evaluatee_id: evaluateeId, fiscal_year: fiscalYear },
     }),
   ]);
 
-  const evalMap = Object.fromEntries(evaluations.map((e) => [e.eval_item_id, e]));
+  const evalMap = Object.fromEntries(evaluations.map((e) => [e.eval_uid, e]));
 
   const itemsWithEval = items.map((item) => {
-    const ev = evalMap[item.id];
+    const ev = evalMap[item.uid];
     return {
-      id: item.id,
-      uid: `${item.target.no}-${item.category.no}-${item.no}`,
+      uid: item.uid,
       name: item.name,
       description: item.description,
       eval_criteria: item.eval_criteria,
-      category: item.category.name,
-      target: item.target.name,
+      category: item.category,
+      target: item.target,
       self_score: (ev?.self_score ?? null) as "none" | "ka" | "ryo" | "yu" | null,
       self_reason: ev?.self_reason ?? null,
       manager_score: (ev?.manager_score ?? null) as "none" | "ka" | "ryo" | "yu" | null,

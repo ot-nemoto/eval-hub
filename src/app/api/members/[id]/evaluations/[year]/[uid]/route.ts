@@ -1,25 +1,20 @@
-import { errorResponse, successResponse } from "@/lib/api-response";
 import { getSession } from "@/lib/auth";
+import { errorResponse, successResponse } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string; year: string; itemId: string }> },
+  { params }: { params: Promise<{ id: string; year: string; uid: string }> },
 ) {
   const session = await getSession();
   if (!session) {
     return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
   }
 
-  const { id: evaluateeId, year, itemId: itemIdStr } = await params;
+  const { id: evaluateeId, year, uid: evalUid } = await params;
   const fiscalYear = Number(year);
   if (Number.isNaN(fiscalYear)) {
     return errorResponse("BAD_REQUEST", "year は数値で指定してください", 400);
-  }
-
-  const itemId = Number(itemIdStr);
-  if (!Number.isInteger(itemId) || itemId < 1) {
-    return errorResponse("BAD_REQUEST", "itemId は正の整数で指定してください", 400);
   }
 
   const currentUserId = session.user.id;
@@ -86,23 +81,23 @@ export async function PUT(
 
   const evaluation = await prisma.evaluation.upsert({
     where: {
-      fiscal_year_evaluatee_id_eval_item_id: {
+      fiscal_year_evaluatee_id_eval_uid: {
         fiscal_year: fiscalYear,
         evaluatee_id: evaluateeId,
-        eval_item_id: itemId,
+        eval_uid: evalUid,
       },
     },
     create: {
       fiscal_year: fiscalYear,
       evaluatee_id: evaluateeId,
-      eval_item_id: itemId,
+      eval_uid: evalUid,
       ...updateData,
     },
     update: updateData,
   });
 
   return successResponse({
-    eval_item_id: evaluation.eval_item_id,
+    eval_uid: evaluation.eval_uid,
     self_score: evaluation.self_score,
     self_reason: evaluation.self_reason,
     manager_score: evaluation.manager_score,
