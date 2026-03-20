@@ -71,7 +71,6 @@ erDiagram
         VARCHAR name
         TEXT description
         TEXT eval_criteria
-        BOOLEAN two_year_rule
     }
     evaluations {
         TEXT id PK
@@ -185,7 +184,6 @@ erDiagram
 | name | VARCHAR(255) | NOT NULL | 評価項目名 |
 | description | TEXT | | 説明 |
 | eval_criteria | TEXT | | 評価事例・基準 |
-| two_year_rule | BOOLEAN | DEFAULT false | ２年ルール適用 |
 
 ---
 

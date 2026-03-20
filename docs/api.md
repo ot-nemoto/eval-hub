@@ -53,6 +53,67 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 ## 評価項目マスタ
 
+### GET /api/admin/evaluation-items
+評価項目一覧取得（admin のみ）
+
+**Response**
+```json
+{
+  "data": [
+    {
+      "uid": "1-1-1",
+      "target": "employee",
+      "target_no": 1,
+      "category": "engagement",
+      "category_no": 1,
+      "item_no": 1,
+      "name": "会社員としての基本姿勢",
+      "description": "...",
+      "eval_criteria": "..."
+    }
+  ]
+}
+```
+
+### POST /api/admin/evaluation-items
+評価項目追加（admin のみ）
+
+**Request**
+```json
+{
+  "uid": "1-1-2",
+  "target": "employee",
+  "target_no": 1,
+  "category": "engagement",
+  "category_no": 1,
+  "item_no": 2,
+  "name": "新しい評価項目",
+  "description": null,
+  "eval_criteria": null
+}
+```
+
+**Response**: `201 Created`
+
+### PATCH /api/admin/evaluation-items/:uid
+評価項目編集（admin のみ）。`name`・`description`・`eval_criteria` を更新可。
+
+**Request**
+```json
+{ "name": "更新後の名称" }
+```
+
+**Response**: `200 OK`
+
+### DELETE /api/admin/evaluation-items/:uid
+評価項目削除（admin のみ）
+
+- 年度（`fiscal_year_items`）に紐づいている場合は `409 Conflict`
+
+**Response**: `204 No Content`
+
+---
+
 ### GET /api/evaluation-items
 評価項目一覧
 
@@ -68,8 +129,7 @@ NextAuth.js による認証（ログイン・セッション管理）
       "category": "engagement",
       "name": "会社員としての基本姿勢",
       "description": "...",
-      "eval_criteria": "...",
-      "two_year_rule": false
+      "eval_criteria": "..."
     }
   ]
 }
@@ -321,8 +381,7 @@ NextAuth.js による認証（ログイン・セッション管理）
       "uid": "1-1-1",
       "target": "employee",
       "category": "engagement",
-      "name": "会社員としての基本姿勢",
-      "two_year_rule": false
+      "name": "会社員としての基本姿勢"
     }
   ]
 }

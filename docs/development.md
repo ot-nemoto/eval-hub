@@ -55,6 +55,14 @@ NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/evaluations
 npx prisma migrate deploy
 ```
 
+### 3-1. DB をリセットしたい場合
+
+```bash
+npx prisma migrate reset
+```
+
+> **注意**: `migrate reset` は seed を自動実行しますが、環境によってスキップされる場合があります。リセット後は必ず手動で seed を実行してください（手順 4）。
+
 ### 4. シードデータを投入
 
 **ローカル環境**（`.env.local` の接続先を使う場合）：
@@ -77,7 +85,7 @@ DATABASE_URL=<接続先> CLERK_SECRET_KEY=<key> npx prisma db seed
 
 シードで作成されるユーザーとパスワードは以下の通り（開発用）：
 
-**共通パスワード**: `EvalHub#Dev2026!`
+**共通パスワード**: `AmericanDogs`
 
 | email | name | role | 検証シナリオ |
 |-------|------|------|------------|

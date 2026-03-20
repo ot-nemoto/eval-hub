@@ -29,8 +29,8 @@ async function syncClerkUser(email: string): Promise<string | null> {
   if (existing.data.length > 0) return existing.data[0].id;
   const created = await clerkClient.users.createUser({
     emailAddress: [email],
-    password: "EvalHub#Dev2026!",
-    skipPasswordChecks: false,
+    password: "AmericanDogs",
+    skipPasswordChecks: true,
   });
   return created.id;
 }
@@ -257,7 +257,6 @@ async function main() {
         name: item.name,
         description: item.description ?? null,
         eval_criteria: item.eval_criteria ?? null,
-        two_year_rule: item.two_year_rule,
       },
       create: {
         uid: item.uid,
@@ -269,7 +268,6 @@ async function main() {
         name: item.name,
         description: item.description ?? null,
         eval_criteria: item.eval_criteria ?? null,
-        two_year_rule: item.two_year_rule,
       },
     });
   }
