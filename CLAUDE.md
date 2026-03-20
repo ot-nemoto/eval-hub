@@ -1,4 +1,4 @@
-# CLAUDE.md — eval-hub プロジェクトルール
+# CLAUDE.md
 
 ## 作業開始時のチェックリスト
 
