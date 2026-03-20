@@ -189,9 +189,9 @@ erDiagram
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| id | INTEGER | PK, AUTO INCREMENT | |
+| id | INTEGER | PK, AUTO INCREMENT | グローバル識別子 |
 | name | VARCHAR(100) | NOT NULL | 大分類名（例: employee） |
-| sort_no | INTEGER | NOT NULL | 並び順 |
+| no | INTEGER | UNIQUE, NOT NULL | 全体でユニークな番号（uid の第1部・並び順兼用） |
 
 - admin が管理画面から追加・編集・削除する
 - `categories` が紐づいている場合は削除不可（409）
@@ -202,10 +202,10 @@ erDiagram
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| id | INTEGER | PK, AUTO INCREMENT | |
+| id | INTEGER | PK, AUTO INCREMENT | グローバル識別子 |
 | target_id | INTEGER | FK → targets.id, NOT NULL | 大分類 |
 | name | VARCHAR(100) | NOT NULL | 中分類名（例: engagement） |
-| sort_no | INTEGER | NOT NULL | 並び順 |
+| no | INTEGER | UNIQUE per target, NOT NULL | target 内でユニークな番号（uid の第2部・並び順兼用） |
 
 - admin が管理画面から追加・編集・削除する
 - `evaluation_items` が紐づいている場合は削除不可（409）
@@ -216,13 +216,16 @@ erDiagram
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| uid | VARCHAR(20) | PK | 例: `1-1-1`, `2-3-3` |
+| uid | VARCHAR(20) | PK | `{target.no}-{category.no}-{no}` で自動生成（例: `1-1-1`） |
 | target_id | INTEGER | FK → targets.id, NOT NULL | 大分類 |
 | category_id | INTEGER | FK → categories.id, NOT NULL | 中分類 |
-| item_no | INTEGER | NOT NULL | 項目番号 |
+| no | INTEGER | UNIQUE per category, NOT NULL | category 内でユニークな番号（uid の第3部・並び順兼用） |
 | name | VARCHAR(255) | NOT NULL | 評価項目名 |
 | description | TEXT | | 説明 |
 | eval_criteria | TEXT | | 評価事例・基準 |
+
+- uid は POST 時にサーバー側で自動生成（`{target.no}-{category.no}-{MAX(no)+1}`）
+- 削除しても no は詰めない（欠番 OK）
 
 ---
 

@@ -60,57 +60,15 @@ async function cleanupUser(email: string): Promise<void> {
 
 // ─── 年度マスタ ────────────────────────────────────────────────────────────────
 
-async function seedFiscalYears(allItemUids: string[]) {
-  const fiscalYearsData = [
-    {
-      year: 2025,
-      name: "2025年度",
-      start_date: new Date("2025-04-01"),
-      end_date: new Date("2026-03-31"),
-      is_current: false,
-    },
-    {
-      year: 2026,
-      name: "2026年度",
-      start_date: new Date("2026-04-01"),
-      end_date: new Date("2027-03-31"),
-      is_current: true,
-    },
-    {
-      year: 2027,
-      name: "2027年度",
-      start_date: new Date("2027-04-01"),
-      end_date: new Date("2028-03-31"),
-      is_current: false,
-    },
-  ];
-
-  for (const fy of fiscalYearsData) {
-    await prisma.fiscalYear.upsert({
-      where: { year: fy.year },
-      update: {
-        name: fy.name,
-        start_date: fy.start_date,
-        end_date: fy.end_date,
-        is_current: fy.is_current,
-      },
-      create: fy,
-    });
-
-    // 全評価項目を各年度に紐付け
+async function seedFiscalYearItems(allItemUids: string[]) {
+  const years = [2025, 2026, 2027];
+  for (const year of years) {
     await prisma.fiscalYearItem.createMany({
-      data: allItemUids.map((uid) => ({ fiscal_year: fy.year, evaluation_item_uid: uid })),
+      data: allItemUids.map((uid) => ({ fiscal_year: year, evaluation_item_uid: uid })),
       skipDuplicates: true,
     });
   }
-
-  // is_current の排他制御（2026年度のみ true）
-  await prisma.fiscalYear.updateMany({
-    where: { year: { not: 2026 } },
-    data: { is_current: false },
-  });
-
-  console.log(`fiscal_years: ${fiscalYearsData.length} upserted`);
+  console.log(`fiscal_year_items: upserted for ${years.join(", ")}`);
 }
 
 // ─── メイン ────────────────────────────────────────────────────────────────────
@@ -162,7 +120,25 @@ async function main() {
   console.log(`users: ${usersData.length} upserted`);
 
   // =========================================================================
-  // 2. 自己評価要否設定（evaluation_settings）
+  // 2. 年度マスタ（fiscal_years のみ、fiscal_year_items は後で登録）
+  // =========================================================================
+  const fiscalYearsBase = [
+    { year: 2025, name: "2025年度", start_date: new Date("2025-04-01"), end_date: new Date("2026-03-31"), is_current: false },
+    { year: 2026, name: "2026年度", start_date: new Date("2026-04-01"), end_date: new Date("2027-03-31"), is_current: true },
+    { year: 2027, name: "2027年度", start_date: new Date("2027-04-01"), end_date: new Date("2028-03-31"), is_current: false },
+  ];
+  for (const fy of fiscalYearsBase) {
+    await prisma.fiscalYear.upsert({
+      where: { year: fy.year },
+      update: { name: fy.name, start_date: fy.start_date, end_date: fy.end_date, is_current: fy.is_current },
+      create: fy,
+    });
+  }
+  await prisma.fiscalYear.updateMany({ where: { year: { not: 2026 } }, data: { is_current: false } });
+  console.log(`fiscal_years: ${fiscalYearsBase.length} upserted`);
+
+  // =========================================================================
+  // 3. 自己評価要否設定（evaluation_settings）
   //    デフォルト false のため、true にしたい年度のみ明示的に登録する
   //
   //              │ 2025  │ 2026  │ 2027
@@ -197,7 +173,7 @@ async function main() {
   console.log(`evaluation_settings: ${settingsData.length} upserted`);
 
   // =========================================================================
-  // 3. 評価者アサイン（evaluation_assignments）
+  // 4. 評価者アサイン（evaluation_assignments）
   //
   //  年度  │ 被評価者  │ 評価者（上長）
   //  ──────┼───────────┼────────────────
@@ -243,25 +219,25 @@ async function main() {
   console.log(`evaluation_assignments: ${assignmentsData.length} upserted`);
 
   // =========================================================================
-  // 4. 大分類マスタ（targets）
+  // 5. 大分類マスタ（targets）
   // =========================================================================
   const targetsData = [
     ...new Map(
-      evaluationItemsData.map((d) => [d.target, { name: d.target, sort_no: d.target_no ?? 0 }]),
+      evaluationItemsData.map((d) => [d.target, { name: d.target, no: d.target_no ?? 0 }]),
     ).values(),
-  ].sort((a, b) => a.sort_no - b.sort_no);
+  ].sort((a, b) => a.no - b.no);
 
   for (const t of targetsData) {
     await prisma.target.upsert({
-      where: { id: (await prisma.target.findFirst({ where: { name: t.name } }))?.id ?? 0 },
-      update: { sort_no: t.sort_no },
-      create: { name: t.name, sort_no: t.sort_no },
+      where: { no: t.no },
+      update: { name: t.name },
+      create: { name: t.name, no: t.no },
     });
   }
   console.log(`targets: ${targetsData.length} upserted`);
 
   // =========================================================================
-  // 5. 中分類マスタ（categories）
+  // 6. 中分類マスタ（categories）
   // =========================================================================
   const allTargets = await prisma.target.findMany();
   const targetByName = Object.fromEntries(allTargets.map((t) => [t.name, t]));
@@ -270,26 +246,23 @@ async function main() {
     ...new Map(
       evaluationItemsData.map((d) => [
         `${d.target}|${d.category}`,
-        { target: d.target, name: d.category, sort_no: d.category_no ?? 0 },
+        { target: d.target, name: d.category, no: d.category_no ?? 0 },
       ]),
     ).values(),
-  ].sort((a, b) => a.sort_no - b.sort_no);
+  ].sort((a, b) => a.no - b.no);
 
   for (const c of categoriesData) {
     const target = targetByName[c.target];
-    const existing = await prisma.category.findFirst({
-      where: { target_id: target.id, name: c.name },
-    });
     await prisma.category.upsert({
-      where: { id: existing?.id ?? 0 },
-      update: { sort_no: c.sort_no },
-      create: { target_id: target.id, name: c.name, sort_no: c.sort_no },
+      where: { target_id_no: { target_id: target.id, no: c.no } },
+      update: { name: c.name },
+      create: { target_id: target.id, name: c.name, no: c.no },
     });
   }
   console.log(`categories: ${categoriesData.length} upserted`);
 
   // =========================================================================
-  // 6. 評価項目マスタ（evaluation_items）
+  // 7. 評価項目マスタ（evaluation_items）
   // =========================================================================
   const allCategories = await prisma.category.findMany({ include: { target: true } });
   const categoryKey = (targetName: string, categoryName: string) => `${targetName}|${categoryName}`;
@@ -305,7 +278,7 @@ async function main() {
       update: {
         target_id: target.id,
         category_id: category.id,
-        item_no: item.item_no,
+        no: item.item_no,
         name: item.name,
         description: item.description ?? null,
         eval_criteria: item.eval_criteria ?? null,
@@ -314,7 +287,7 @@ async function main() {
         uid: item.uid,
         target_id: target.id,
         category_id: category.id,
-        item_no: item.item_no,
+        no: item.item_no,
         name: item.name,
         description: item.description ?? null,
         eval_criteria: item.eval_criteria ?? null,
@@ -324,10 +297,10 @@ async function main() {
   console.log(`evaluation_items: ${evaluationItemsData.length} upserted`);
 
   // =========================================================================
-  // 7. 年度マスタ（fiscal_years + fiscal_year_items）
+  // 8. fiscal_year_items（年度と評価項目の紐付け）
   // =========================================================================
   const allItemUids = evaluationItemsData.map((item) => item.uid);
-  await seedFiscalYears(allItemUids);
+  await seedFiscalYearItems(allItemUids);
 }
 
 main()
