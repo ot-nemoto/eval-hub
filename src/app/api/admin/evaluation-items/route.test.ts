@@ -26,7 +26,6 @@ const mockItems = [
     name: "会社員としての基本姿勢",
     description: null,
     eval_criteria: null,
-    two_year_rule: false,
   },
 ];
 
@@ -68,7 +67,6 @@ describe("POST /api/admin/evaluation-items", () => {
     category_no: 1,
     item_no: 2,
     name: "新しい評価項目",
-    two_year_rule: false,
   };
 
   it("admin は新しい評価項目を追加できる", async () => {

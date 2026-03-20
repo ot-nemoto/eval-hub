@@ -24,7 +24,6 @@ const mockItem = {
   category_no: 1,
   item_no: 1,
   name: "基本姿勢",
-  two_year_rule: false,
 };
 
 function makeParams(year: string) {

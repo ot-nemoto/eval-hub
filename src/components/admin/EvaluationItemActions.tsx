@@ -8,7 +8,6 @@ type EvaluationItem = {
   name: string;
   description: string | null;
   eval_criteria: string | null;
-  two_year_rule: boolean;
 };
 
 type Props = { item: EvaluationItem; hasEvaluations: boolean };
@@ -21,15 +20,11 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
     name: item.name,
     description: item.description ?? "",
     eval_criteria: item.eval_criteria ?? "",
-    two_year_rule: item.two_year_rule,
   });
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    const { name, value, type } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
-    }));
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   }
 
   async function handleEdit(e: React.FormEvent) {
@@ -43,7 +38,6 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
           name: form.name,
           description: form.description || null,
           eval_criteria: form.eval_criteria || null,
-          two_year_rule: form.two_year_rule,
         }),
       });
       if (res.ok) {
@@ -106,16 +100,6 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
           rows={2}
           className="rounded border border-gray-300 px-2 py-1 text-xs"
         />
-        <label className="flex items-center gap-1 text-xs text-gray-700">
-          <input
-            type="checkbox"
-            name="two_year_rule"
-            checked={form.two_year_rule}
-            onChange={handleChange}
-            className="rounded border-gray-300"
-          />
-          ２年ルール
-        </label>
         <div className="flex gap-2">
           <button
             type="submit"

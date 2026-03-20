@@ -85,7 +85,7 @@ DATABASE_URL=<接続先> CLERK_SECRET_KEY=<key> npx prisma db seed
 
 シードで作成されるユーザーとパスワードは以下の通り（開発用）：
 
-**共通パスワード**: `EvalHub#Dev2026!`
+**共通パスワード**: `AmericanDogs`
 
 | email | name | role | 検証シナリオ |
 |-------|------|------|------------|

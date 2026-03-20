@@ -19,7 +19,6 @@ export async function GET() {
       name: true,
       description: true,
       eval_criteria: true,
-      two_year_rule: true,
     },
   });
 
@@ -34,7 +33,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   if (!body) return errorResponse("BAD_REQUEST", "リクエストボディが不正です", 400);
 
-  const { uid, target, target_no, category, category_no, item_no, name, description, eval_criteria, two_year_rule } = body;
+  const { uid, target, target_no, category, category_no, item_no, name, description, eval_criteria } = body;
 
   if (!uid || typeof uid !== "string") return errorResponse("BAD_REQUEST", "uid は必須です", 400);
   if (!target || typeof target !== "string") return errorResponse("BAD_REQUEST", "target は必須です", 400);
@@ -56,9 +55,8 @@ export async function POST(request: Request) {
       name,
       description: typeof description === "string" ? description : null,
       eval_criteria: typeof eval_criteria === "string" ? eval_criteria : null,
-      two_year_rule: two_year_rule === true,
     },
-    select: { uid: true, target: true, target_no: true, category: true, category_no: true, item_no: true, name: true, description: true, eval_criteria: true, two_year_rule: true },
+    select: { uid: true, target: true, target_no: true, category: true, category_no: true, item_no: true, name: true, description: true, eval_criteria: true },
   });
 
   return successResponse(item, undefined, 201);

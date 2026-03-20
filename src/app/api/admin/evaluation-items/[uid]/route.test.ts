@@ -27,7 +27,6 @@ const mockItem = {
   name: "会社員としての基本姿勢",
   description: null,
   eval_criteria: null,
-  two_year_rule: false,
 };
 
 const params = Promise.resolve({ uid: "1-1-1" });
@@ -70,18 +69,6 @@ describe("PATCH /api/admin/evaluation-items/:uid", () => {
     const req = new Request("http://localhost/api/admin/evaluation-items/1-1-1", {
       method: "PATCH",
       body: JSON.stringify({}),
-    });
-    const res = await PATCH(req, { params });
-    expect(res.status).toBe(400);
-  });
-
-  it("two_year_rule が真偽値でない場合は 400", async () => {
-    vi.mocked(getSession).mockResolvedValue(adminSession as never);
-    vi.mocked(prisma.evaluationItem.findUnique).mockResolvedValue(mockItem as never);
-
-    const req = new Request("http://localhost/api/admin/evaluation-items/1-1-1", {
-      method: "PATCH",
-      body: JSON.stringify({ two_year_rule: "yes" }),
     });
     const res = await PATCH(req, { params });
     expect(res.status).toBe(400);

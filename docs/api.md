@@ -69,8 +69,7 @@ NextAuth.js による認証（ログイン・セッション管理）
       "item_no": 1,
       "name": "会社員としての基本姿勢",
       "description": "...",
-      "eval_criteria": "...",
-      "two_year_rule": false
+      "eval_criteria": "..."
     }
   ]
 }
@@ -90,19 +89,18 @@ NextAuth.js による認証（ログイン・セッション管理）
   "item_no": 2,
   "name": "新しい評価項目",
   "description": null,
-  "eval_criteria": null,
-  "two_year_rule": false
+  "eval_criteria": null
 }
 ```
 
 **Response**: `201 Created`
 
 ### PATCH /api/admin/evaluation-items/:uid
-評価項目編集（admin のみ）。`name`・`description`・`eval_criteria`・`two_year_rule` を更新可。
+評価項目編集（admin のみ）。`name`・`description`・`eval_criteria` を更新可。
 
 **Request**
 ```json
-{ "name": "更新後の名称", "two_year_rule": true }
+{ "name": "更新後の名称" }
 ```
 
 **Response**: `200 OK`
@@ -110,7 +108,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 ### DELETE /api/admin/evaluation-items/:uid
 評価項目削除（admin のみ）
 
-- 評価データ（`evaluations`）が紐づいている場合は `409 Conflict`
+- 年度（`fiscal_year_items`）に紐づいている場合は `409 Conflict`
 
 **Response**: `204 No Content`
 
@@ -131,8 +129,7 @@ NextAuth.js による認証（ログイン・セッション管理）
       "category": "engagement",
       "name": "会社員としての基本姿勢",
       "description": "...",
-      "eval_criteria": "...",
-      "two_year_rule": false
+      "eval_criteria": "..."
     }
   ]
 }
@@ -384,8 +381,7 @@ NextAuth.js による認証（ログイン・セッション管理）
       "uid": "1-1-1",
       "target": "employee",
       "category": "engagement",
-      "name": "会社員としての基本姿勢",
-      "two_year_rule": false
+      "name": "会社員としての基本姿勢"
     }
   ]
 }

@@ -30,17 +30,12 @@ export async function PATCH(request: Request, { params }: Params) {
     if (body.eval_criteria !== null && typeof body.eval_criteria !== "string") return errorResponse("BAD_REQUEST", "eval_criteria の型が不正です", 400);
     data.eval_criteria = body.eval_criteria;
   }
-  if ("two_year_rule" in body) {
-    if (typeof body.two_year_rule !== "boolean") return errorResponse("BAD_REQUEST", "two_year_rule は真偽値で指定してください", 400);
-    data.two_year_rule = body.two_year_rule;
-  }
-
   if (Object.keys(data).length === 0) return errorResponse("BAD_REQUEST", "更新するフィールドを指定してください", 400);
 
   const item = await prisma.evaluationItem.update({
     where: { uid },
     data,
-    select: { uid: true, target: true, target_no: true, category: true, category_no: true, item_no: true, name: true, description: true, eval_criteria: true, two_year_rule: true },
+    select: { uid: true, target: true, target_no: true, category: true, category_no: true, item_no: true, name: true, description: true, eval_criteria: true },
   });
 
   return successResponse(item);

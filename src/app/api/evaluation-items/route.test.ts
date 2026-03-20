@@ -25,7 +25,6 @@ const mockItems = [
     name: "会社員としての基本姿勢",
     description: "説明",
     eval_criteria: "基準",
-    two_year_rule: false,
   },
   {
     uid: "1-1-2",
@@ -34,7 +33,6 @@ const mockItems = [
     name: "積極性",
     description: null,
     eval_criteria: null,
-    two_year_rule: false,
   },
 ];
 

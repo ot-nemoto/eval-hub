@@ -17,15 +17,11 @@ export function EvaluationItemForm() {
     name: "",
     description: "",
     eval_criteria: "",
-    two_year_rule: false,
   });
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    const { name, value, type } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
-    }));
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -45,12 +41,11 @@ export function EvaluationItemForm() {
           name: form.name,
           description: form.description || null,
           eval_criteria: form.eval_criteria || null,
-          two_year_rule: form.two_year_rule,
         }),
       });
       if (res.ok) {
         setOpen(false);
-        setForm({ uid: "", target: "", target_no: "", category: "", category_no: "", item_no: "", name: "", description: "", eval_criteria: "", two_year_rule: false });
+        setForm({ uid: "", target: "", target_no: "", category: "", category_no: "", item_no: "", name: "", description: "", eval_criteria: "" });
         router.refresh();
       } else {
         const json = await res.json().catch(() => ({}));
@@ -201,19 +196,6 @@ export function EvaluationItemForm() {
             rows={2}
             className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
           />
-        </div>
-        <div className="col-span-3 flex items-center gap-2">
-          <input
-            id="two_year_rule"
-            name="two_year_rule"
-            type="checkbox"
-            checked={form.two_year_rule}
-            onChange={handleChange}
-            className="rounded border-gray-300"
-          />
-          <label htmlFor="two_year_rule" className="text-sm text-gray-700">
-            ２年ルール
-          </label>
         </div>
       </div>
       <div className="mt-4 flex gap-2">

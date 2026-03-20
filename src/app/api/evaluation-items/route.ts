@@ -1,5 +1,5 @@
-import { getSession } from "@/lib/auth";
 import { errorResponse, successResponse } from "@/lib/api-response";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
@@ -25,7 +25,6 @@ export async function GET(request: Request) {
       name: true,
       description: true,
       eval_criteria: true,
-      two_year_rule: true,
     },
   });
 

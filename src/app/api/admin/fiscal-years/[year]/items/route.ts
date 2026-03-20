@@ -30,7 +30,6 @@ export async function GET(_request: Request, { params }: Params) {
           category_no: true,
           item_no: true,
           name: true,
-          two_year_rule: true,
         },
       },
     },

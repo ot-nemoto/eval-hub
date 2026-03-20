@@ -107,7 +107,6 @@ model EvaluationItem {
   name          String  @db.VarChar(255)
   description   String? @db.Text
   eval_criteria String? @db.Text
-  two_year_rule Boolean @default(false)
 
   evaluations       Evaluation[]
   fiscal_year_items FiscalYearItem[]

@@ -18,7 +18,6 @@ export default async function EvaluationItemsPage() {
       name: true,
       description: true,
       eval_criteria: true,
-      two_year_rule: true,
       _count: { select: { fiscal_year_items: true } },
     },
   });
@@ -42,14 +41,13 @@ export default async function EvaluationItemsPage() {
               <th className="px-4 py-3 text-left font-medium text-gray-700">大分類</th>
               <th className="px-4 py-3 text-left font-medium text-gray-700">中分類</th>
               <th className="px-4 py-3 text-left font-medium text-gray-700">名称</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-700">２年ルール</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y">
             {items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
                   評価項目が登録されていません。
                 </td>
               </tr>
@@ -60,15 +58,6 @@ export default async function EvaluationItemsPage() {
                   <td className="px-4 py-3 text-gray-700">{item.target}</td>
                   <td className="px-4 py-3 text-gray-700">{item.category}</td>
                   <td className="px-4 py-3 text-gray-900">{item.name}</td>
-                  <td className="px-4 py-3">
-                    {item.two_year_rule ? (
-                      <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
-                        対象
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
                   <td className="px-4 py-3 text-right">
                     <EvaluationItemActions item={item} hasEvaluations={item._count.fiscal_year_items > 0} />
                   </td>
