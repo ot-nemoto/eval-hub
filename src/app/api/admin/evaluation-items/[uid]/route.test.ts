@@ -13,20 +13,19 @@ vi.mock("@/lib/prisma", () => ({
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-
 const adminSession = { user: { id: "admin-1", role: "admin" } };
 const memberSession = { user: { id: "member-1", role: "member" } };
 
 const mockItem = {
   uid: "1-1-1",
-  target: "employee",
-  target_no: 1,
-  category: "engagement",
-  category_no: 1,
-  item_no: 1,
+  target_id: 1,
+  category_id: 1,
+  no: 1,
   name: "会社員としての基本姿勢",
   description: null,
   eval_criteria: null,
+  target: { id: 1, name: "employee", no: 1 },
+  category: { id: 1, target_id: 1, name: "engagement", no: 1 },
 };
 
 const params = Promise.resolve({ uid: "1-1-1" });

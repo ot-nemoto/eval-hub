@@ -35,7 +35,17 @@ export async function PATCH(request: Request, { params }: Params) {
   const item = await prisma.evaluationItem.update({
     where: { uid },
     data,
-    select: { uid: true, target: true, target_no: true, category: true, category_no: true, item_no: true, name: true, description: true, eval_criteria: true },
+    select: {
+      uid: true,
+      target_id: true,
+      category_id: true,
+      no: true,
+      name: true,
+      description: true,
+      eval_criteria: true,
+      target: { select: { id: true, name: true, no: true } },
+      category: { select: { id: true, target_id: true, name: true, no: true } },
+    },
   });
 
   return successResponse(item);

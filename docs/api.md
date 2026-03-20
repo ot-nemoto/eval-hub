@@ -154,7 +154,7 @@ NextAuth.js による認証（ログイン・セッション管理）
       "uid": "1-1-1",
       "target_id": 1,
       "category_id": 1,
-      "item_no": 1,
+      "no": 1,
       "name": "会社員としての基本姿勢",
       "description": "...",
       "eval_criteria": "...",
@@ -166,15 +166,13 @@ NextAuth.js による認証（ログイン・セッション管理）
 ```
 
 ### POST /api/admin/evaluation-items
-評価項目追加（admin のみ）
+評価項目追加（admin のみ）。uid は `{target.no}-{category.no}-{連番}` でサーバー側自動生成。
 
 **Request**
 ```json
 {
-  "uid": "1-1-2",
   "target_id": 1,
   "category_id": 1,
-  "item_no": 2,
   "name": "新しい評価項目",
   "description": null,
   "eval_criteria": null
@@ -215,6 +213,7 @@ NextAuth.js による認証（ログイン・セッション管理）
       "uid": "1-1-1",
       "target_id": 1,
       "category_id": 1,
+      "no": 1,
       "name": "会社員としての基本姿勢",
       "description": "...",
       "eval_criteria": "...",
@@ -224,6 +223,8 @@ NextAuth.js による認証（ログイン・セッション管理）
   ]
 }
 ```
+
+**クエリ**: `?target_id=1&category_id=1`
 
 **権限**: 認証済みユーザー全員
 
