@@ -55,6 +55,14 @@ NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/evaluations
 npx prisma migrate deploy
 ```
 
+### 3-1. DB をリセットしたい場合
+
+```bash
+npx prisma migrate reset
+```
+
+> **注意**: `migrate reset` は seed を自動実行しますが、環境によってスキップされる場合があります。リセット後は必ず手動で seed を実行してください（手順 4）。
+
 ### 4. シードデータを投入
 
 **ローカル環境**（`.env.local` の接続先を使う場合）：

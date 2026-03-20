@@ -53,6 +53,69 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 ## 評価項目マスタ
 
+### GET /api/admin/evaluation-items
+評価項目一覧取得（admin のみ）
+
+**Response**
+```json
+{
+  "data": [
+    {
+      "uid": "1-1-1",
+      "target": "employee",
+      "target_no": 1,
+      "category": "engagement",
+      "category_no": 1,
+      "item_no": 1,
+      "name": "会社員としての基本姿勢",
+      "description": "...",
+      "eval_criteria": "...",
+      "two_year_rule": false
+    }
+  ]
+}
+```
+
+### POST /api/admin/evaluation-items
+評価項目追加（admin のみ）
+
+**Request**
+```json
+{
+  "uid": "1-1-2",
+  "target": "employee",
+  "target_no": 1,
+  "category": "engagement",
+  "category_no": 1,
+  "item_no": 2,
+  "name": "新しい評価項目",
+  "description": null,
+  "eval_criteria": null,
+  "two_year_rule": false
+}
+```
+
+**Response**: `201 Created`
+
+### PATCH /api/admin/evaluation-items/:uid
+評価項目編集（admin のみ）。`name`・`description`・`eval_criteria`・`two_year_rule` を更新可。
+
+**Request**
+```json
+{ "name": "更新後の名称", "two_year_rule": true }
+```
+
+**Response**: `200 OK`
+
+### DELETE /api/admin/evaluation-items/:uid
+評価項目削除（admin のみ）
+
+- 評価データ（`evaluations`）が紐づいている場合は `409 Conflict`
+
+**Response**: `204 No Content`
+
+---
+
 ### GET /api/evaluation-items
 評価項目一覧
 
