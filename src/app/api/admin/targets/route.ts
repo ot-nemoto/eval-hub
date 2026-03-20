@@ -25,6 +25,7 @@ export async function POST(request: Request) {
   if (
     !body ||
     typeof body.name !== "string" ||
+    !body.name ||
     !Number.isInteger(body.no) ||
     body.no < 1
   ) {

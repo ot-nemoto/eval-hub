@@ -84,6 +84,18 @@ describe("GET /api/evaluation-items", () => {
     );
   });
 
+  it("?target_id が不正値の場合は 400", async () => {
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
+    const res = await GET(new Request("http://localhost/api/evaluation-items?target_id=abc"));
+    expect(res.status).toBe(400);
+  });
+
+  it("?category_id が不正値の場合は 400", async () => {
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
+    const res = await GET(new Request("http://localhost/api/evaluation-items?category_id=abc"));
+    expect(res.status).toBe(400);
+  });
+
   it("未認証の場合は 401", async () => {
     vi.mocked(getSession).mockResolvedValue(null);
 

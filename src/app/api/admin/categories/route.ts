@@ -10,7 +10,14 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const targetIdStr = searchParams.get("target_id");
-  const where = targetIdStr ? { target_id: Number(targetIdStr) } : {};
+  let where: { target_id?: number } = {};
+  if (targetIdStr !== null) {
+    const targetId = Number(targetIdStr);
+    if (!Number.isInteger(targetId) || targetId < 1) {
+      return errorResponse("BAD_REQUEST", "target_id は正の整数で指定してください", 400);
+    }
+    where = { target_id: targetId };
+  }
 
   const categories = await prisma.category.findMany({
     where,
@@ -32,6 +39,7 @@ export async function POST(request: Request) {
     !Number.isInteger(body.target_id) ||
     body.target_id < 1 ||
     typeof body.name !== "string" ||
+    !body.name ||
     !Number.isInteger(body.no) ||
     body.no < 1
   ) {

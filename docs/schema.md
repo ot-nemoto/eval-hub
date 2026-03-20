@@ -55,7 +55,7 @@ erDiagram
     }
     fiscal_year_items {
         INT fiscal_year FK
-        VARCHAR evaluation_item_uid FK
+        INT evaluation_item_id FK
     }
     evaluation_assignments {
         TEXT id PK
@@ -66,19 +66,19 @@ erDiagram
     targets {
         INT id PK
         VARCHAR name
-        INT sort_no
+        INT no
     }
     categories {
         INT id PK
         INT target_id FK
         VARCHAR name
-        INT sort_no
+        INT no
     }
     evaluation_items {
-        VARCHAR uid PK
+        INT id PK
         INT target_id FK
         INT category_id FK
-        INT item_no
+        INT no
         VARCHAR name
         TEXT description
         TEXT eval_criteria
@@ -87,7 +87,7 @@ erDiagram
         TEXT id PK
         INT fiscal_year FK
         TEXT evaluatee_id FK
-        VARCHAR eval_uid FK
+        INT eval_item_id FK
         ENUM self_score
         TEXT self_reason
         ENUM manager_score
@@ -107,12 +107,12 @@ erDiagram
     targets ||--o{ categories : "target_id"
     targets ||--o{ evaluation_items : "target_id"
     categories ||--o{ evaluation_items : "category_id"
-    evaluation_items ||--o{ fiscal_year_items : "evaluation_item_uid"
+    evaluation_items ||--o{ fiscal_year_items : "evaluation_item_id"
     users ||--o{ evaluation_assignments : "evaluatee_id"
     users ||--o{ evaluation_assignments : "evaluator_id"
     users ||--o{ evaluations : "evaluatee_id"
     users ||--o{ evaluation_settings : "user_id"
-    evaluation_items ||--o{ evaluations : "eval_uid"
+    evaluation_items ||--o{ evaluations : "eval_item_id"
 ```
 
 ---
@@ -160,8 +160,8 @@ erDiagram
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
 | fiscal_year | INTEGER | FK → fiscal_years.year | 年度 |
-| evaluation_item_uid | VARCHAR(20) | FK → evaluation_items.uid | 評価項目 |
-| UNIQUE | (fiscal_year, evaluation_item_uid) | | |
+| evaluation_item_id | INTEGER | FK → evaluation_items.id | 評価項目 |
+| UNIQUE | (fiscal_year, evaluation_item_id) | | |
 
 - 年度新規作成時、直近年度の `fiscal_year_items` を全件コピーして初期化
 - admin が年度ごとに項目を追加・削除できる
@@ -216,15 +216,16 @@ erDiagram
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| uid | VARCHAR(20) | PK | `{target.no}-{category.no}-{no}` で自動生成（例: `1-1-1`） |
+| id | INTEGER | PK, AUTO INCREMENT | グローバル識別子 |
 | target_id | INTEGER | FK → targets.id, NOT NULL | 大分類 |
 | category_id | INTEGER | FK → categories.id, NOT NULL | 中分類 |
-| no | INTEGER | UNIQUE per category, NOT NULL | category 内でユニークな番号（uid の第3部・並び順兼用） |
+| no | INTEGER | UNIQUE per category, NOT NULL | category 内でユニークな番号（並び順兼用） |
 | name | VARCHAR(255) | NOT NULL | 評価項目名 |
 | description | TEXT | | 説明 |
 | eval_criteria | TEXT | | 評価事例・基準 |
 
-- uid は POST 時にサーバー側で自動生成（`{target.no}-{category.no}-{MAX(no)+1}`）
+- uid（`{target.no}-{category.no}-{no}` 形式、例: `1-1-1`）は DB には保存せず、表示時に動的に算出する
+- no は POST 時にカテゴリ内の最大値 +1 でサーバー側自動採番
 - 削除しても no は詰めない（欠番 OK）
 
 ---
@@ -236,12 +237,12 @@ erDiagram
 | id | TEXT | PK, DEFAULT uuid() | UUID 値を TEXT で保存 |
 | fiscal_year | INTEGER | NOT NULL | 年度 |
 | evaluatee_id | TEXT | FK → users.id | 評価される人 |
-| eval_uid | VARCHAR(20) | FK → evaluation_items.uid | 評価項目 |
+| eval_item_id | INTEGER | FK → evaluation_items.id | 評価項目 |
 | self_score | ENUM | | `none` / `ka` / `ryo` / `yu` |
 | self_reason | TEXT | | 自己採点理由 |
 | manager_score | ENUM | | `none` / `ka` / `ryo` / `yu`（評価者側がまとめた1つ） |
 | manager_reason | TEXT | | 評価者側採点理由 |
-| UNIQUE | (fiscal_year, evaluatee_id, eval_uid) | | 年度×被評価者×項目で1レコード |
+| UNIQUE | (fiscal_year, evaluatee_id, eval_item_id) | | 年度×被評価者×項目で1レコード |
 
 - 自己評価（`self_score / self_reason`）は本人が入力
 - 評価者評価（`manager_score / manager_reason`）は `evaluation_assignments` でアサインされた評価者が入力

@@ -50,6 +50,12 @@ describe("GET /api/admin/categories", () => {
     );
   });
 
+  it("?target_id が不正値の場合は 400", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+    const res = await GET(new Request("http://localhost/api/admin/categories?target_id=abc"));
+    expect(res.status).toBe(400);
+  });
+
   it("未認証の場合は 401", async () => {
     vi.mocked(getSession).mockResolvedValue(null);
     const res = await GET(new Request("http://localhost/api/admin/categories"));
@@ -81,6 +87,16 @@ describe("POST /api/admin/categories", () => {
 
     expect(res.status).toBe(201);
     expect(body.data.name).toBe("engagement");
+  });
+
+  it("name が空文字の場合は 400", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+    const req = new Request("http://localhost/api/admin/categories", {
+      method: "POST",
+      body: JSON.stringify({ target_id: 1, name: "", no: 1 }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
   });
 
   it("target_id がない場合は 400", async () => {

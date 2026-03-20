@@ -11,10 +11,21 @@ export async function GET(request: Request) {
   const targetIdStr = searchParams.get("target_id");
   const categoryIdStr = searchParams.get("category_id");
 
-  const where = {
-    ...(targetIdStr ? { target_id: Number(targetIdStr) } : {}),
-    ...(categoryIdStr ? { category_id: Number(categoryIdStr) } : {}),
-  };
+  const where: { target_id?: number; category_id?: number } = {};
+  if (targetIdStr !== null) {
+    const targetId = Number(targetIdStr);
+    if (!Number.isInteger(targetId) || targetId < 1) {
+      return errorResponse("BAD_REQUEST", "target_id は正の整数で指定してください", 400);
+    }
+    where.target_id = targetId;
+  }
+  if (categoryIdStr !== null) {
+    const categoryId = Number(categoryIdStr);
+    if (!Number.isInteger(categoryId) || categoryId < 1) {
+      return errorResponse("BAD_REQUEST", "category_id は正の整数で指定してください", 400);
+    }
+    where.category_id = categoryId;
+  }
 
   const items = await prisma.evaluationItem.findMany({
     where,

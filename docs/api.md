@@ -151,7 +151,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 {
   "data": [
     {
-      "uid": "1-1-1",
+      "id": 1,
       "target_id": 1,
       "category_id": 1,
       "no": 1,
@@ -166,7 +166,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 ```
 
 ### POST /api/admin/evaluation-items
-評価項目追加（admin のみ）。uid は `{target.no}-{category.no}-{連番}` でサーバー側自動生成。
+評価項目追加（admin のみ）。no はカテゴリ内の最大値 +1 でサーバー側自動採番。uid（`{target.no}-{category.no}-{no}`）は表示用に動的算出。
 
 **Request**
 ```json
@@ -181,7 +181,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 **Response**: `201 Created`
 
-### PATCH /api/admin/evaluation-items/:uid
+### PATCH /api/admin/evaluation-items/:id
 評価項目編集（admin のみ）。`name`・`description`・`eval_criteria` を更新可。
 
 **Request**
@@ -191,7 +191,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 **Response**: `200 OK`
 
-### DELETE /api/admin/evaluation-items/:uid
+### DELETE /api/admin/evaluation-items/:id
 評価項目削除（admin のみ）
 
 - 年度（`fiscal_year_items`）に紐づいている場合は `409 Conflict`
@@ -210,7 +210,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 {
   "data": [
     {
-      "uid": "1-1-1",
+      "id": 1,
       "target_id": 1,
       "category_id": 1,
       "no": 1,
@@ -469,7 +469,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 {
   "data": [
     {
-      "uid": "1-1-1",
+      "id": 1,
       "target_id": 1,
       "category_id": 1,
       "name": "会社員としての基本姿勢"
@@ -483,15 +483,15 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 **Request**
 ```json
-{ "evaluation_item_uid": "1-1-1" }
+{ "evaluation_item_id": 1 }
 ```
 
 **Response**: `201 Created`
 ```json
-{ "data": { "fiscal_year": 2026, "evaluation_item_uid": "1-1-1" } }
+{ "data": { "fiscal_year": 2026, "evaluation_item_id": 1 } }
 ```
 
-### DELETE /api/admin/fiscal-years/:year/items/:uid
+### DELETE /api/admin/fiscal-years/:year/items/:itemId
 年度から評価項目を削除（admin のみ）
 
 **Response**: `204 No Content`

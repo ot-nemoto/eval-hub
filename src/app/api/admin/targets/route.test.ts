@@ -66,6 +66,16 @@ describe("POST /api/admin/targets", () => {
     expect(body.data.name).toBe("new target");
   });
 
+  it("name が空文字の場合は 400", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+    const req = new Request("http://localhost/api/admin/targets", {
+      method: "POST",
+      body: JSON.stringify({ name: "", no: 1 }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+
   it("name がない場合は 400", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
 
