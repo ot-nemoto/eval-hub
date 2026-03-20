@@ -60,13 +60,13 @@ model FiscalYear {
 }
 
 model FiscalYearItem {
-  fiscal_year          Int
-  evaluation_item_uid  String @db.VarChar(20)
+  fiscal_year         Int
+  evaluation_item_id  Int
 
   fiscal_year_rel  FiscalYear     @relation(fields: [fiscal_year], references: [year])
-  evaluation_item  EvaluationItem @relation(fields: [evaluation_item_uid], references: [uid])
+  evaluation_item  EvaluationItem @relation(fields: [evaluation_item_id], references: [id])
 
-  @@id([fiscal_year, evaluation_item_uid])
+  @@id([fiscal_year, evaluation_item_id])
   @@map("fiscal_year_items")
 }
 
@@ -122,7 +122,7 @@ model Category {
 }
 
 model EvaluationItem {
-  uid           String  @id @db.VarChar(20)
+  id            Int     @id @default(autoincrement())
   target_id     Int
   category_id   Int
   no            Int
@@ -143,16 +143,16 @@ model Evaluation {
   id             String  @id @default(uuid())
   fiscal_year    Int
   evaluatee_id   String
-  eval_uid       String  @db.VarChar(20)
+  eval_item_id   Int
   self_score     Score?
   self_reason    String? @db.Text
   manager_score  Score?
   manager_reason String? @db.Text
 
   evaluatee       User           @relation(fields: [evaluatee_id], references: [id])
-  evaluation_item EvaluationItem @relation(fields: [eval_uid], references: [uid])
+  evaluation_item EvaluationItem @relation(fields: [eval_item_id], references: [id])
   fiscal_year_rel FiscalYear     @relation(fields: [fiscal_year], references: [year])
 
-  @@unique([fiscal_year, evaluatee_id, eval_uid])
+  @@unique([fiscal_year, evaluatee_id, eval_item_id])
   @@map("evaluations")
 }

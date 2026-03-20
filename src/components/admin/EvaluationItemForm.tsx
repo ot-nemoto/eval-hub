@@ -3,25 +3,37 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function EvaluationItemForm() {
+type Target = { id: number; name: string };
+type Category = { id: number; target_id: number; name: string };
+
+type Props = {
+  targets: Target[];
+  categories: Category[];
+};
+
+export function EvaluationItemForm({ targets, categories }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    uid: "",
-    target: "",
-    target_no: "",
-    category: "",
-    category_no: "",
-    item_no: "",
+    target_id: "",
+    category_id: "",
     name: "",
     description: "",
     eval_criteria: "",
   });
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  const filteredCategories = form.target_id
+    ? categories.filter((c) => c.target_id === Number(form.target_id))
+    : [];
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    if (name === "target_id") {
+      setForm((prev) => ({ ...prev, target_id: value, category_id: "" }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -32,12 +44,8 @@ export function EvaluationItemForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          uid: form.uid,
-          target: form.target,
-          target_no: form.target_no ? Number(form.target_no) : null,
-          category: form.category,
-          category_no: form.category_no ? Number(form.category_no) : null,
-          item_no: Number(form.item_no),
+          target_id: Number(form.target_id),
+          category_id: Number(form.category_id),
           name: form.name,
           description: form.description || null,
           eval_criteria: form.eval_criteria || null,
@@ -45,7 +53,7 @@ export function EvaluationItemForm() {
       });
       if (res.ok) {
         setOpen(false);
-        setForm({ uid: "", target: "", target_no: "", category: "", category_no: "", item_no: "", name: "", description: "", eval_criteria: "" });
+        setForm({ target_id: "", category_id: "", name: "", description: "", eval_criteria: "" });
         router.refresh();
       } else {
         const json = await res.json().catch(() => ({}));
@@ -73,91 +81,45 @@ export function EvaluationItemForm() {
   return (
     <form onSubmit={handleSubmit} className="rounded-lg border bg-white p-4">
       <h3 className="mb-4 font-medium text-gray-900">新しい評価項目を追加</h3>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="uid" className="mb-1 block text-xs font-medium text-gray-700">
-            UID <span className="text-red-500">*</span>
-          </label>
-          <input
-            id="uid"
-            name="uid"
-            type="text"
-            required
-            value={form.uid}
-            onChange={handleChange}
-            placeholder="1-1-1"
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label htmlFor="target" className="mb-1 block text-xs font-medium text-gray-700">
+          <label htmlFor="target_id" className="mb-1 block text-xs font-medium text-gray-700">
             大分類 <span className="text-red-500">*</span>
           </label>
-          <input
-            id="target"
-            name="target"
-            type="text"
+          <select
+            id="target_id"
+            name="target_id"
             required
-            value={form.target}
+            value={form.target_id}
             onChange={handleChange}
             className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
-          />
+          >
+            <option value="">選択してください</option>
+            {targets.map((t) => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
         </div>
         <div>
-          <label htmlFor="target_no" className="mb-1 block text-xs font-medium text-gray-700">
-            大分類順
-          </label>
-          <input
-            id="target_no"
-            name="target_no"
-            type="number"
-            value={form.target_no}
-            onChange={handleChange}
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label htmlFor="category" className="mb-1 block text-xs font-medium text-gray-700">
+          <label htmlFor="category_id" className="mb-1 block text-xs font-medium text-gray-700">
             中分類 <span className="text-red-500">*</span>
           </label>
-          <input
-            id="category"
-            name="category"
-            type="text"
+          <select
+            id="category_id"
+            name="category_id"
             required
-            value={form.category}
+            value={form.category_id}
             onChange={handleChange}
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
-          />
+            disabled={!form.target_id}
+            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none disabled:bg-gray-50 disabled:text-gray-400"
+          >
+            <option value="">選択してください</option>
+            {filteredCategories.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
         </div>
-        <div>
-          <label htmlFor="category_no" className="mb-1 block text-xs font-medium text-gray-700">
-            中分類順
-          </label>
-          <input
-            id="category_no"
-            name="category_no"
-            type="number"
-            value={form.category_no}
-            onChange={handleChange}
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label htmlFor="item_no" className="mb-1 block text-xs font-medium text-gray-700">
-            項目番号 <span className="text-red-500">*</span>
-          </label>
-          <input
-            id="item_no"
-            name="item_no"
-            type="number"
-            required
-            value={form.item_no}
-            onChange={handleChange}
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
-          />
-        </div>
-        <div className="col-span-3">
+        <div className="col-span-2">
           <label htmlFor="name" className="mb-1 block text-xs font-medium text-gray-700">
             名称 <span className="text-red-500">*</span>
           </label>
@@ -171,7 +133,7 @@ export function EvaluationItemForm() {
             className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
           />
         </div>
-        <div className="col-span-3">
+        <div className="col-span-2">
           <label htmlFor="description" className="mb-1 block text-xs font-medium text-gray-700">
             説明
           </label>
@@ -184,7 +146,7 @@ export function EvaluationItemForm() {
             className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
           />
         </div>
-        <div className="col-span-3">
+        <div className="col-span-2">
           <label htmlFor="eval_criteria" className="mb-1 block text-xs font-medium text-gray-700">
             評価基準
           </label>

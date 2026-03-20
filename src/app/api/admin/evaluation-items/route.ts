@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const itemSelect = {
-  uid: true,
+  id: true,
   target_id: true,
   category_id: true,
   no: true,
@@ -62,11 +62,9 @@ export async function POST(request: Request) {
     select: { no: true },
   });
   const no = (maxItem?.no ?? 0) + 1;
-  const uid = `${target.no}-${category.no}-${no}`;
 
   const item = await prisma.evaluationItem.create({
     data: {
-      uid,
       target_id: body.target_id,
       category_id: body.category_id,
       no,

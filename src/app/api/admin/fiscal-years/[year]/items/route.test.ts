@@ -17,12 +17,10 @@ import { prisma } from "@/lib/prisma";
 const adminSession = { user: { id: "admin-1", role: "admin" } };
 const mockFy = { year: 2026 };
 const mockItem = {
-  uid: "1-1-1",
-  target: "employee",
-  target_no: 1,
-  category: "engagement",
-  category_no: 1,
-  item_no: 1,
+  id: 1,
+  target_id: 1,
+  category_id: 1,
+  no: 1,
   name: "基本姿勢",
 };
 
@@ -46,7 +44,8 @@ describe("GET /api/admin/fiscal-years/:year/items", () => {
 
     expect(res.status).toBe(200);
     expect(body.data).toHaveLength(1);
-    expect(body.data[0].uid).toBe("1-1-1");
+    expect(body.data[0].id).toBe(1);
+    expect(body.data[0].name).toBe("基本姿勢");
   });
 
   it("存在しない年度は 404", async () => {
@@ -69,12 +68,12 @@ describe("POST /api/admin/fiscal-years/:year/items", () => {
     vi.mocked(prisma.fiscalYearItem.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.fiscalYearItem.create).mockResolvedValue({
       fiscal_year: 2026,
-      evaluation_item_uid: "1-1-1",
+      evaluation_item_id: 1,
     } as never);
 
     const req = new Request("http://localhost/api/admin/fiscal-years/2026/items", {
       method: "POST",
-      body: JSON.stringify({ evaluation_item_uid: "1-1-1" }),
+      body: JSON.stringify({ evaluation_item_id: 1 }),
     });
     const res = await POST(req, makeParams("2026"));
     expect(res.status).toBe(201);
@@ -86,18 +85,18 @@ describe("POST /api/admin/fiscal-years/:year/items", () => {
     vi.mocked(prisma.evaluationItem.findUnique).mockResolvedValue(mockItem as never);
     vi.mocked(prisma.fiscalYearItem.findUnique).mockResolvedValue({
       fiscal_year: 2026,
-      evaluation_item_uid: "1-1-1",
+      evaluation_item_id: 1,
     } as never);
 
     const req = new Request("http://localhost/api/admin/fiscal-years/2026/items", {
       method: "POST",
-      body: JSON.stringify({ evaluation_item_uid: "1-1-1" }),
+      body: JSON.stringify({ evaluation_item_id: 1 }),
     });
     const res = await POST(req, makeParams("2026"));
     expect(res.status).toBe(409);
   });
 
-  it("evaluation_item_uid が未指定の場合は 400", async () => {
+  it("evaluation_item_id が未指定の場合は 400", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
 
     const req = new Request("http://localhost/api/admin/fiscal-years/2026/items", {

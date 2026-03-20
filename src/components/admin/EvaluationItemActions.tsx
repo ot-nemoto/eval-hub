@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type EvaluationItem = {
-  uid: string;
+  id: number;
   name: string;
   description: string | null;
   eval_criteria: string | null;
@@ -31,7 +31,7 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/evaluation-items/${item.uid}`, {
+      const res = await fetch(`/api/admin/evaluation-items/${item.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -58,7 +58,7 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
     if (!confirm(`「${item.name}」を削除しますか？この操作は取り消せません。`)) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/evaluation-items/${item.uid}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/evaluation-items/${item.id}`, { method: "DELETE" });
       if (res.status === 204) {
         router.refresh();
       } else {

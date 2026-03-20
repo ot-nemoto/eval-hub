@@ -22,7 +22,7 @@ const otherSession = { user: { id: "other-99", role: "member" } };
 
 const mockEvaluations = [
   {
-    eval_uid: "1-1-1",
+    eval_item_id: 1,
     fiscal_year: 2025,
     evaluatee_id: "user-2",
     self_score: "ryo",
@@ -47,7 +47,7 @@ describe("GET /api/members/:id/evaluations/:year", () => {
 
     expect(res.status).toBe(200);
     expect(body.data).toHaveLength(1);
-    expect(body.data[0]).toMatchObject({ eval_uid: "1-1-1", item_name: "会社員としての基本姿勢" });
+    expect(body.data[0]).toMatchObject({ eval_item_id: 1, item_name: "会社員としての基本姿勢" });
   });
 
   it("admin は任意の評価一覧を取得できる", async () => {

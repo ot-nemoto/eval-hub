@@ -20,7 +20,7 @@ const memberSession = { user: { id: "member-1", role: "member" } };
 const mockTarget = { id: 1, name: "employee", no: 1 };
 const mockCategory = { id: 1, target_id: 1, name: "engagement", no: 1 };
 const mockItem = {
-  uid: "1-1-1",
+  id: 1,
   target_id: 1,
   category_id: 1,
   no: 1,
@@ -64,12 +64,12 @@ describe("POST /api/admin/evaluation-items", () => {
 
   const validBody = { target_id: 1, category_id: 1, name: "新しい評価項目" };
 
-  it("admin は評価項目を追加でき、uid が自動生成される", async () => {
+  it("admin は評価項目を追加でき、no が自動採番される", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.target.findUnique).mockResolvedValue(mockTarget as never);
     vi.mocked(prisma.category.findUnique).mockResolvedValue(mockCategory as never);
     vi.mocked(prisma.evaluationItem.findFirst).mockResolvedValue({ no: 3 } as never);
-    vi.mocked(prisma.evaluationItem.create).mockResolvedValue({ ...mockItem, uid: "1-1-4", no: 4 } as never);
+    vi.mocked(prisma.evaluationItem.create).mockResolvedValue({ ...mockItem, no: 4 } as never);
 
     const req = new Request("http://localhost/api/admin/evaluation-items", {
       method: "POST",
@@ -80,17 +80,17 @@ describe("POST /api/admin/evaluation-items", () => {
     expect(res.status).toBe(201);
     expect(prisma.evaluationItem.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ uid: "1-1-4", no: 4 }),
+        data: expect.objectContaining({ no: 4 }),
       }),
     );
   });
 
-  it("カテゴリ内に項目がない場合、no=1 で uid が生成される", async () => {
+  it("カテゴリ内に項目がない場合、no=1 が採番される", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.target.findUnique).mockResolvedValue(mockTarget as never);
     vi.mocked(prisma.category.findUnique).mockResolvedValue(mockCategory as never);
     vi.mocked(prisma.evaluationItem.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.evaluationItem.create).mockResolvedValue({ ...mockItem, uid: "1-1-1", no: 1 } as never);
+    vi.mocked(prisma.evaluationItem.create).mockResolvedValue({ ...mockItem, no: 1 } as never);
 
     const req = new Request("http://localhost/api/admin/evaluation-items", {
       method: "POST",
@@ -100,7 +100,7 @@ describe("POST /api/admin/evaluation-items", () => {
 
     expect(prisma.evaluationItem.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ uid: "1-1-1", no: 1 }),
+        data: expect.objectContaining({ no: 1 }),
       }),
     );
   });

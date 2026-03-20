@@ -52,12 +52,13 @@ export default async function EvaluationsPage() {
     );
   }
 
-  const evalMap = Object.fromEntries(evaluations.map((e) => [e.eval_uid, e]));
+  const evalMap = Object.fromEntries(evaluations.map((e) => [e.eval_item_id, e]));
 
   const itemsWithEval = items.map((item) => {
-    const ev = evalMap[item.uid];
+    const ev = evalMap[item.id];
     return {
-      uid: item.uid,
+      id: item.id,
+      uid: `${item.target.no}-${item.category.no}-${item.no}`,
       name: item.name,
       description: item.description,
       eval_criteria: item.eval_criteria,

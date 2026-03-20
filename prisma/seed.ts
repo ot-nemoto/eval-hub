@@ -60,11 +60,11 @@ async function cleanupUser(email: string): Promise<void> {
 
 // ─── 年度マスタ ────────────────────────────────────────────────────────────────
 
-async function seedFiscalYearItems(allItemUids: string[]) {
+async function seedFiscalYearItems(allItemIds: number[]) {
   const years = [2025, 2026, 2027];
   for (const year of years) {
     await prisma.fiscalYearItem.createMany({
-      data: allItemUids.map((uid) => ({ fiscal_year: year, evaluation_item_uid: uid })),
+      data: allItemIds.map((id) => ({ fiscal_year: year, evaluation_item_id: id })),
       skipDuplicates: true,
     });
   }
@@ -274,17 +274,14 @@ async function main() {
     const target = targetByName[item.target];
     const category = categoryByKey[categoryKey(item.target, item.category)];
     await prisma.evaluationItem.upsert({
-      where: { uid: item.uid },
+      where: { category_id_no: { category_id: category.id, no: item.item_no } },
       update: {
         target_id: target.id,
-        category_id: category.id,
-        no: item.item_no,
         name: item.name,
         description: item.description ?? null,
         eval_criteria: item.eval_criteria ?? null,
       },
       create: {
-        uid: item.uid,
         target_id: target.id,
         category_id: category.id,
         no: item.item_no,
@@ -299,8 +296,8 @@ async function main() {
   // =========================================================================
   // 8. fiscal_year_items（年度と評価項目の紐付け）
   // =========================================================================
-  const allItemUids = evaluationItemsData.map((item) => item.uid);
-  await seedFiscalYearItems(allItemUids);
+  const allItems = await prisma.evaluationItem.findMany({ select: { id: true } });
+  await seedFiscalYearItems(allItems.map((i) => i.id));
 }
 
 main()

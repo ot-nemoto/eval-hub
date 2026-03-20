@@ -9,15 +9,21 @@ export default async function EvaluationItemsPage() {
   if (!session) redirect("/login");
   if (session.user.role !== "admin") redirect("/evaluations");
 
+  const [targets, categories] = await Promise.all([
+    prisma.target.findMany({ orderBy: { no: "asc" }, select: { id: true, name: true } }),
+    prisma.category.findMany({ orderBy: { no: "asc" }, select: { id: true, target_id: true, name: true } }),
+  ]);
+
   const items = await prisma.evaluationItem.findMany({
     orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
     select: {
-      uid: true,
+      id: true,
+      no: true,
       name: true,
       description: true,
       eval_criteria: true,
-      target: { select: { name: true } },
-      category: { select: { name: true } },
+      target: { select: { name: true, no: true } },
+      category: { select: { name: true, no: true } },
       _count: { select: { fiscal_year_items: true } },
     },
   });
@@ -30,7 +36,7 @@ export default async function EvaluationItemsPage() {
       </div>
 
       <div className="mb-6">
-        <EvaluationItemForm />
+        <EvaluationItemForm targets={targets} categories={categories} />
       </div>
 
       <div className="overflow-hidden rounded-lg border bg-white">
@@ -53,8 +59,8 @@ export default async function EvaluationItemsPage() {
               </tr>
             ) : (
               items.map((item) => (
-                <tr key={item.uid} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-mono text-xs text-gray-500">{item.uid}</td>
+                <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 font-mono text-xs text-gray-500">{`${item.target.no}-${item.category.no}-${item.no}`}</td>
                   <td className="px-4 py-3 text-gray-700">{item.target.name}</td>
                   <td className="px-4 py-3 text-gray-700">{item.category.name}</td>
                   <td className="px-4 py-3 text-gray-900">{item.name}</td>

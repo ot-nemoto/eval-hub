@@ -68,21 +68,21 @@ CREATE TABLE "categories" (
 
 -- CreateTable: evaluation_items
 CREATE TABLE "evaluation_items" (
-    "uid" VARCHAR(20) NOT NULL,
+    "id" SERIAL NOT NULL,
     "target_id" INTEGER NOT NULL,
     "category_id" INTEGER NOT NULL,
     "no" INTEGER NOT NULL,
     "name" VARCHAR(255) NOT NULL,
     "description" TEXT,
     "eval_criteria" TEXT,
-    CONSTRAINT "evaluation_items_pkey" PRIMARY KEY ("uid")
+    CONSTRAINT "evaluation_items_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable: fiscal_year_items
 CREATE TABLE "fiscal_year_items" (
     "fiscal_year" INTEGER NOT NULL,
-    "evaluation_item_uid" VARCHAR(20) NOT NULL,
-    CONSTRAINT "fiscal_year_items_pkey" PRIMARY KEY ("fiscal_year", "evaluation_item_uid")
+    "evaluation_item_id" INTEGER NOT NULL,
+    CONSTRAINT "fiscal_year_items_pkey" PRIMARY KEY ("fiscal_year", "evaluation_item_id")
 );
 
 -- CreateTable: evaluations
@@ -90,7 +90,7 @@ CREATE TABLE "evaluations" (
     "id" TEXT NOT NULL DEFAULT gen_random_uuid(),
     "fiscal_year" INTEGER NOT NULL,
     "evaluatee_id" TEXT NOT NULL,
-    "eval_uid" VARCHAR(20) NOT NULL,
+    "eval_item_id" INTEGER NOT NULL,
     "self_score" "Score",
     "self_reason" TEXT,
     "manager_score" "Score",
@@ -118,7 +118,7 @@ CREATE UNIQUE INDEX "categories_target_id_no_key" ON "categories"("target_id", "
 CREATE UNIQUE INDEX "evaluation_items_category_id_no_key" ON "evaluation_items"("category_id", "no");
 
 -- CreateIndex: evaluations
-CREATE UNIQUE INDEX "evaluations_fiscal_year_evaluatee_id_eval_uid_key" ON "evaluations"("fiscal_year", "evaluatee_id", "eval_uid");
+CREATE UNIQUE INDEX "evaluations_fiscal_year_evaluatee_id_eval_item_id_key" ON "evaluations"("fiscal_year", "evaluatee_id", "eval_item_id");
 
 -- CreateIndex: is_current partial unique (at most 1 true per fiscal_years)
 CREATE UNIQUE INDEX "fiscal_years_is_current_true_key" ON "fiscal_years"("is_current") WHERE "is_current" = true;
@@ -137,8 +137,8 @@ ALTER TABLE "evaluation_items" ADD CONSTRAINT "evaluation_items_target_id_fkey" 
 ALTER TABLE "evaluation_items" ADD CONSTRAINT "evaluation_items_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 ALTER TABLE "fiscal_year_items" ADD CONSTRAINT "fiscal_year_items_fiscal_year_fkey" FOREIGN KEY ("fiscal_year") REFERENCES "fiscal_years"("year") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "fiscal_year_items" ADD CONSTRAINT "fiscal_year_items_evaluation_item_uid_fkey" FOREIGN KEY ("evaluation_item_uid") REFERENCES "evaluation_items"("uid") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "fiscal_year_items" ADD CONSTRAINT "fiscal_year_items_evaluation_item_id_fkey" FOREIGN KEY ("evaluation_item_id") REFERENCES "evaluation_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 ALTER TABLE "evaluations" ADD CONSTRAINT "evaluations_evaluatee_id_fkey" FOREIGN KEY ("evaluatee_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "evaluations" ADD CONSTRAINT "evaluations_eval_uid_fkey" FOREIGN KEY ("eval_uid") REFERENCES "evaluation_items"("uid") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "evaluations" ADD CONSTRAINT "evaluations_eval_item_id_fkey" FOREIGN KEY ("eval_item_id") REFERENCES "evaluation_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "evaluations" ADD CONSTRAINT "evaluations_fiscal_year_fkey" FOREIGN KEY ("fiscal_year") REFERENCES "fiscal_years"("year") ON DELETE RESTRICT ON UPDATE CASCADE;
