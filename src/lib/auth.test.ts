@@ -48,7 +48,7 @@ describe("getSession", () => {
         id: "mock-user-id",
         name: "モックユーザー",
         role: "admin",
-        is_active: true,
+        isActive: true,
       });
 
       const result = await getSession();
@@ -58,7 +58,7 @@ describe("getSession", () => {
       expect(mockAuth).not.toHaveBeenCalled();
       expect(mockFindUnique).toHaveBeenCalledWith({
         where: { id: "mock-user-id" },
-        select: { id: true, name: true, role: true, is_active: true },
+        select: { id: true, name: true, role: true, isActive: true },
       });
     });
 
@@ -71,13 +71,13 @@ describe("getSession", () => {
       expect(mockAuth).not.toHaveBeenCalled();
     });
 
-    it("is_active: false のユーザーは null を返す", async () => {
+    it("isActive: false のユーザーは null を返す", async () => {
       // @ts-expect-error
       mockFindUnique.mockResolvedValue({
         id: "mock-user-id",
         name: "無効ユーザー",
         role: "member",
-        is_active: false,
+        isActive: false,
       });
 
       const result = await getSession();
@@ -106,7 +106,7 @@ describe("getSession", () => {
         id: "user-uuid",
         name: "モックユーザー",
         role: "member",
-        is_active: true,
+        isActive: true,
       });
 
       const result = await getSession();
@@ -114,7 +114,7 @@ describe("getSession", () => {
       expect(mockAuth).not.toHaveBeenCalled();
       expect(mockFindUnique).toHaveBeenCalledWith({
         where: { email: "mock@example.com" },
-        select: { id: true, name: true, role: true, is_active: true },
+        select: { id: true, name: true, role: true, isActive: true },
       });
     });
 
@@ -127,13 +127,13 @@ describe("getSession", () => {
       expect(mockAuth).not.toHaveBeenCalled();
     });
 
-    it("is_active: false のユーザーは null を返す", async () => {
+    it("isActive: false のユーザーは null を返す", async () => {
       // @ts-expect-error
       mockFindUnique.mockResolvedValue({
         id: "user-uuid",
         name: "無効ユーザー",
         role: "member",
-        is_active: false,
+        isActive: false,
       });
 
       const result = await getSession();
@@ -147,13 +147,13 @@ describe("getSession", () => {
         id: "priority-user-id",
         name: "優先ユーザー",
         role: "admin",
-        is_active: true,
+        isActive: true,
       });
 
       const result = await getSession();
       expect(mockFindUnique).toHaveBeenCalledWith({
         where: { id: "priority-user-id" },
-        select: { id: true, name: true, role: true, is_active: true },
+        select: { id: true, name: true, role: true, isActive: true },
       });
       expect(result?.user.id).toBe("priority-user-id");
     });
@@ -168,7 +168,7 @@ describe("getSession", () => {
     expect(mockFindUnique).not.toHaveBeenCalled();
   });
 
-  it("正常系: clerk_idに対応するDBユーザーが存在する場合はセッションを返す", async () => {
+  it("正常系: clerkIdに対応するDBユーザーが存在する場合はセッションを返す", async () => {
     // @ts-expect-error
     mockAuth.mockResolvedValue({ userId: "clerk_abc123" });
     // @ts-expect-error
@@ -176,7 +176,7 @@ describe("getSession", () => {
       id: "user-uuid",
       name: "テストユーザー",
       role: "member",
-      is_active: true,
+      isActive: true,
     });
 
     const result = await getSession();
@@ -186,7 +186,7 @@ describe("getSession", () => {
     expect(mockCurrentUser).not.toHaveBeenCalled();
   });
 
-  it("clerk_id で見つかったユーザーが is_active: false の場合は null を返す", async () => {
+  it("clerkId で見つかったユーザーが isActive: false の場合は null を返す", async () => {
     // @ts-expect-error
     mockAuth.mockResolvedValue({ userId: "clerk_abc123" });
     // @ts-expect-error
@@ -194,7 +194,7 @@ describe("getSession", () => {
       id: "user-uuid",
       name: "無効ユーザー",
       role: "member",
-      is_active: false,
+      isActive: false,
     });
 
     const result = await getSession();
@@ -209,27 +209,27 @@ describe("getSession", () => {
       id: "admin-uuid",
       name: "管理者",
       role: "admin",
-      is_active: true,
+      isActive: true,
     });
 
     const result = await getSession();
     expect(result?.user.role).toBe("admin");
   });
 
-  describe("初回ログイン時の clerk_id 自動紐付け", () => {
-    it("メールアドレスが一致するDBユーザーに clerk_id を紐付けてセッションを返す", async () => {
+  describe("初回ログイン時の clerkId 自動紐付け", () => {
+    it("メールアドレスが一致するDBユーザーに clerkId を紐付けてセッションを返す", async () => {
       // @ts-expect-error
       mockAuth.mockResolvedValue({ userId: "clerk_new123" });
       // @ts-expect-error
       mockFindUnique
-        .mockResolvedValueOnce(null) // clerk_id 検索 → 未ヒット
+        .mockResolvedValueOnce(null) // clerkId 検索 → 未ヒット
         // @ts-expect-error
         .mockResolvedValueOnce({
           id: "user-uuid",
           name: "田中太郎",
           role: "member",
-          clerk_id: null,
-          is_active: true,
+          clerkId: null,
+          isActive: true,
         }); // email 検索
       // @ts-expect-error
       mockCurrentUser.mockResolvedValue({
@@ -243,31 +243,31 @@ describe("getSession", () => {
         user: { id: "user-uuid", name: "田中太郎", role: "member" },
       });
       expect(mockUpdateMany).toHaveBeenCalledWith({
-        where: { email: "tanaka@example.com", clerk_id: null },
-        data: { clerk_id: "clerk_new123" },
+        where: { email: "tanaka@example.com", clerkId: null },
+        data: { clerkId: "clerk_new123" },
       });
     });
 
-    it("並行リクエストで先に clerk_id が紐付け済みの場合は既存レコードを返す", async () => {
+    it("並行リクエストで先に clerkId が紐付け済みの場合は既存レコードを返す", async () => {
       // @ts-expect-error
       mockAuth.mockResolvedValue({ userId: "clerk_new123" });
       // @ts-expect-error
       mockFindUnique
-        .mockResolvedValueOnce(null) // clerk_id 検索 → 未ヒット
+        .mockResolvedValueOnce(null) // clerkId 検索 → 未ヒット
         // @ts-expect-error
         .mockResolvedValueOnce({
           id: "user-uuid",
           name: "田中太郎",
           role: "member",
-          clerk_id: null,
-          is_active: true,
+          clerkId: null,
+          isActive: true,
         }) // email 検索
         // @ts-expect-error
         .mockResolvedValueOnce({
           id: "user-uuid",
           name: "田中太郎",
           role: "member",
-          is_active: true,
+          isActive: true,
         }); // updateMany count=0 後の再取得
       // @ts-expect-error
       mockCurrentUser.mockResolvedValue({
@@ -287,7 +287,7 @@ describe("getSession", () => {
       mockAuth.mockResolvedValue({ userId: "clerk_new123" });
       // @ts-expect-error
       mockFindUnique
-        .mockResolvedValueOnce(null) // clerk_id 検索 → 未ヒット
+        .mockResolvedValueOnce(null) // clerkId 検索 → 未ヒット
         .mockResolvedValueOnce(null); // email 検索 → 未ヒット
       // @ts-expect-error
       mockCurrentUser.mockResolvedValue({
@@ -304,7 +304,7 @@ describe("getSession", () => {
       });
       expect(mockCreate).toHaveBeenCalledWith({
         data: {
-          clerk_id: "clerk_new123",
+          clerkId: "clerk_new123",
           email: "new@example.com",
           name: "新規ユーザー",
           role: "member",
@@ -314,19 +314,19 @@ describe("getSession", () => {
       expect(mockUpdateMany).not.toHaveBeenCalled();
     });
 
-    it("既に別の clerk_id に紐付き済みのDBユーザーはnullを返す", async () => {
+    it("既に別の clerkId に紐付き済みのDBユーザーはnullを返す", async () => {
       // @ts-expect-error
       mockAuth.mockResolvedValue({ userId: "clerk_new123" });
       // @ts-expect-error
       mockFindUnique
-        .mockResolvedValueOnce(null) // clerk_id 検索 → 未ヒット
+        .mockResolvedValueOnce(null) // clerkId 検索 → 未ヒット
         // @ts-expect-error
         .mockResolvedValueOnce({
           id: "user-uuid",
           name: "田中太郎",
           role: "member",
-          clerk_id: "clerk_other",
-          is_active: true,
+          clerkId: "clerk_other",
+          isActive: true,
         }); // email 検索 → 別IDに紐付き済み
       // @ts-expect-error
       mockCurrentUser.mockResolvedValue({
@@ -338,19 +338,19 @@ describe("getSession", () => {
       expect(mockUpdateMany).not.toHaveBeenCalled();
     });
 
-    it("email で見つかったユーザーが is_active: false の場合は null を返す", async () => {
+    it("email で見つかったユーザーが isActive: false の場合は null を返す", async () => {
       // @ts-expect-error
       mockAuth.mockResolvedValue({ userId: "clerk_new123" });
       // @ts-expect-error
       mockFindUnique
-        .mockResolvedValueOnce(null) // clerk_id 検索 → 未ヒット
+        .mockResolvedValueOnce(null) // clerkId 検索 → 未ヒット
         // @ts-expect-error
         .mockResolvedValueOnce({
           id: "user-uuid",
           name: "無効ユーザー",
           role: "member",
-          clerk_id: null,
-          is_active: false,
+          clerkId: null,
+          isActive: false,
         }); // email 検索
       // @ts-expect-error
       mockCurrentUser.mockResolvedValue({

@@ -22,14 +22,14 @@ const otherSession = { user: { id: "other-99", role: "member" } };
 
 const mockEvaluations = [
   {
-    eval_item_id: 1,
-    fiscal_year: 2025,
-    evaluatee_id: "user-2",
-    self_score: "ryo",
-    self_reason: "理由",
-    manager_score: null,
-    manager_reason: null,
-    evaluation_item: { name: "会社員としての基本姿勢" },
+    evalItemId: 1,
+    fiscalYear: 2025,
+    evaluateeId: "user-2",
+    selfScore: "ryo",
+    selfReason: "理由",
+    managerScore: null,
+    managerReason: null,
+    evaluationItem: { name: "会社員としての基本姿勢" },
   },
 ];
 
@@ -66,9 +66,9 @@ describe("GET /api/members/:id/evaluations/:year", () => {
     vi.mocked(getSession).mockResolvedValue(evaluatorSession as never);
     vi.mocked(prisma.evaluationAssignment.findFirst).mockResolvedValue({
       id: "assign-1",
-      fiscal_year: 2025,
-      evaluatee_id: "user-2",
-      evaluator_id: "user-1",
+      fiscalYear: 2025,
+      evaluateeId: "user-2",
+      evaluatorId: "user-1",
     });
     vi.mocked(prisma.evaluation.findMany).mockResolvedValue(mockEvaluations as never);
 

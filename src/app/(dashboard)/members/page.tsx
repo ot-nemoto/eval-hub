@@ -22,7 +22,7 @@ export default async function MembersPage() {
     });
   } else if (fiscalYear !== null) {
     const assignments = await prisma.evaluationAssignment.findMany({
-      where: { evaluator_id: userId, fiscal_year: fiscalYear },
+      where: { evaluatorId: userId, fiscalYear: fiscalYear },
       include: { evaluatee: { select: { id: true, name: true, division: true } } },
       orderBy: { evaluatee: { name: "asc" } },
     });

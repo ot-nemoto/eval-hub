@@ -6,9 +6,9 @@ import { useState } from "react";
 type FiscalYear = {
   year: number;
   name: string;
-  start_date: Date;
-  end_date: Date;
-  is_current: boolean;
+  startDate: Date;
+  endDate: Date;
+  isCurrent: boolean;
 };
 
 type Props = { fiscalYear: FiscalYear };
@@ -19,8 +19,8 @@ export function FiscalYearActions({ fiscalYear }: Props) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     name: fiscalYear.name,
-    start_date: fiscalYear.start_date.toISOString().slice(0, 10),
-    end_date: fiscalYear.end_date.toISOString().slice(0, 10),
+    startDate: fiscalYear.startDate.toISOString().slice(0, 10),
+    endDate: fiscalYear.endDate.toISOString().slice(0, 10),
   });
 
   async function handleSetCurrent() {
@@ -30,7 +30,7 @@ export function FiscalYearActions({ fiscalYear }: Props) {
       const res = await fetch(`/api/admin/fiscal-years/${fiscalYear.year}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_current: true }),
+        body: JSON.stringify({ isCurrent: true }),
       });
       if (res.ok) {
         router.refresh();
@@ -99,15 +99,15 @@ export function FiscalYearActions({ fiscalYear }: Props) {
         />
         <input
           type="date"
-          value={form.start_date}
-          onChange={(e) => setForm((p) => ({ ...p, start_date: e.target.value }))}
+          value={form.startDate}
+          onChange={(e) => setForm((p) => ({ ...p, startDate: e.target.value }))}
           className="rounded border border-gray-300 px-2 py-1 text-xs"
           required
         />
         <input
           type="date"
-          value={form.end_date}
-          onChange={(e) => setForm((p) => ({ ...p, end_date: e.target.value }))}
+          value={form.endDate}
+          onChange={(e) => setForm((p) => ({ ...p, endDate: e.target.value }))}
           className="rounded border border-gray-300 px-2 py-1 text-xs"
           required
         />
@@ -132,7 +132,7 @@ export function FiscalYearActions({ fiscalYear }: Props) {
 
   return (
     <div className="flex justify-end gap-2">
-      {!fiscalYear.is_current && (
+      {!fiscalYear.isCurrent && (
         <button
           type="button"
           onClick={handleSetCurrent}

@@ -7,7 +7,7 @@ export function FiscalYearForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ year: "", name: "", start_date: "", end_date: "" });
+  const [form, setForm] = useState({ year: "", name: "", startDate: "", endDate: "" });
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
@@ -31,13 +31,13 @@ export function FiscalYearForm() {
         body: JSON.stringify({
           year: Number(form.year),
           name: form.name,
-          start_date: form.start_date,
-          end_date: form.end_date,
+          startDate: form.startDate,
+          endDate: form.endDate,
         }),
       });
       if (res.ok) {
         setOpen(false);
-        setForm({ year: "", name: "", start_date: "", end_date: "" });
+        setForm({ year: "", name: "", startDate: "", endDate: "" });
         router.refresh();
       } else {
         const json = await res.json().catch(() => ({}));
@@ -97,29 +97,29 @@ export function FiscalYearForm() {
           />
         </div>
         <div>
-          <label htmlFor="start_date" className="mb-1 block text-xs font-medium text-gray-700">
+          <label htmlFor="startDate" className="mb-1 block text-xs font-medium text-gray-700">
             開始日
           </label>
           <input
-            id="start_date"
-            name="start_date"
+            id="startDate"
+            name="startDate"
             type="date"
             required
-            value={form.start_date}
+            value={form.startDate}
             onChange={handleChange}
             className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
           />
         </div>
         <div>
-          <label htmlFor="end_date" className="mb-1 block text-xs font-medium text-gray-700">
+          <label htmlFor="endDate" className="mb-1 block text-xs font-medium text-gray-700">
             終了日
           </label>
           <input
-            id="end_date"
-            name="end_date"
+            id="endDate"
+            name="endDate"
             type="date"
             required
-            value={form.end_date}
+            value={form.endDate}
             onChange={handleChange}
             className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
           />

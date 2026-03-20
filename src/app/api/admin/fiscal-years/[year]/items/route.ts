@@ -19,22 +19,22 @@ export async function GET(_request: Request, { params }: Params) {
   if (!fiscalYear) return errorResponse("NOT_FOUND", "年度が見つかりません", 404);
 
   const items = await prisma.fiscalYearItem.findMany({
-    where: { fiscal_year: year },
+    where: { fiscalYear: year },
     include: {
-      evaluation_item: {
+      evaluationItem: {
         select: {
           id: true,
-          target_id: true,
-          category_id: true,
+          targetId: true,
+          categoryId: true,
           no: true,
           name: true,
         },
       },
     },
-    orderBy: { evaluation_item: { no: "asc" } },
+    orderBy: { evaluationItem: { no: "asc" } },
   });
 
-  return successResponse(items.map((i) => i.evaluation_item));
+  return successResponse(items.map((i) => i.evaluationItem));
 }
 
 export async function POST(request: Request, { params }: Params) {
@@ -48,29 +48,29 @@ export async function POST(request: Request, { params }: Params) {
     return errorResponse("BAD_REQUEST", "year は整数で指定してください", 400);
 
   const body = await request.json().catch(() => null);
-  if (!body || !Number.isInteger(body.evaluation_item_id) || body.evaluation_item_id < 1) {
-    return errorResponse("BAD_REQUEST", "evaluation_item_id は正の整数で指定してください", 400);
+  if (!body || !Number.isInteger(body.evaluationItemId) || body.evaluationItemId < 1) {
+    return errorResponse("BAD_REQUEST", "evaluationItemId は正の整数で指定してください", 400);
   }
 
   const fiscalYear = await prisma.fiscalYear.findUnique({ where: { year } });
   if (!fiscalYear) return errorResponse("NOT_FOUND", "年度が見つかりません", 404);
 
-  const item = await prisma.evaluationItem.findUnique({ where: { id: body.evaluation_item_id } });
+  const item = await prisma.evaluationItem.findUnique({ where: { id: body.evaluationItemId } });
   if (!item) return errorResponse("NOT_FOUND", "評価項目が見つかりません", 404);
 
   const existing = await prisma.fiscalYearItem.findUnique({
     where: {
-      fiscal_year_evaluation_item_id: {
-        fiscal_year: year,
-        evaluation_item_id: body.evaluation_item_id,
+      fiscalYear_evaluationItemId: {
+        fiscalYear: year,
+        evaluationItemId: body.evaluationItemId,
       },
     },
   });
   if (existing) return errorResponse("CONFLICT", "すでに紐づいています", 409);
 
   const created = await prisma.fiscalYearItem.create({
-    data: { fiscal_year: year, evaluation_item_id: body.evaluation_item_id },
-    select: { fiscal_year: true, evaluation_item_id: true },
+    data: { fiscalYear: year, evaluationItemId: body.evaluationItemId },
+    select: { fiscalYear: true, evaluationItemId: true },
   });
 
   return successResponse(created, undefined, 201);

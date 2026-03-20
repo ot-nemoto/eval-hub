@@ -19,9 +19,9 @@ export async function GET() {
       email: true,
       role: true,
       division: true,
-      joined_at: true,
-      created_at: true,
-      is_active: true,
+      joinedAt: true,
+      createdAt: true,
+      isActive: true,
     },
     orderBy: { name: "asc" },
   });

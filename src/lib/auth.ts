@@ -16,17 +16,17 @@ export async function getSession(): Promise<Session | null> {
     if (process.env.MOCK_USER_ID) {
       const user = await prisma.user.findUnique({
         where: { id: process.env.MOCK_USER_ID },
-        select: { id: true, name: true, role: true, is_active: true },
+        select: { id: true, name: true, role: true, isActive: true },
       });
-      if (!user || !user.is_active) return null;
+      if (!user || !user.isActive) return null;
       return { user: { id: user.id, name: user.name, role: user.role } };
     }
     if (process.env.MOCK_USER_EMAIL) {
       const user = await prisma.user.findUnique({
         where: { email: process.env.MOCK_USER_EMAIL },
-        select: { id: true, name: true, role: true, is_active: true },
+        select: { id: true, name: true, role: true, isActive: true },
       });
-      if (!user || !user.is_active) return null;
+      if (!user || !user.isActive) return null;
       return { user: { id: user.id, name: user.name, role: user.role } };
     }
   }
@@ -34,14 +34,14 @@ export async function getSession(): Promise<Session | null> {
   const { userId } = await auth();
   if (!userId) return null;
 
-  // まず clerk_id で検索
+  // まず clerkId で検索
   const userByClerkId = await prisma.user.findUnique({
-    where: { clerk_id: userId },
-    select: { id: true, name: true, role: true, is_active: true },
+    where: { clerkId: userId },
+    select: { id: true, name: true, role: true, isActive: true },
   });
 
   if (userByClerkId) {
-    if (!userByClerkId.is_active) return null;
+    if (!userByClerkId.isActive) return null;
     return { user: { id: userByClerkId.id, name: userByClerkId.name, role: userByClerkId.role } };
   }
 
@@ -52,7 +52,7 @@ export async function getSession(): Promise<Session | null> {
 
   const existingUser = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, name: true, role: true, clerk_id: true, is_active: true },
+    select: { id: true, name: true, role: true, clerkId: true, isActive: true },
   });
 
   if (!existingUser) {
@@ -61,7 +61,7 @@ export async function getSession(): Promise<Session | null> {
     const name = clerkUser?.fullName ?? clerkUser?.firstName ?? email;
     try {
       const created = await prisma.user.create({
-        data: { clerk_id: userId, email, name, role: "member" },
+        data: { clerkId: userId, email, name, role: "member" },
         select: { id: true, name: true, role: true },
       });
       return { user: created };
@@ -69,33 +69,33 @@ export async function getSession(): Promise<Session | null> {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
         const user = await prisma.user.findUnique({
           where: { email },
-          select: { id: true, name: true, role: true, is_active: true },
+          select: { id: true, name: true, role: true, isActive: true },
         });
-        if (!user || !user.is_active) return null;
+        if (!user || !user.isActive) return null;
         return { user: { id: user.id, name: user.name, role: user.role } };
       }
       throw e;
     }
   }
 
-  if (existingUser.clerk_id) {
+  if (existingUser.clerkId) {
     return null; // 既に別の Clerk ID に紐付き済み
   }
 
-  if (!existingUser.is_active) return null;
+  if (!existingUser.isActive) return null;
 
-  // clerk_id: null の場合のみ更新（並行リクエストによる上書き防止）
+  // clerkId: null の場合のみ更新（並行リクエストによる上書き防止）
   const { count } = await prisma.user.updateMany({
-    where: { email, clerk_id: null },
-    data: { clerk_id: userId },
+    where: { email, clerkId: null },
+    data: { clerkId: userId },
   });
   if (count === 0) {
     // 別リクエストが先に紐付けを完了した場合は再取得して返す
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, name: true, role: true, is_active: true },
+      select: { id: true, name: true, role: true, isActive: true },
     });
-    if (!user || !user.is_active) return null;
+    if (!user || !user.isActive) return null;
     return { user: { id: user.id, name: user.name, role: user.role } };
   }
 

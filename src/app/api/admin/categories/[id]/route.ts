@@ -29,15 +29,15 @@ export async function PATCH(request: Request, { params }: Params) {
 
   if (data.no !== undefined && data.no !== category.no) {
     const conflict = await prisma.category.findUnique({
-      where: { target_id_no: { target_id: category.target_id, no: data.no } },
+      where: { targetId_no: { targetId: category.targetId, no: data.no } },
     });
-    if (conflict) return errorResponse("CONFLICT", "同じ target_id と no の中分類がすでに存在します", 409);
+    if (conflict) return errorResponse("CONFLICT", "同じ targetId と no の中分類がすでに存在します", 409);
   }
 
   const updated = await prisma.category.update({
     where: { id },
     data,
-    select: { id: true, target_id: true, name: true, no: true },
+    select: { id: true, targetId: true, name: true, no: true },
   });
 
   return successResponse(updated);
@@ -55,7 +55,7 @@ export async function DELETE(_request: Request, { params }: Params) {
   const category = await prisma.category.findUnique({ where: { id } });
   if (!category) return errorResponse("NOT_FOUND", "中分類が見つかりません", 404);
 
-  const itemCount = await prisma.evaluationItem.count({ where: { category_id: id } });
+  const itemCount = await prisma.evaluationItem.count({ where: { categoryId: id } });
   if (itemCount > 0) return errorResponse("CONFLICT", "紐づく評価項目が存在するため削除できません", 409);
 
   await prisma.category.delete({ where: { id } });

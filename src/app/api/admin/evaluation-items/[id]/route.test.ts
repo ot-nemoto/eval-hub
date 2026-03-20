@@ -18,14 +18,14 @@ const memberSession = { user: { id: "member-1", role: "member" } };
 
 const mockItem = {
   id: 1,
-  target_id: 1,
-  category_id: 1,
+  targetId: 1,
+  categoryId: 1,
   no: 1,
   name: "会社員としての基本姿勢",
   description: null,
-  eval_criteria: null,
+  evalCriteria: null,
   target: { id: 1, name: "employee", no: 1 },
-  category: { id: 1, target_id: 1, name: "engagement", no: 1 },
+  category: { id: 1, targetId: 1, name: "engagement", no: 1 },
 };
 
 const params = Promise.resolve({ id: "1" });

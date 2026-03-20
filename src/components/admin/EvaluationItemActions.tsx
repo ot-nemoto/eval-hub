@@ -7,7 +7,7 @@ type EvaluationItem = {
   id: number;
   name: string;
   description: string | null;
-  eval_criteria: string | null;
+  evalCriteria: string | null;
 };
 
 type Props = { item: EvaluationItem; hasEvaluations: boolean };
@@ -19,7 +19,7 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
   const [form, setForm] = useState({
     name: item.name,
     description: item.description ?? "",
-    eval_criteria: item.eval_criteria ?? "",
+    evalCriteria: item.evalCriteria ?? "",
   });
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
@@ -37,7 +37,7 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
         body: JSON.stringify({
           name: form.name,
           description: form.description || null,
-          eval_criteria: form.eval_criteria || null,
+          evalCriteria: form.evalCriteria || null,
         }),
       });
       if (res.ok) {
@@ -93,8 +93,8 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
           className="rounded border border-gray-300 px-2 py-1 text-xs"
         />
         <textarea
-          name="eval_criteria"
-          value={form.eval_criteria}
+          name="evalCriteria"
+          value={form.evalCriteria}
           onChange={handleChange}
           placeholder="評価基準"
           rows={2}

@@ -26,14 +26,14 @@ export async function GET(
   }
 
   const settings = await prisma.evaluationSetting.findMany({
-    where: { user_id: id },
-    orderBy: { fiscal_year: "desc" },
+    where: { userId: id },
+    orderBy: { fiscalYear: "desc" },
   });
 
   return successResponse(
     settings.map((s) => ({
-      fiscal_year: s.fiscal_year,
-      self_evaluation_enabled: s.self_evaluation_enabled,
+      fiscalYear: s.fiscalYear,
+      selfEvaluationEnabled: s.selfEvaluationEnabled,
     })),
   );
 }

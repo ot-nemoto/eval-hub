@@ -23,41 +23,41 @@ export async function PATCH(request: Request, { params }: Params) {
 
   const data: {
     name?: string;
-    start_date?: Date;
-    end_date?: Date;
-    is_current?: boolean;
+    startDate?: Date;
+    endDate?: Date;
+    isCurrent?: boolean;
   } = {};
   if (typeof body.name === "string") data.name = body.name;
-  if (typeof body.start_date === "string") data.start_date = new Date(body.start_date);
-  if (typeof body.end_date === "string") data.end_date = new Date(body.end_date);
-  if (typeof body.is_current === "boolean") data.is_current = body.is_current;
+  if (typeof body.startDate === "string") data.startDate = new Date(body.startDate);
+  if (typeof body.endDate === "string") data.endDate = new Date(body.endDate);
+  if (typeof body.isCurrent === "boolean") data.isCurrent = body.isCurrent;
 
   if (Object.keys(data).length === 0)
     return errorResponse("BAD_REQUEST", "更新可能なフィールドが指定されていません", 400);
 
-  if (data.start_date && Number.isNaN(data.start_date.getTime()))
-    return errorResponse("BAD_REQUEST", "start_date は有効な日付形式で指定してください", 400);
-  if (data.end_date && Number.isNaN(data.end_date.getTime()))
-    return errorResponse("BAD_REQUEST", "end_date は有効な日付形式で指定してください", 400);
+  if (data.startDate && Number.isNaN(data.startDate.getTime()))
+    return errorResponse("BAD_REQUEST", "startDate は有効な日付形式で指定してください", 400);
+  if (data.endDate && Number.isNaN(data.endDate.getTime()))
+    return errorResponse("BAD_REQUEST", "endDate は有効な日付形式で指定してください", 400);
 
   // 両方指定された場合、または片方が指定されてもう一方が既存値から取れる場合の整合性チェック
-  const effectiveStart = data.start_date ?? target.start_date;
-  const effectiveEnd = data.end_date ?? target.end_date;
+  const effectiveStart = data.startDate ?? target.startDate;
+  const effectiveEnd = data.endDate ?? target.endDate;
   if (effectiveStart > effectiveEnd)
-    return errorResponse("BAD_REQUEST", "start_date は end_date 以前の日付を指定してください", 400);
+    return errorResponse("BAD_REQUEST", "startDate は endDate 以前の日付を指定してください", 400);
 
   const updated = await prisma.$transaction(async (tx) => {
-    // is_current: true にする場合、他の年度を false に
-    if (data.is_current === true) {
+    // isCurrent: true にする場合、他の年度を false に
+    if (data.isCurrent === true) {
       await tx.fiscalYear.updateMany({
-        where: { is_current: true, year: { not: year } },
-        data: { is_current: false },
+        where: { isCurrent: true, year: { not: year } },
+        data: { isCurrent: false },
       });
     }
     return tx.fiscalYear.update({
       where: { year },
       data,
-      select: { year: true, name: true, start_date: true, end_date: true, is_current: true },
+      select: { year: true, name: true, startDate: true, endDate: true, isCurrent: true },
     });
   });
 
@@ -78,10 +78,10 @@ export async function DELETE(_request: Request, { params }: Params) {
   if (!target) return errorResponse("NOT_FOUND", "年度が見つかりません", 404);
 
   const [assignmentCount, evaluationCount, settingCount, itemCount] = await Promise.all([
-    prisma.evaluationAssignment.count({ where: { fiscal_year: year } }),
-    prisma.evaluation.count({ where: { fiscal_year: year } }),
-    prisma.evaluationSetting.count({ where: { fiscal_year: year } }),
-    prisma.fiscalYearItem.count({ where: { fiscal_year: year } }),
+    prisma.evaluationAssignment.count({ where: { fiscalYear: year } }),
+    prisma.evaluation.count({ where: { fiscalYear: year } }),
+    prisma.evaluationSetting.count({ where: { fiscalYear: year } }),
+    prisma.fiscalYearItem.count({ where: { fiscalYear: year } }),
   ]);
 
   if (assignmentCount > 0 || evaluationCount > 0 || settingCount > 0 || itemCount > 0) {

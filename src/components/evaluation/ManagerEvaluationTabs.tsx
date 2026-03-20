@@ -17,13 +17,13 @@ type Item = {
   uid: string;
   name: string;
   description: string | null;
-  eval_criteria: string | null;
+  evalCriteria: string | null;
   category: string;
   target: string;
-  self_score: Score | null;
-  self_reason: string | null;
-  manager_score: Score | null;
-  manager_reason: string | null;
+  selfScore: Score | null;
+  selfReason: string | null;
+  managerScore: Score | null;
+  managerReason: string | null;
 };
 
 type Props = {
@@ -37,10 +37,10 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
   const [activeCategory, setActiveCategory] = useState(categories[0] ?? "");
 
   const [scores, setScores] = useState<Record<number, Score>>(
-    Object.fromEntries(items.map((i) => [i.id, i.manager_score ?? "none"])),
+    Object.fromEntries(items.map((i) => [i.id, i.managerScore ?? "none"])),
   );
   const [reasons, setReasons] = useState<Record<number, string>>(
-    Object.fromEntries(items.map((i) => [i.id, i.manager_reason ?? ""])),
+    Object.fromEntries(items.map((i) => [i.id, i.managerReason ?? ""])),
   );
   const [saving, setSaving] = useState<Record<number, boolean>>({});
   const [saved, setSaved] = useState<Record<number, boolean>>({});
@@ -121,9 +121,9 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
               {item.description && (
                 <p className="mt-1 text-sm text-gray-600">{item.description}</p>
               )}
-              {item.eval_criteria && (
+              {item.evalCriteria && (
                 <p className="mt-1 text-xs text-gray-400">
-                  評価基準: {item.eval_criteria}
+                  評価基準: {item.evalCriteria}
                 </p>
               )}
             </div>
@@ -133,10 +133,10 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
               <p className="mb-1 text-xs font-medium text-gray-500">自己評価（参考）</p>
               <div className="flex items-center gap-3">
                 <span className="rounded-md bg-white px-2 py-1 text-sm font-medium text-gray-700 border">
-                  {item.self_score ? SCORE_LABELS[item.self_score] : "未入力"}
+                  {item.selfScore ? SCORE_LABELS[item.selfScore] : "未入力"}
                 </span>
-                {item.self_reason && (
-                  <span className="text-sm text-gray-600">{item.self_reason}</span>
+                {item.selfReason && (
+                  <span className="text-sm text-gray-600">{item.selfReason}</span>
                 )}
               </div>
             </div>

@@ -10,7 +10,7 @@ export async function GET() {
 
   const fiscalYears = await prisma.fiscalYear.findMany({
     orderBy: { year: "desc" },
-    select: { year: true, name: true, start_date: true, end_date: true, is_current: true },
+    select: { year: true, name: true, startDate: true, endDate: true, isCurrent: true },
   });
 
   return successResponse(fiscalYears);
@@ -28,19 +28,19 @@ export async function POST(request: Request) {
     body.year < 1900 ||
     body.year > 9999 ||
     typeof body.name !== "string" ||
-    typeof body.start_date !== "string" ||
-    typeof body.end_date !== "string"
+    typeof body.startDate !== "string" ||
+    typeof body.endDate !== "string"
   ) {
-    return errorResponse("BAD_REQUEST", "year, name, start_date, end_date は必須です", 400);
+    return errorResponse("BAD_REQUEST", "year, name, startDate, endDate は必須です", 400);
   }
 
-  const startDate = new Date(body.start_date);
-  const endDate = new Date(body.end_date);
+  const startDate = new Date(body.startDate);
+  const endDate = new Date(body.endDate);
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-    return errorResponse("BAD_REQUEST", "start_date, end_date は有効な日付形式で指定してください", 400);
+    return errorResponse("BAD_REQUEST", "startDate, endDate は有効な日付形式で指定してください", 400);
   }
   if (startDate > endDate) {
-    return errorResponse("BAD_REQUEST", "start_date は end_date 以前の日付を指定してください", 400);
+    return errorResponse("BAD_REQUEST", "startDate は endDate 以前の日付を指定してください", 400);
   }
 
   const existing = await prisma.fiscalYear.findUnique({ where: { year: body.year } });
@@ -58,22 +58,22 @@ export async function POST(request: Request) {
       data: {
         year: body.year,
         name: body.name,
-        start_date: startDate,
-        end_date: endDate,
+        startDate: startDate,
+        endDate: endDate,
       },
-      select: { year: true, name: true, start_date: true, end_date: true, is_current: true },
+      select: { year: true, name: true, startDate: true, endDate: true, isCurrent: true },
     });
 
     if (latestFy) {
       const sourceItems = await tx.fiscalYearItem.findMany({
-        where: { fiscal_year: latestFy.year },
-        select: { evaluation_item_id: true },
+        where: { fiscalYear: latestFy.year },
+        select: { evaluationItemId: true },
       });
       if (sourceItems.length > 0) {
         await tx.fiscalYearItem.createMany({
           data: sourceItems.map((item) => ({
-            fiscal_year: body.year,
-            evaluation_item_id: item.evaluation_item_id,
+            fiscalYear: body.year,
+            evaluationItemId: item.evaluationItemId,
           })),
         });
       }

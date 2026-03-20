@@ -18,7 +18,7 @@ export function CategoryForm({ targetId }: Props) {
       const res = await fetch("/api/admin/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ target_id: targetId, name: form.name, no: Number(form.no) }),
+        body: JSON.stringify({ targetId: targetId, name: form.name, no: Number(form.no) }),
       });
       if (res.ok) {
         setOpen(false);

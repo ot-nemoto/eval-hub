@@ -21,16 +21,16 @@ const mockFiscalYears = [
   {
     year: 2026,
     name: "2026年度",
-    start_date: new Date("2026-04-01"),
-    end_date: new Date("2027-03-31"),
-    is_current: true,
+    startDate: new Date("2026-04-01"),
+    endDate: new Date("2027-03-31"),
+    isCurrent: true,
   },
   {
     year: 2025,
     name: "2025年度",
-    start_date: new Date("2025-04-01"),
-    end_date: new Date("2026-03-31"),
-    is_current: false,
+    startDate: new Date("2025-04-01"),
+    endDate: new Date("2026-03-31"),
+    isCurrent: false,
   },
 ];
 
@@ -71,9 +71,9 @@ describe("POST /api/admin/fiscal-years", () => {
     const newFy = {
       year: 2028,
       name: "2028年度",
-      start_date: new Date("2028-04-01"),
-      end_date: new Date("2029-03-31"),
-      is_current: false,
+      startDate: new Date("2028-04-01"),
+      endDate: new Date("2029-03-31"),
+      isCurrent: false,
     };
     vi.mocked(prisma.$transaction).mockImplementation(async (fn) => fn(prisma as never));
     vi.mocked(prisma.fiscalYear.create).mockResolvedValue(newFy as never);
@@ -84,8 +84,8 @@ describe("POST /api/admin/fiscal-years", () => {
       body: JSON.stringify({
         year: 2028,
         name: "2028年度",
-        start_date: "2028-04-01",
-        end_date: "2029-03-31",
+        startDate: "2028-04-01",
+        endDate: "2029-03-31",
       }),
     });
     const res = await POST(req);
@@ -104,8 +104,8 @@ describe("POST /api/admin/fiscal-years", () => {
       body: JSON.stringify({
         year: 2026,
         name: "2026年度",
-        start_date: "2026-04-01",
-        end_date: "2027-03-31",
+        startDate: "2026-04-01",
+        endDate: "2027-03-31",
       }),
     });
     const res = await POST(req);
@@ -128,7 +128,7 @@ describe("POST /api/admin/fiscal-years", () => {
 
     const req = new Request("http://localhost/api/admin/fiscal-years", {
       method: "POST",
-      body: JSON.stringify({ year: 2028.5, name: "2028年度", start_date: "2028-04-01", end_date: "2029-03-31" }),
+      body: JSON.stringify({ year: 2028.5, name: "2028年度", startDate: "2028-04-01", endDate: "2029-03-31" }),
     });
     const res = await POST(req);
     expect(res.status).toBe(400);
@@ -139,29 +139,29 @@ describe("POST /api/admin/fiscal-years", () => {
 
     const req = new Request("http://localhost/api/admin/fiscal-years", {
       method: "POST",
-      body: JSON.stringify({ year: 1800, name: "1800年度", start_date: "1800-04-01", end_date: "1801-03-31" }),
+      body: JSON.stringify({ year: 1800, name: "1800年度", startDate: "1800-04-01", endDate: "1801-03-31" }),
     });
     const res = await POST(req);
     expect(res.status).toBe(400);
   });
 
-  it("start_date が不正な日付文字列の場合は 400", async () => {
+  it("startDate が不正な日付文字列の場合は 400", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
 
     const req = new Request("http://localhost/api/admin/fiscal-years", {
       method: "POST",
-      body: JSON.stringify({ year: 2028, name: "2028年度", start_date: "not-a-date", end_date: "2029-03-31" }),
+      body: JSON.stringify({ year: 2028, name: "2028年度", startDate: "not-a-date", endDate: "2029-03-31" }),
     });
     const res = await POST(req);
     expect(res.status).toBe(400);
   });
 
-  it("start_date が end_date より後の場合は 400", async () => {
+  it("startDate が endDate より後の場合は 400", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
 
     const req = new Request("http://localhost/api/admin/fiscal-years", {
       method: "POST",
-      body: JSON.stringify({ year: 2028, name: "2028年度", start_date: "2029-03-31", end_date: "2028-04-01" }),
+      body: JSON.stringify({ year: 2028, name: "2028年度", startDate: "2029-03-31", endDate: "2028-04-01" }),
     });
     const res = await POST(req);
     expect(res.status).toBe(400);
@@ -174,15 +174,15 @@ describe("POST /api/admin/fiscal-years", () => {
     const newFy = {
       year: 2027,
       name: "2027年度",
-      start_date: new Date("2027-04-01"),
-      end_date: new Date("2028-03-31"),
-      is_current: false,
+      startDate: new Date("2027-04-01"),
+      endDate: new Date("2028-03-31"),
+      isCurrent: false,
     };
     vi.mocked(prisma.$transaction).mockImplementation(async (fn) => fn(prisma as never));
     vi.mocked(prisma.fiscalYear.create).mockResolvedValue(newFy as never);
     vi.mocked(prisma.fiscalYearItem.findMany).mockResolvedValue([
-      { evaluation_item_id: 1 },
-      { evaluation_item_id: 2 },
+      { evaluationItemId: 1 },
+      { evaluationItemId: 2 },
     ] as never);
     vi.mocked(prisma.fiscalYearItem.createMany).mockResolvedValue({ count: 2 } as never);
 
@@ -191,16 +191,16 @@ describe("POST /api/admin/fiscal-years", () => {
       body: JSON.stringify({
         year: 2027,
         name: "2027年度",
-        start_date: "2027-04-01",
-        end_date: "2028-03-31",
+        startDate: "2027-04-01",
+        endDate: "2028-03-31",
       }),
     });
     const res = await POST(req);
     expect(res.status).toBe(201);
     expect(prisma.fiscalYearItem.createMany).toHaveBeenCalledWith({
       data: [
-        { fiscal_year: 2027, evaluation_item_id: 1 },
-        { fiscal_year: 2027, evaluation_item_id: 2 },
+        { fiscalYear: 2027, evaluationItemId: 1 },
+        { fiscalYear: 2027, evaluationItemId: 2 },
       ],
     });
   });

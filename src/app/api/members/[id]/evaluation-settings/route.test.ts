@@ -19,8 +19,8 @@ const otherMemberSession = { user: { id: "member-2", role: "member" } };
 
 const mockUser = { id: "member-1", name: "山田太郎" };
 const mockSettings = [
-  { fiscal_year: 2026, self_evaluation_enabled: true },
-  { fiscal_year: 2025, self_evaluation_enabled: false },
+  { fiscalYear: 2026, selfEvaluationEnabled: true },
+  { fiscalYear: 2025, selfEvaluationEnabled: false },
 ];
 
 function makeParams(id: string) {
@@ -40,7 +40,7 @@ describe("GET /api/members/:id/evaluation-settings", () => {
 
     expect(res.status).toBe(200);
     expect(body.data).toHaveLength(2);
-    expect(body.data[0]).toMatchObject({ fiscal_year: 2026, self_evaluation_enabled: true });
+    expect(body.data[0]).toMatchObject({ fiscalYear: 2026, selfEvaluationEnabled: true });
   });
 
   it("本人は自分の設定を取得できる", async () => {

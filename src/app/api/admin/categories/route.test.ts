@@ -17,8 +17,8 @@ const adminSession = { user: { id: "admin-1", role: "admin" } };
 const memberSession = { user: { id: "member-1", role: "member" } };
 
 const mockCategories = [
-  { id: 1, target_id: 1, name: "engagement", no: 1 },
-  { id: 2, target_id: 1, name: "skill", no: 2 },
+  { id: 1, targetId: 1, name: "engagement", no: 1 },
+  { id: 2, targetId: 1, name: "skill", no: 2 },
 ];
 
 describe("GET /api/admin/categories", () => {
@@ -36,23 +36,23 @@ describe("GET /api/admin/categories", () => {
     expect(body.data).toHaveLength(2);
   });
 
-  it("?target_id でフィルタできる", async () => {
+  it("?targetId でフィルタできる", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.category.findMany).mockResolvedValue([mockCategories[0]] as never);
 
-    const req = new Request("http://localhost/api/admin/categories?target_id=1");
+    const req = new Request("http://localhost/api/admin/categories?targetId=1");
     const res = await GET(req);
     const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(prisma.category.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { target_id: 1 } }),
+      expect.objectContaining({ where: { targetId: 1 } }),
     );
   });
 
-  it("?target_id が不正値の場合は 400", async () => {
+  it("?targetId が不正値の場合は 400", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
-    const res = await GET(new Request("http://localhost/api/admin/categories?target_id=abc"));
+    const res = await GET(new Request("http://localhost/api/admin/categories?targetId=abc"));
     expect(res.status).toBe(400);
   });
 
@@ -80,7 +80,7 @@ describe("POST /api/admin/categories", () => {
 
     const req = new Request("http://localhost/api/admin/categories", {
       method: "POST",
-      body: JSON.stringify({ target_id: 1, name: "engagement", no: 1 }),
+      body: JSON.stringify({ targetId: 1, name: "engagement", no: 1 }),
     });
     const res = await POST(req);
     const body = await res.json();
@@ -93,13 +93,13 @@ describe("POST /api/admin/categories", () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     const req = new Request("http://localhost/api/admin/categories", {
       method: "POST",
-      body: JSON.stringify({ target_id: 1, name: "", no: 1 }),
+      body: JSON.stringify({ targetId: 1, name: "", no: 1 }),
     });
     const res = await POST(req);
     expect(res.status).toBe(400);
   });
 
-  it("target_id がない場合は 400", async () => {
+  it("targetId がない場合は 400", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
 
     const req = new Request("http://localhost/api/admin/categories", {
@@ -110,26 +110,26 @@ describe("POST /api/admin/categories", () => {
     expect(res.status).toBe(400);
   });
 
-  it("存在しない target_id の場合は 404", async () => {
+  it("存在しない targetId の場合は 404", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.target.findUnique).mockResolvedValue(null);
 
     const req = new Request("http://localhost/api/admin/categories", {
       method: "POST",
-      body: JSON.stringify({ target_id: 999, name: "x", no: 1 }),
+      body: JSON.stringify({ targetId: 999, name: "x", no: 1 }),
     });
     const res = await POST(req);
     expect(res.status).toBe(404);
   });
 
-  it("同じ target_id と no が存在する場合は 409", async () => {
+  it("同じ targetId と no が存在する場合は 409", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.target.findUnique).mockResolvedValue({ id: 1 } as never);
     vi.mocked(prisma.category.findUnique).mockResolvedValue(mockCategories[0] as never);
 
     const req = new Request("http://localhost/api/admin/categories", {
       method: "POST",
-      body: JSON.stringify({ target_id: 1, name: "dup", no: 1 }),
+      body: JSON.stringify({ targetId: 1, name: "dup", no: 1 }),
     });
     const res = await POST(req);
     expect(res.status).toBe(409);
@@ -139,7 +139,7 @@ describe("POST /api/admin/categories", () => {
     vi.mocked(getSession).mockResolvedValue(null);
     const req = new Request("http://localhost/api/admin/categories", {
       method: "POST",
-      body: JSON.stringify({ target_id: 1, name: "x", no: 1 }),
+      body: JSON.stringify({ targetId: 1, name: "x", no: 1 }),
     });
     const res = await POST(req);
     expect(res.status).toBe(401);
@@ -149,7 +149,7 @@ describe("POST /api/admin/categories", () => {
     vi.mocked(getSession).mockResolvedValue(memberSession as never);
     const req = new Request("http://localhost/api/admin/categories", {
       method: "POST",
-      body: JSON.stringify({ target_id: 1, name: "x", no: 1 }),
+      body: JSON.stringify({ targetId: 1, name: "x", no: 1 }),
     });
     const res = await POST(req);
     expect(res.status).toBe(403);
