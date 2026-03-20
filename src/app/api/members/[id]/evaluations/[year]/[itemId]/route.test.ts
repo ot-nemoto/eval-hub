@@ -41,7 +41,7 @@ describe("PUT /api/members/:id/evaluations/:year/:itemId", () => {
   it("本人は self_score/self_reason を更新できる", async () => {
     vi.mocked(getSession).mockResolvedValue(selfSession as never);
     vi.mocked(prisma.evaluationSetting.findUnique).mockResolvedValue(enabledSetting);
-    vi.mocked(prisma.evaluation.upsert).mockResolvedValue(mockUpsertResult);
+    vi.mocked(prisma.evaluation.upsert).mockResolvedValue(mockUpsertResult as never);
 
     const res = await PUT(
       new Request("http://localhost", {
@@ -63,7 +63,7 @@ describe("PUT /api/members/:id/evaluations/:year/:itemId", () => {
       ...mockUpsertResult,
       manager_score: "yu",
       manager_reason: "管理者コメント",
-    });
+    } as never);
 
     const res = await PUT(
       new Request("http://localhost", {
@@ -89,7 +89,7 @@ describe("PUT /api/members/:id/evaluations/:year/:itemId", () => {
       ...mockUpsertResult,
       manager_score: "ryo",
       manager_reason: "コメント",
-    });
+    } as never);
 
     const res = await PUT(
       new Request("http://localhost", {

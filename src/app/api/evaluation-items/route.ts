@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     where,
     orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
     select: {
-      uid: true,
+      id: true,
       target_id: true,
       category_id: true,
       no: true,

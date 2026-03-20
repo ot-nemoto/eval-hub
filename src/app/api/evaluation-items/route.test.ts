@@ -16,7 +16,7 @@ const mockTarget = { id: 1, name: "employee", no: 1 };
 const mockCategory = { id: 1, target_id: 1, name: "engagement", no: 1 };
 const mockItems = [
   {
-    uid: "1-1-1",
+    id: 1,
     target_id: 1,
     category_id: 1,
     no: 1,
@@ -27,7 +27,7 @@ const mockItems = [
     category: mockCategory,
   },
   {
-    uid: "1-1-2",
+    id: 2,
     target_id: 1,
     category_id: 1,
     no: 2,
