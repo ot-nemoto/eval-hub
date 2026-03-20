@@ -60,8 +60,8 @@ NextAuth.js による認証（ログイン・セッション管理）
 ```json
 {
   "data": [
-    { "id": 1, "name": "employee", "sort_no": 1 },
-    { "id": 2, "name": "projects", "sort_no": 2 }
+    { "id": 1, "name": "employee", "no": 1 },
+    { "id": 2, "name": "projects", "no": 2 }
   ]
 }
 ```
@@ -71,13 +71,13 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 **Request**
 ```json
-{ "name": "新しい大分類", "sort_no": 3 }
+{ "name": "新しい大分類", "no": 3 }
 ```
 
 **Response**: `201 Created`
 
 ### PATCH /api/admin/targets/:id
-大分類編集（admin のみ）。`name`・`sort_no` を更新可。
+大分類編集（admin のみ）。`name`・`no` を更新可。
 
 **Request**
 ```json
@@ -106,8 +106,8 @@ NextAuth.js による認証（ログイン・セッション管理）
 ```json
 {
   "data": [
-    { "id": 1, "target_id": 1, "name": "engagement", "sort_no": 1 },
-    { "id": 2, "target_id": 1, "name": "skill", "sort_no": 2 }
+    { "id": 1, "target_id": 1, "name": "engagement", "no": 1 },
+    { "id": 2, "target_id": 1, "name": "skill", "no": 2 }
   ]
 }
 ```
@@ -117,13 +117,13 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 **Request**
 ```json
-{ "target_id": 1, "name": "新しい中分類", "sort_no": 3 }
+{ "target_id": 1, "name": "新しい中分類", "no": 3 }
 ```
 
 **Response**: `201 Created`
 
 ### PATCH /api/admin/categories/:id
-中分類編集（admin のみ）。`name`・`sort_no` を更新可。
+中分類編集（admin のみ）。`name`・`no` を更新可。
 
 **Request**
 ```json
@@ -158,8 +158,8 @@ NextAuth.js による認証（ログイン・セッション管理）
       "name": "会社員としての基本姿勢",
       "description": "...",
       "eval_criteria": "...",
-      "target": { "id": 1, "name": "employee", "sort_no": 1 },
-      "category": { "id": 1, "target_id": 1, "name": "engagement", "sort_no": 1 }
+      "target": { "id": 1, "name": "employee", "no": 1 },
+      "category": { "id": 1, "target_id": 1, "name": "engagement", "no": 1 }
     }
   ]
 }
@@ -218,8 +218,8 @@ NextAuth.js による認証（ログイン・セッション管理）
       "name": "会社員としての基本姿勢",
       "description": "...",
       "eval_criteria": "...",
-      "target": { "id": 1, "name": "employee", "sort_no": 1 },
-      "category": { "id": 1, "target_id": 1, "name": "engagement", "sort_no": 1 }
+      "target": { "id": 1, "name": "employee", "no": 1 },
+      "category": { "id": 1, "target_id": 1, "name": "engagement", "no": 1 }
     }
   ]
 }
