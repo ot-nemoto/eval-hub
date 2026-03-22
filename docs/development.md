@@ -167,6 +167,51 @@ MOCK_USER_EMAIL="doigaki@example.com"
 
 ---
 
+## Prisma 操作
+
+### マイグレーション
+
+マイグレーションは**常に手動で実行**する（ビルドスクリプトによる自動実行は行わない）。
+
+```bash
+# スキーマ変更後に新しいマイグレーションを作成・適用（開発時）
+npx prisma migrate dev --name <migration-name>
+
+# 本番・ステージング環境への適用（デプロイ前に手動実行）
+npx prisma migrate deploy
+```
+
+#### DB を完全リセットしてシードを投入し直す場合
+
+```bash
+# DB をリセット（全テーブル削除・マイグレーション再適用）
+npx prisma migrate reset --force
+
+# シードデータを投入
+npx prisma db seed
+```
+
+### マイグレーション状態確認
+
+```bash
+npx prisma migrate status
+```
+
+---
+
+## デプロイ（Vercel）
+
+1. Vercel ダッシュボードで環境変数を設定（`DATABASE_URL`, `DIRECT_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL`）
+2. デプロイ前に**手動**でマイグレーションを適用する
+
+   ```bash
+   npx prisma migrate deploy
+   ```
+
+3. `develop` ブランチへのプッシュ（またはマージ）で自動デプロイ（Build Command は `prisma generate && next build` のみ）
+
+---
+
 ## よく使うコマンド
 
 ```bash
@@ -174,6 +219,7 @@ npm run dev          # 開発サーバー起動
 npm run test         # ユニットテスト実行
 npm run check        # Biome によるリント・フォーマット
 npx prisma studio    # DB の GUI ブラウザを起動
-npx prisma migrate dev --name <name>  # マイグレーションファイル作成
+npx prisma migrate dev --name <name>  # マイグレーションファイル作成（開発時）
+npx prisma migrate deploy             # マイグレーション適用（本番・ステージング）
 npx prisma db seed   # シードデータ投入
 ```
