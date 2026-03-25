@@ -139,6 +139,45 @@ none(0) < 可=ka(1) < 良=ryo(2) < 優=yu(3)
 
 > `manager` ロールは廃止。評価権限は `evaluation_assignments` で動的に管理する。
 
+## 認証フロー
+
+詳細は [`docs/auth.md`](./auth.md) を参照。
+
+概要：
+
+```
+未認証ユーザー
+  → proxy.ts（clerkMiddleware）でセッション確認
+  → 未認証なら /login にリダイレクト（Clerk が処理）
+  → 認証済み → getSession() で DB ユーザーを取得
+    → isActive = false → /auth-error へリダイレクト
+    → clerkId 未紐付け → メールで突合し自動紐付け
+    → セッション返却
+```
+
+`MOCK_USER_ID` 環境変数が設定されている場合は Clerk をバイパスし、指定 ID のユーザーで固定セッションを返す（ローカル開発用）。
+
+---
+
+## デプロイフロー
+
+```
+develop ブランチ
+  → git push origin develop
+  → Vercel が自動検知
+  → next build（ビルド）
+  → Vercel にデプロイ（Preview / Production）
+  ※ マイグレーションは手動実行（docs/development.md 参照）
+
+master ブランチ
+  → git push origin master
+  → GitHub Actions (release.yml) が起動
+  → package.json のバージョンを取得
+  → タグが未存在なら GitHub Releases を即時公開
+```
+
+---
+
 ## 開発環境
 
 ```bash

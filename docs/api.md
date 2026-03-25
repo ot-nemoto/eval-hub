@@ -1,4 +1,4 @@
-> 最終更新: 2026-03-20 (targets・categories API追加、evaluation-items の外部キー対応)
+> 最終更新: 2026-03-25 (フィールド名・クエリパラメータを camelCase に統一)
 
 # api.md — API 仕様
 
@@ -10,8 +10,8 @@
 ```
 
 ### 認証
-- すべてのエンドポイントで `Authorization: Bearer <token>` が必要（認証エンドポイントを除く）
-- NextAuth.js のセッショントークンを使用
+- すべてのエンドポイントで Clerk セッション（httpOnly Cookie）が必要
+- サーバー側で `getSession()` を呼び出し、未認証の場合は 401 を返す
 
 ### レスポンス形式
 ```json
@@ -44,10 +44,40 @@
 
 ---
 
-## 認証
+## エンドポイント一覧
 
-### POST /api/auth/[...nextauth]
-NextAuth.js による認証（ログイン・セッション管理）
+| メソッド | パス | 説明 | ロール |
+|---|---|---|---|
+| GET | `/api/admin/targets` | 大分類一覧取得 | admin |
+| POST | `/api/admin/targets` | 大分類作成 | admin |
+| PATCH | `/api/admin/targets/:id` | 大分類更新 | admin |
+| DELETE | `/api/admin/targets/:id` | 大分類削除 | admin |
+| GET | `/api/admin/categories` | 中分類一覧取得 | admin |
+| POST | `/api/admin/categories` | 中分類作成 | admin |
+| PATCH | `/api/admin/categories/:id` | 中分類更新 | admin |
+| DELETE | `/api/admin/categories/:id` | 中分類削除 | admin |
+| GET | `/api/admin/evaluation-items` | 評価項目一覧取得（admin） | admin |
+| POST | `/api/admin/evaluation-items` | 評価項目作成 | admin |
+| PATCH | `/api/admin/evaluation-items/:id` | 評価項目更新 | admin |
+| DELETE | `/api/admin/evaluation-items/:id` | 評価項目削除 | admin |
+| GET | `/api/evaluation-items` | 評価項目一覧取得（一般） | member / admin |
+| GET | `/api/evaluation-assignments` | 評価者アサイン一覧取得 | admin |
+| POST | `/api/evaluation-assignments` | 評価者アサイン作成 | admin |
+| DELETE | `/api/evaluation-assignments/:id` | 評価者アサイン削除 | admin |
+| GET | `/api/members/:id/evaluations/:year` | 採点一覧取得 | member（本人・評価者）/ admin |
+| PUT | `/api/members/:id/evaluations/:year/:uid` | 採点登録・更新 | member（本人・評価者）/ admin |
+| GET | `/api/members/:id/evaluation-settings` | 自己評価要否設定取得 | member（本人）/ admin |
+| PUT | `/api/members/:id/evaluation-settings/:year` | 自己評価要否設定更新 | admin |
+| GET | `/api/admin/fiscal-years` | 年度一覧取得 | admin |
+| POST | `/api/admin/fiscal-years` | 年度作成 | admin |
+| PATCH | `/api/admin/fiscal-years/:year` | 年度更新 | admin |
+| DELETE | `/api/admin/fiscal-years/:year` | 年度削除 | admin |
+| GET | `/api/admin/fiscal-years/:year/items` | 年度別有効評価項目取得 | admin |
+| POST | `/api/admin/fiscal-years/:year/items` | 年度別有効評価項目追加 | admin |
+| DELETE | `/api/admin/fiscal-years/:year/items/:itemId` | 年度別有効評価項目削除 | admin |
+| GET | `/api/admin/users` | ユーザー一覧取得 | admin |
+| PATCH | `/api/admin/users/:id` | ユーザー更新（ロール・有効化） | admin |
+| DELETE | `/api/admin/users/:id` | ユーザー削除 | admin |
 
 ---
 
@@ -100,14 +130,14 @@ NextAuth.js による認証（ログイン・セッション管理）
 ### GET /api/admin/categories
 中分類一覧取得（admin のみ）
 
-**Query**: `?target_id=1`
+**Query**: `?targetId=1`
 
 **Response**
 ```json
 {
   "data": [
-    { "id": 1, "target_id": 1, "name": "engagement", "no": 1 },
-    { "id": 2, "target_id": 1, "name": "skill", "no": 2 }
+    { "id": 1, "targetId": 1, "name": "engagement", "no": 1 },
+    { "id": 2, "targetId": 1, "name": "skill", "no": 2 }
   ]
 }
 ```
@@ -117,7 +147,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 **Request**
 ```json
-{ "target_id": 1, "name": "新しい中分類", "no": 3 }
+{ "targetId": 1, "name": "新しい中分類", "no": 3 }
 ```
 
 **Response**: `201 Created`
@@ -152,14 +182,14 @@ NextAuth.js による認証（ログイン・セッション管理）
   "data": [
     {
       "id": 1,
-      "target_id": 1,
-      "category_id": 1,
+      "targetId": 1,
+      "categoryId": 1,
       "no": 1,
       "name": "会社員としての基本姿勢",
       "description": "...",
-      "eval_criteria": "...",
+      "evalCriteria": "...",
       "target": { "id": 1, "name": "employee", "no": 1 },
-      "category": { "id": 1, "target_id": 1, "name": "engagement", "no": 1 }
+      "category": { "id": 1, "targetId": 1, "name": "engagement", "no": 1 }
     }
   ]
 }
@@ -171,18 +201,18 @@ NextAuth.js による認証（ログイン・セッション管理）
 **Request**
 ```json
 {
-  "target_id": 1,
-  "category_id": 1,
+  "targetId": 1,
+  "categoryId": 1,
   "name": "新しい評価項目",
   "description": null,
-  "eval_criteria": null
+  "evalCriteria": null
 }
 ```
 
 **Response**: `201 Created`
 
 ### PATCH /api/admin/evaluation-items/:id
-評価項目編集（admin のみ）。`name`・`description`・`eval_criteria` を更新可。
+評価項目編集（admin のみ）。`name`・`description`・`evalCriteria` を更新可。
 
 **Request**
 ```json
@@ -203,7 +233,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 ### GET /api/evaluation-items
 評価項目一覧
 
-**Query**: `?target_id=1&category_id=1`
+**Query**: `?targetId=1&categoryId=1`
 
 **Response**
 ```json
@@ -211,20 +241,18 @@ NextAuth.js による認証（ログイン・セッション管理）
   "data": [
     {
       "id": 1,
-      "target_id": 1,
-      "category_id": 1,
+      "targetId": 1,
+      "categoryId": 1,
       "no": 1,
       "name": "会社員としての基本姿勢",
       "description": "...",
-      "eval_criteria": "...",
+      "evalCriteria": "...",
       "target": { "id": 1, "name": "employee", "no": 1 },
-      "category": { "id": 1, "target_id": 1, "name": "engagement", "no": 1 }
+      "category": { "id": 1, "targetId": 1, "name": "engagement", "no": 1 }
     }
   ]
 }
 ```
-
-**クエリ**: `?target_id=1&category_id=1`
 
 **権限**: 認証済みユーザー全員
 
@@ -235,7 +263,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 ### GET /api/evaluation-assignments
 アサイン一覧（admin のみ）
 
-**Query**: `?fiscal_year=2025`
+**Query**: `?fiscalYear=2025`
 
 **Response**
 ```json
@@ -243,7 +271,7 @@ NextAuth.js による認証（ログイン・セッション管理）
   "data": [
     {
       "id": "uuid",
-      "fiscal_year": 2025,
+      "fiscalYear": 2025,
       "evaluatee": { "id": "uuid", "name": "山田 太郎" },
       "evaluator": { "id": "uuid", "name": "鈴木 一郎" }
     }
@@ -257,15 +285,15 @@ NextAuth.js による認証（ログイン・セッション管理）
 **Request**
 ```json
 {
-  "fiscal_year": 2025,
-  "evaluatee_id": "uuid",
-  "evaluator_id": "uuid"
+  "fiscalYear": 2025,
+  "evaluateeId": "uuid",
+  "evaluatorId": "uuid"
 }
 ```
 
 **Response**: `201 Created`
 ```json
-{ "data": { "id": "uuid", "fiscal_year": 2025, "evaluatee_id": "uuid", "evaluator_id": "uuid" } }
+{ "data": { "id": "uuid", "fiscalYear": 2025, "evaluateeId": "uuid", "evaluatorId": "uuid" } }
 ```
 
 ### DELETE /api/evaluation-assignments/:id
@@ -285,7 +313,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 {
   "data": [
     {
-      "eval_uid": "1-1-1",
+      "eval_item_id": 1,
       "item_name": "会社員としての基本姿勢",
       "self_score": "ryo",
       "self_reason": "日報を毎日記録し...",
@@ -298,7 +326,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 **権限**
 - 本人（`id == 自分`）
-- アサインされた評価者（`evaluation_assignments` に `evaluatee_id == :id` かつ `evaluator_id == 自分` のレコードがある）
+- アサインされた評価者（`evaluation_assignments` に `evaluateeId == :id` かつ `evaluatorId == 自分` のレコードがある）
 - admin
 
 ### PUT /api/members/:id/evaluations/:year/:uid
@@ -328,7 +356,7 @@ NextAuth.js による認証（ログイン・セッション管理）
 ```json
 {
   "data": {
-    "eval_uid": "1-1-1",
+    "eval_item_id": 1,
     "self_score": "ryo",
     "self_reason": "...",
     "manager_score": "yu",
@@ -348,8 +376,8 @@ NextAuth.js による認証（ログイン・セッション管理）
 ```json
 {
   "data": [
-    { "fiscal_year": 2026, "self_evaluation_enabled": false },
-    { "fiscal_year": 2025, "self_evaluation_enabled": true }
+    { "fiscalYear": 2026, "selfEvaluationEnabled": false },
+    { "fiscalYear": 2025, "selfEvaluationEnabled": true }
   ]
 }
 ```
@@ -363,12 +391,12 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 **Request**
 ```json
-{ "self_evaluation_enabled": false }
+{ "selfEvaluationEnabled": false }
 ```
 
 **Response**: `200 OK`
 ```json
-{ "data": { "fiscal_year": 2026, "self_evaluation_enabled": false } }
+{ "data": { "fiscalYear": 2026, "selfEvaluationEnabled": false } }
 ```
 
 **権限**: admin のみ
@@ -387,16 +415,16 @@ NextAuth.js による認証（ログイン・セッション管理）
     {
       "year": 2026,
       "name": "2026年度",
-      "start_date": "2026-04-01T00:00:00.000Z",
-      "end_date": "2027-03-31T00:00:00.000Z",
-      "is_current": true
+      "startDate": "2026-04-01T00:00:00.000Z",
+      "endDate": "2027-03-31T00:00:00.000Z",
+      "isCurrent": true
     },
     {
       "year": 2025,
       "name": "2025年度",
-      "start_date": "2025-04-01T00:00:00.000Z",
-      "end_date": "2026-03-31T00:00:00.000Z",
-      "is_current": false
+      "startDate": "2025-04-01T00:00:00.000Z",
+      "endDate": "2026-03-31T00:00:00.000Z",
+      "isCurrent": false
     }
   ]
 }
@@ -410,8 +438,8 @@ NextAuth.js による認証（ログイン・セッション管理）
 {
   "year": 2027,
   "name": "2027年度",
-  "start_date": "2027-04-01",
-  "end_date": "2028-03-31"
+  "startDate": "2027-04-01",
+  "endDate": "2028-03-31"
 }
 ```
 
@@ -421,21 +449,21 @@ NextAuth.js による認証（ログイン・セッション管理）
   "data": {
     "year": 2027,
     "name": "2027年度",
-    "start_date": "2027-04-01T00:00:00.000Z",
-    "end_date": "2028-03-31T00:00:00.000Z",
-    "is_current": false
+    "startDate": "2027-04-01T00:00:00.000Z",
+    "endDate": "2028-03-31T00:00:00.000Z",
+    "isCurrent": false
   }
 }
 ```
 
 ### PATCH /api/admin/fiscal-years/:year
-年度編集（admin のみ）。`name`・`start_date`・`end_date`・`is_current` を更新可。
-`is_current: true` を設定すると他の年度の `is_current` は自動的に `false` になる。
+年度編集（admin のみ）。`name`・`startDate`・`endDate`・`isCurrent` を更新可。
+`isCurrent: true` を設定すると他の年度の `isCurrent` は自動的に `false` になる。
 
 **Request**
 ```json
 {
-  "is_current": true
+  "isCurrent": true
 }
 ```
 
@@ -445,9 +473,9 @@ NextAuth.js による認証（ログイン・セッション管理）
   "data": {
     "year": 2026,
     "name": "2026年度",
-    "start_date": "2026-04-01T00:00:00.000Z",
-    "end_date": "2027-03-31T00:00:00.000Z",
-    "is_current": true
+    "startDate": "2026-04-01T00:00:00.000Z",
+    "endDate": "2027-03-31T00:00:00.000Z",
+    "isCurrent": true
   }
 }
 ```
@@ -470,8 +498,9 @@ NextAuth.js による認証（ログイン・セッション管理）
   "data": [
     {
       "id": 1,
-      "target_id": 1,
-      "category_id": 1,
+      "targetId": 1,
+      "categoryId": 1,
+      "no": 1,
       "name": "会社員としての基本姿勢"
     }
   ]
@@ -483,12 +512,12 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 **Request**
 ```json
-{ "evaluation_item_id": 1 }
+{ "evaluationItemId": 1 }
 ```
 
 **Response**: `201 Created`
 ```json
-{ "data": { "fiscal_year": 2026, "evaluation_item_id": 1 } }
+{ "data": { "fiscalYear": 2026, "evaluationItemId": 1 } }
 ```
 
 ### DELETE /api/admin/fiscal-years/:year/items/:itemId
@@ -507,13 +536,13 @@ NextAuth.js による認証（ログイン・セッション管理）
 ```json
 {
   "data": [
-    { "id": "uuid", "name": "山田太郎", "email": "yamada@example.com", "role": "member", "division": "開発部", "joined_at": null, "created_at": "2026-01-01T00:00:00.000Z", "is_active": true }
+    { "id": "uuid", "name": "山田太郎", "email": "yamada@example.com", "role": "member", "division": "開発部", "joinedAt": null, "createdAt": "2026-01-01T00:00:00.000Z", "isActive": true }
   ]
 }
 ```
 
 ### PATCH /api/admin/users/:id
-ロール変更・有効/無効化（admin のみ）。`role` と `is_active` はどちらか一方、または同時に指定可。
+ロール変更・有効/無効化（admin のみ）。`role` と `isActive` はどちらか一方、または同時に指定可。
 
 **Request（ロール変更）**
 ```json
@@ -522,12 +551,12 @@ NextAuth.js による認証（ログイン・セッション管理）
 
 **Request（無効化）**
 ```json
-{ "is_active": false }
+{ "isActive": false }
 ```
 
 **Response**: `200 OK`
 ```json
-{ "data": { "id": "uuid", "name": "山田太郎", "email": "yamada@example.com", "role": "member", "is_active": false } }
+{ "data": { "id": "uuid", "name": "山田太郎", "email": "yamada@example.com", "role": "member", "isActive": false } }
 ```
 
 ### DELETE /api/admin/users/:id

@@ -97,6 +97,23 @@
 
 ---
 
+## 画面一覧
+
+| 画面 | パス | 説明 | ロール制限 |
+|---|---|---|---|
+| ログイン | `/login` | Clerk SignIn UI（メール・パスワード） | 全員（未認証） |
+| 認証エラー | `/auth-error` | アカウント無効化などの認証エラー表示 | 全員 |
+| 評価一覧（自分） | `/evaluations` | 自分の評価項目一覧・自己評価入力 | member / admin |
+| メンバー一覧 | `/members` | 社員一覧（評価者として担当する被評価者へのリンク） | member / admin |
+| メンバー別評価 | `/members/[id]/evaluations` | 指定メンバーへの評価者評価入力 | member（アサイン済み）/ admin |
+| 管理：大分類マスタ | `/admin/targets` | 大分類（target）の追加・編集・削除 | admin |
+| 管理：評価項目マスタ | `/admin/evaluation-items` | 評価項目の追加・編集・削除 | admin |
+| 管理：年度管理 | `/admin/fiscal-years` | 年度の追加・編集・削除・現在年度設定 | admin |
+| 管理：ユーザー一覧 | `/admin/users` | ユーザー一覧・有効化/無効化・削除 | admin |
+| 管理：自己評価要否設定 | `/admin/users/[id]/evaluation-settings` | ユーザーごとの年度別自己評価要否設定 | admin |
+
+---
+
 ## v1.1 以降（defer）
 
 | 機能 | 内容 |
