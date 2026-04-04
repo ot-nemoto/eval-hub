@@ -144,11 +144,12 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
             <div className="space-y-3">
               {/* 評価者採点 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <p className="block text-sm font-medium text-gray-700">
                   評価者採点
-                </label>
+                </p>
                 <div role="radiogroup" aria-label="評価者採点" className="mt-1 flex gap-2">
                   {(["none", "ka", "ryo", "yu"] as Score[]).map((score) => (
+                    // biome-ignore lint/a11y/useSemanticElements: カスタムラジオボタン実装（スタイル制御のため button を使用）
                     <button
                       key={score}
                       type="button"

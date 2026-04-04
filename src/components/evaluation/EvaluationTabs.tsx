@@ -117,9 +117,9 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
             <div className="space-y-3">
               {/* Score */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <p className="block text-sm font-medium text-gray-700">
                   自己採点
-                </label>
+                </p>
                 <div className="mt-1 flex gap-2">
                   {(["none", "ka", "ryo", "yu"] as Score[]).map((score) => (
                     <button
@@ -142,10 +142,11 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
 
               {/* Reason */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label htmlFor={`reason-${item.id}`} className="block text-sm font-medium text-gray-700">
                   自己採点理由
                 </label>
                 <textarea
+                  id={`reason-${item.id}`}
                   className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   rows={3}
                   value={reasons[item.id] ?? ""}
