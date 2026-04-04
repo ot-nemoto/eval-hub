@@ -41,6 +41,43 @@ Clerk middleware では公開ルートとして設定しているため、未認
 
 ---
 
+## 保護対象ルート
+
+`src/proxy.ts` は以下のパスを**除いた全ルート**を認証必須とする。
+
+| パス | 認証 | 理由 |
+|------|------|------|
+| `/login` | 不要 | Clerk のサインインページ |
+| `/auth-error` | 不要 | 認証エラー表示ページ（無効化ユーザー等） |
+| その他全パス | **必須** | 未認証なら Clerk が `/login` へリダイレクト |
+
+---
+
+## セッション管理
+
+| 項目 | 内容 |
+|------|------|
+| 戦略 | Clerk JWT |
+| 保存場所 | Clerk が管理する httpOnly Cookie |
+| `session.user.id` | DB の `users.id`（UUID） |
+| `session.user.name` | DB の `users.name` |
+| `session.user.role` | DB の `users.role`（`admin` / `member`） |
+
+### セッション取得方法
+
+```typescript
+// API ルート・サーバーコンポーネント
+import { getSession } from "@/lib/auth";
+const session = await getSession();
+const userId = session?.user?.id;
+```
+
+`getSession()` が `null` を返した場合：
+- API ルート → 401 を返す
+- ページ（dashboard layout）→ Clerk セッションがなければ `/login`、あれば `/auth-error` へリダイレクト
+
+---
+
 ## 既存ユーザーの Clerk 移行手順（T46）
 
 ### 前提
