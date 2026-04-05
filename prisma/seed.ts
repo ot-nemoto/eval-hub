@@ -95,11 +95,11 @@ async function main() {
   // └─────────────┴────────┴──────────────────────────────────────────┘
   // =========================================================================
   const usersData = [
-    { email: "doigaki@example.com", name: "土井垣将", role: "admin" as const },
-    { email: "shiranui@example.com", name: "不知火守", role: "admin" as const },
-    { email: "yamada@example.com", name: "山田太郎", role: "member" as const },
-    { email: "satonaka@example.com", name: "里中智", role: "member" as const },
-    { email: "iwaki@example.com", name: "岩鬼正美", role: "member" as const },
+    { email: "doigaki@example.com", name: "土井垣将", role: "ADMIN" as const },
+    { email: "shiranui@example.com", name: "不知火守", role: "ADMIN" as const },
+    { email: "yamada@example.com", name: "山田太郎", role: "MEMBER" as const },
+    { email: "satonaka@example.com", name: "里中智", role: "MEMBER" as const },
+    { email: "iwaki@example.com", name: "岩鬼正美", role: "MEMBER" as const },
   ];
 
   const u: Record<string, { id: string }> = {};

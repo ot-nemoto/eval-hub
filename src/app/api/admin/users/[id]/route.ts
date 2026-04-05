@@ -11,7 +11,7 @@ export async function PATCH(
   if (!session) {
     return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
   }
-  if (session.user.role !== "admin") {
+  if (session.user.role !== "ADMIN") {
     return errorResponse("FORBIDDEN", "権限がありません", 403);
   }
 
@@ -22,7 +22,7 @@ export async function PATCH(
   }
 
   const body = await request.json().catch(() => null);
-  const validRole = body?.role === "admin" || body?.role === "member";
+  const validRole = body?.role === "ADMIN" || body?.role === "MEMBER";
   const validIsActive = body?.isActive === true || body?.isActive === false;
   if (!body || (!validRole && !validIsActive)) {
     return errorResponse(
@@ -37,7 +37,7 @@ export async function PATCH(
     return errorResponse("NOT_FOUND", "ユーザーが見つかりません", 404);
   }
 
-  const data: { role?: "admin" | "member"; isActive?: boolean } = {};
+  const data: { role?: "ADMIN" | "MEMBER"; isActive?: boolean } = {};
   if (validRole) data.role = body.role;
   if (validIsActive) data.isActive = body.isActive;
 
@@ -58,7 +58,7 @@ export async function DELETE(
   if (!session) {
     return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
   }
-  if (session.user.role !== "admin") {
+  if (session.user.role !== "ADMIN") {
     return errorResponse("FORBIDDEN", "権限がありません", 403);
   }
 

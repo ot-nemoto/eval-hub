@@ -11,7 +11,7 @@ export async function PUT(
   if (!session) {
     return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
   }
-  if (session.user.role !== "admin") {
+  if (session.user.role !== "ADMIN") {
     return errorResponse("FORBIDDEN", "権限がありません", 403);
   }
 

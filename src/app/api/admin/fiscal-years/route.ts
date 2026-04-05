@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   const session = await getSession();
   if (!session) return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
-  if (session.user.role !== "admin") return errorResponse("FORBIDDEN", "権限がありません", 403);
+  if (session.user.role !== "ADMIN") return errorResponse("FORBIDDEN", "権限がありません", 403);
 
   const fiscalYears = await prisma.fiscalYear.findMany({
     orderBy: { year: "desc" },
@@ -19,7 +19,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session) return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
-  if (session.user.role !== "admin") return errorResponse("FORBIDDEN", "権限がありません", 403);
+  if (session.user.role !== "ADMIN") return errorResponse("FORBIDDEN", "権限がありません", 403);
 
   const body = await request.json().catch(() => null);
   if (

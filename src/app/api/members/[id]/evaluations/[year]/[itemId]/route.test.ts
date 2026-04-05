@@ -19,10 +19,10 @@ const enabledSetting = { id: "s-1", userId: "user-2", fiscalYear: 2025, selfEval
 const makeParams = (id: string, year: string, itemId: string) =>
   Promise.resolve({ id, year, itemId });
 
-const adminSession = { user: { id: "admin-1", role: "admin" } };
-const selfSession = { user: { id: "user-2", role: "member" } };
-const evaluatorSession = { user: { id: "user-1", role: "member" } };
-const otherSession = { user: { id: "other-99", role: "member" } };
+const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
+const selfSession = { user: { id: "user-2", role: "MEMBER" } };
+const evaluatorSession = { user: { id: "user-1", role: "MEMBER" } };
+const otherSession = { user: { id: "other-99", role: "MEMBER" } };
 
 const mockUpsertResult = {
   id: "eval-1",

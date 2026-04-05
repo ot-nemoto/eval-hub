@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 export default async function TargetsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.user.role !== "admin") redirect("/evaluations");
+  if (session.user.role !== "ADMIN") redirect("/evaluations");
 
   const targets = await prisma.target.findMany({
     orderBy: { no: "asc" },

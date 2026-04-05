@@ -18,7 +18,7 @@ export async function GET(
   }
 
   const currentUserId = session.user.id;
-  const isAdmin = session.user.role === "admin";
+  const isAdmin = session.user.role === "ADMIN";
   const isSelf = currentUserId === evaluateeId;
 
   // 評価者かどうかチェック

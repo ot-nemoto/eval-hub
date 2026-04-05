@@ -15,10 +15,10 @@ import { prisma } from "@/lib/prisma";
 
 const makeParams = (id: string, year: string) => Promise.resolve({ id, year });
 
-const adminSession = { user: { id: "admin-1", role: "admin" } };
-const selfSession = { user: { id: "user-2", role: "member" } };
-const evaluatorSession = { user: { id: "user-1", role: "member" } };
-const otherSession = { user: { id: "other-99", role: "member" } };
+const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
+const selfSession = { user: { id: "user-2", role: "MEMBER" } };
+const evaluatorSession = { user: { id: "user-1", role: "MEMBER" } };
+const otherSession = { user: { id: "other-99", role: "MEMBER" } };
 
 const mockEvaluations = [
   {

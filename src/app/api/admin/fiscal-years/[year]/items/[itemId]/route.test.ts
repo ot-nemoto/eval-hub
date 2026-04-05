@@ -12,8 +12,8 @@ vi.mock("@/lib/prisma", () => ({
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const adminSession = { user: { id: "admin-1", role: "admin" } };
-const memberSession = { user: { id: "member-1", role: "member" } };
+const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
+const memberSession = { user: { id: "member-1", role: "MEMBER" } };
 const mockItem = { fiscalYear: 2026, evaluationItemId: 1 };
 
 function makeParams(year: string, itemId: string) {

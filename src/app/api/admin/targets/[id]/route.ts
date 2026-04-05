@@ -8,7 +8,7 @@ type Params = { params: Promise<{ id: string }> };
 export async function PATCH(request: Request, { params }: Params) {
   const session = await getSession();
   if (!session) return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
-  if (session.user.role !== "admin") return errorResponse("FORBIDDEN", "権限がありません", 403);
+  if (session.user.role !== "ADMIN") return errorResponse("FORBIDDEN", "権限がありません", 403);
 
   const { id: idStr } = await params;
   const id = Number(idStr);
@@ -44,7 +44,7 @@ export async function PATCH(request: Request, { params }: Params) {
 export async function DELETE(_request: Request, { params }: Params) {
   const session = await getSession();
   if (!session) return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
-  if (session.user.role !== "admin") return errorResponse("FORBIDDEN", "権限がありません", 403);
+  if (session.user.role !== "ADMIN") return errorResponse("FORBIDDEN", "権限がありません", 403);
 
   const { id: idStr } = await params;
   const id = Number(idStr);

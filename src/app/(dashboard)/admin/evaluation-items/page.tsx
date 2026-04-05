@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 export default async function EvaluationItemsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.user.role !== "admin") redirect("/evaluations");
+  if (session.user.role !== "ADMIN") redirect("/evaluations");
 
   const [targets, categories] = await Promise.all([
     prisma.target.findMany({ orderBy: { no: "asc" }, select: { id: true, name: true } }),

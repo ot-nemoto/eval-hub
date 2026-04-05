@@ -18,7 +18,7 @@ const itemSelect = {
 export async function GET() {
   const session = await getSession();
   if (!session) return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
-  if (session.user.role !== "admin") return errorResponse("FORBIDDEN", "管理者のみアクセス可能です", 403);
+  if (session.user.role !== "ADMIN") return errorResponse("FORBIDDEN", "管理者のみアクセス可能です", 403);
 
   const items = await prisma.evaluationItem.findMany({
     orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
@@ -31,7 +31,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session) return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
-  if (session.user.role !== "admin") return errorResponse("FORBIDDEN", "管理者のみアクセス可能です", 403);
+  if (session.user.role !== "ADMIN") return errorResponse("FORBIDDEN", "管理者のみアクセス可能です", 403);
 
   const body = await request.json().catch(() => null);
   if (

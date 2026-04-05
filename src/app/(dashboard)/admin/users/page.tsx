@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 export default async function AdminUsersPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.user.role !== "admin") redirect("/evaluations");
+  if (session.user.role !== "ADMIN") redirect("/evaluations");
 
   const users = await prisma.user.findMany({
     select: {
@@ -55,7 +55,7 @@ export default async function AdminUsersPage() {
                 <td className="px-4 py-3">
                   <span
                     className={
-                      user.role === "admin"
+                      user.role === "ADMIN"
                         ? "inline-block rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800"
                         : "inline-block rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600"
                     }

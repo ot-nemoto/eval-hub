@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   if (!session) {
     return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
   }
-  if (session.user.role !== "admin") {
+  if (session.user.role !== "ADMIN") {
     return errorResponse("FORBIDDEN", "権限がありません", 403);
   }
 
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   if (!session) {
     return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
   }
-  if (session.user.role !== "admin") {
+  if (session.user.role !== "ADMIN") {
     return errorResponse("FORBIDDEN", "権限がありません", 403);
   }
 
