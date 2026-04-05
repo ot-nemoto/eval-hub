@@ -2,10 +2,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "./route";
 
-vi.mock("@/lib/auth", () => ({ getSession: vi.fn() }));
+vi.mock("@/lib/auth", () => ({
+  getSession: vi.fn(),
+}));
+
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    evaluationItem: { findMany: vi.fn() },
+    evaluationItem: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -40,7 +45,9 @@ const mockItems = [
 ];
 
 describe("GET /api/evaluation-items", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("認証済みユーザーに評価項目一覧を返す", async () => {
     vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "MEMBER" } } as never);
@@ -51,7 +58,7 @@ describe("GET /api/evaluation-items", () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.data).toHaveLength(2);
+    expect(body.data).toEqual(mockItems);
   });
 
   it("?targetId でフィルタできる", async () => {
@@ -60,6 +67,7 @@ describe("GET /api/evaluation-items", () => {
 
     const req = new Request("http://localhost/api/evaluation-items?targetId=1");
     const res = await GET(req);
+    const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(prisma.evaluationItem.findMany).toHaveBeenCalledWith(
@@ -67,6 +75,7 @@ describe("GET /api/evaluation-items", () => {
         where: expect.objectContaining({ targetId: 1 }),
       }),
     );
+    expect(body.data).toHaveLength(1);
   });
 
   it("?categoryId でフィルタできる", async () => {
@@ -76,12 +85,12 @@ describe("GET /api/evaluation-items", () => {
     const req = new Request("http://localhost/api/evaluation-items?categoryId=1");
     const res = await GET(req);
 
-    expect(res.status).toBe(200);
     expect(prisma.evaluationItem.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ categoryId: 1 }),
       }),
     );
+    expect(res.status).toBe(200);
   });
 
   it("?targetId が不正値の場合は 400", async () => {

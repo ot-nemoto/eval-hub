@@ -121,12 +121,9 @@ none(0) < 可=ka(1) < 良=ryo(2) < 優=yu(3)
 ```
 
 ### 年度管理
-- 年度は `fiscal_years` テーブルで管理（`year: Int` が PK）
-- `is_current = true` の年度が「現在年度」。admin が管理画面から明示的に設定する
-- 現在年度は `src/lib/fiscal-year.ts` の `getCurrentFiscalYear()` で取得し、各ページ・API で使用する
-- 年度ごとに有効な評価項目を `fiscal_year_items` で管理。年度新規作成時は直近年度の項目を自動コピー
-- `evaluations`・`evaluation_assignments`・`evaluation_settings` の `fiscal_year: Int` は `fiscal_years.year` への論理FK（スキーマ上は FK 制約を付与）
-- 過去年度の評価記録は `evaluations` に `fiscal_year + evaluatee_id + eval_item_id` の組み合わせ（ユニーク制約）で永続保持される
+- 年度は `fiscal_year`（例: `2025`）で管理
+- 評価はすべて `fiscal_year` に紐付く
+- `evaluation_assignments` も年度単位で管理（年度ごとに評価者を変更可）
 
 ### 権限制御
 - API Routes でセッション + DB 参照によるアクセス制御

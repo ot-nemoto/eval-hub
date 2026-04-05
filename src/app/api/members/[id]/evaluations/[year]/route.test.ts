@@ -38,7 +38,7 @@ describe("GET /api/members/:id/evaluations/:year", () => {
 
   it("本人は自分の評価一覧を取得できる", async () => {
     vi.mocked(getSession).mockResolvedValue(selfSession as never);
-    vi.mocked(prisma.evaluation.findMany).mockResolvedValue(mockEvaluations as never);
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue(mockEvaluations);
 
     const res = await GET(new Request("http://localhost"), {
       params: makeParams("user-2", "2025"),
@@ -47,12 +47,12 @@ describe("GET /api/members/:id/evaluations/:year", () => {
 
     expect(res.status).toBe(200);
     expect(body.data).toHaveLength(1);
-    expect(body.data[0]).toMatchObject({ eval_item_id: 1, item_name: "会社員としての基本姿勢" });
+    expect(body.data[0]).toMatchObject({ eval_uid: "1-1-1", item_name: "会社員としての基本姿勢" });
   });
 
   it("admin は任意の評価一覧を取得できる", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
-    vi.mocked(prisma.evaluation.findMany).mockResolvedValue(mockEvaluations as never);
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue(mockEvaluations);
 
     const res = await GET(new Request("http://localhost"), {
       params: makeParams("user-2", "2025"),
@@ -70,7 +70,7 @@ describe("GET /api/members/:id/evaluations/:year", () => {
       evaluateeId: "user-2",
       evaluatorId: "user-1",
     });
-    vi.mocked(prisma.evaluation.findMany).mockResolvedValue(mockEvaluations as never);
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue(mockEvaluations);
 
     const res = await GET(new Request("http://localhost"), {
       params: makeParams("user-2", "2025"),

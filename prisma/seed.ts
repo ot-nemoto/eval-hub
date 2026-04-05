@@ -214,7 +214,7 @@ async function main() {
   console.log(`evaluation_settings: ${settingsData.length} upserted`);
 
   // =========================================================================
-  // 4. 評価者アサイン（evaluation_assignments）
+  // 3. 評価者アサイン（evaluation_assignments）
   //
   //  年度  │ 被評価者  │ 評価者（上長）
   //  ──────┼───────────┼────────────────
@@ -260,7 +260,7 @@ async function main() {
   console.log(`evaluation_assignments: ${assignmentsData.length} upserted`);
 
   // =========================================================================
-  // 5. 大分類マスタ（targets）
+  // 4. 評価項目マスタ（evaluation_items）
   // =========================================================================
   const targetsData = [
     ...new Map(
@@ -312,8 +312,6 @@ async function main() {
   );
 
   for (const item of evaluationItemsData) {
-    const target = targetByName[item.target];
-    const category = categoryByKey[categoryKey(item.target, item.category)];
     await prisma.evaluationItem.upsert({
       where: { categoryId_no: { categoryId: category.id, no: item.item_no } },
       update: {
@@ -403,10 +401,5 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .catch((e) => { console.error(e); process.exit(1); })
+  .finally(async () => { await prisma.$disconnect(); });

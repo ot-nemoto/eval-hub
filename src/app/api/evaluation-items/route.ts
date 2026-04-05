@@ -1,11 +1,12 @@
-// @vitest-environment node
-import { errorResponse, successResponse } from "@/lib/api-response";
 import { getSession } from "@/lib/auth";
+import { errorResponse, successResponse } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
   const session = await getSession();
-  if (!session) return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
+  if (!session) {
+    return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
+  }
 
   const { searchParams } = new URL(request.url);
   const targetIdStr = searchParams.get("targetId");
@@ -28,8 +29,11 @@ export async function GET(request: Request) {
   }
 
   const items = await prisma.evaluationItem.findMany({
-    where,
-    orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
+    where: {
+      ...(target ? { target } : {}),
+      ...(category ? { category } : {}),
+    },
+    orderBy: [{ target_no: "asc" }, { category_no: "asc" }, { item_no: "asc" }],
     select: {
       id: true,
       targetId: true,

@@ -37,7 +37,8 @@ prisma/
     "item_no": 1,
     "name": "会社員としての基本姿勢",
     "description": "挨拶をする\n電話を率先して取る...",
-    "eval_criteria": "下記のうち一つ以上の取り組みがある・・・可\n3つ以上・・・良\n5つ以上・・・優"
+    "eval_criteria": "下記のうち一つ以上の取り組みがある・・・可\n3つ以上・・・良\n5つ以上・・・優",
+    "two_year_rule": false
   },
   {
     "uid": "2-3-3",
@@ -48,7 +49,8 @@ prisma/
     "item_no": 3,
     "name": "サーバーサイドプログラミング能力",
     "description": "サーバ/言語/フレームワークの特性に合わせたプログラム設計・実装する",
-    "eval_criteria": "..."
+    "eval_criteria": "...",
+    "two_year_rule": false
   }
 ]
 ```
