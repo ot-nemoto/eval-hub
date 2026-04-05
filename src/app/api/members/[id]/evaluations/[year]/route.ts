@@ -18,16 +18,16 @@ export async function GET(
   }
 
   const currentUserId = session.user.id;
-  const isAdmin = session.user.role === "admin";
+  const isAdmin = session.user.role === "ADMIN";
   const isSelf = currentUserId === evaluateeId;
 
   // 評価者かどうかチェック
   const isAssignedEvaluator = !isSelf && !isAdmin
     ? await prisma.evaluationAssignment.findFirst({
         where: {
-          fiscal_year: fiscalYear,
-          evaluatee_id: evaluateeId,
-          evaluator_id: currentUserId,
+          fiscalYear: fiscalYear,
+          evaluateeId: evaluateeId,
+          evaluatorId: currentUserId,
         },
       }).then((r) => r !== null)
     : false;
@@ -37,19 +37,19 @@ export async function GET(
   }
 
   const evaluations = await prisma.evaluation.findMany({
-    where: { fiscal_year: fiscalYear, evaluatee_id: evaluateeId },
-    include: { evaluation_item: { select: { name: true } } },
-    orderBy: { eval_uid: "asc" },
+    where: { fiscalYear: fiscalYear, evaluateeId: evaluateeId },
+    include: { evaluationItem: { select: { name: true } } },
+    orderBy: { evalItemId: "asc" },
   });
 
   return successResponse(
     evaluations.map((e) => ({
-      eval_uid: e.eval_uid,
-      item_name: e.evaluation_item.name,
-      self_score: e.self_score,
-      self_reason: e.self_reason,
-      manager_score: e.manager_score,
-      manager_reason: e.manager_reason,
+      eval_item_id: e.evalItemId,
+      item_name: e.evaluationItem.name,
+      self_score: e.selfScore,
+      self_reason: e.selfReason,
+      manager_score: e.managerScore,
+      manager_reason: e.managerReason,
     })),
   );
 }

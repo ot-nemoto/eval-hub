@@ -7,31 +7,31 @@ export async function GET(request: Request) {
   if (!session) {
     return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
   }
-  if (session.user.role !== "admin") {
+  if (session.user.role !== "ADMIN") {
     return errorResponse("FORBIDDEN", "権限がありません", 403);
   }
 
   const { searchParams } = new URL(request.url);
-  const fiscalYearParam = searchParams.get("fiscal_year");
+  const fiscalYearParam = searchParams.get("fiscalYear");
   const fiscalYear = fiscalYearParam ? Number(fiscalYearParam) : undefined;
 
   if (fiscalYearParam && Number.isNaN(fiscalYear)) {
-    return errorResponse("BAD_REQUEST", "fiscal_year は数値で指定してください", 400);
+    return errorResponse("BAD_REQUEST", "fiscalYear は数値で指定してください", 400);
   }
 
   const assignments = await prisma.evaluationAssignment.findMany({
-    where: fiscalYear ? { fiscal_year: fiscalYear } : undefined,
+    where: fiscalYear ? { fiscalYear: fiscalYear } : undefined,
     include: {
       evaluatee: { select: { id: true, name: true } },
       evaluator: { select: { id: true, name: true } },
     },
-    orderBy: [{ fiscal_year: "desc" }, { evaluatee_id: "asc" }],
+    orderBy: [{ fiscalYear: "desc" }, { evaluateeId: "asc" }],
   });
 
   return successResponse(
     assignments.map((a) => ({
       id: a.id,
-      fiscal_year: a.fiscal_year,
+      fiscalYear: a.fiscalYear,
       evaluatee: a.evaluatee,
       evaluator: a.evaluator,
     })),
@@ -43,26 +43,26 @@ export async function POST(request: Request) {
   if (!session) {
     return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
   }
-  if (session.user.role !== "admin") {
+  if (session.user.role !== "ADMIN") {
     return errorResponse("FORBIDDEN", "権限がありません", 403);
   }
 
   const body = await request.json().catch(() => null);
   if (
     !body ||
-    typeof body.fiscal_year !== "number" ||
-    typeof body.evaluatee_id !== "string" ||
-    typeof body.evaluator_id !== "string"
+    typeof body.fiscalYear !== "number" ||
+    typeof body.evaluateeId !== "string" ||
+    typeof body.evaluatorId !== "string"
   ) {
-    return errorResponse("BAD_REQUEST", "fiscal_year, evaluatee_id, evaluator_id は必須です", 400);
+    return errorResponse("BAD_REQUEST", "fiscalYear, evaluateeId, evaluatorId は必須です", 400);
   }
 
   const existing = await prisma.evaluationAssignment.findUnique({
     where: {
-      fiscal_year_evaluatee_id_evaluator_id: {
-        fiscal_year: body.fiscal_year,
-        evaluatee_id: body.evaluatee_id,
-        evaluator_id: body.evaluator_id,
+      fiscalYear_evaluateeId_evaluatorId: {
+        fiscalYear: body.fiscalYear,
+        evaluateeId: body.evaluateeId,
+        evaluatorId: body.evaluatorId,
       },
     },
   });
@@ -72,9 +72,9 @@ export async function POST(request: Request) {
 
   const assignment = await prisma.evaluationAssignment.create({
     data: {
-      fiscal_year: body.fiscal_year,
-      evaluatee_id: body.evaluatee_id,
-      evaluator_id: body.evaluator_id,
+      fiscalYear: body.fiscalYear,
+      evaluateeId: body.evaluateeId,
+      evaluatorId: body.evaluatorId,
     },
   });
 

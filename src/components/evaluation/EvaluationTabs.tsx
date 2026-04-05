@@ -16,11 +16,13 @@ type Item = {
   uid: string;
   name: string;
   description: string | null;
-  eval_criteria: string | null;
+  evalCriteria: string | null;
   category: string;
   target: string;
-  self_score: Score | null;
-  self_reason: string | null;
+  selfScore: Score | null;
+  selfReason: string | null;
+  managerScore: Score | null;
+  managerReason: string | null;
 };
 
 type Props = {
@@ -33,11 +35,11 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
   const categories = [...new Set(items.map((i) => i.category))];
   const [activeCategory, setActiveCategory] = useState(categories[0] ?? "");
 
-  const [scores, setScores] = useState<Record<string, Score>>(
-    Object.fromEntries(items.map((i) => [i.uid, i.self_score ?? "none"])),
+  const [scores, setScores] = useState<Record<number, Score>>(
+    Object.fromEntries(items.map((i) => [i.id, i.selfScore ?? "none"])),
   );
-  const [reasons, setReasons] = useState<Record<string, string>>(
-    Object.fromEntries(items.map((i) => [i.uid, i.self_reason ?? ""])),
+  const [reasons, setReasons] = useState<Record<number, string>>(
+    Object.fromEntries(items.map((i) => [i.id, i.selfReason ?? ""])),
   );
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
@@ -106,9 +108,9 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
               {item.description && (
                 <p className="mt-1 text-sm text-gray-600">{item.description}</p>
               )}
-              {item.eval_criteria && (
+              {item.evalCriteria && (
                 <p className="mt-1 text-xs text-gray-400">
-                  評価基準: {item.eval_criteria}
+                  評価基準: {item.evalCriteria}
                 </p>
               )}
             </div>
@@ -116,9 +118,9 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
             <div className="space-y-3">
               {/* Score */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <p className="block text-sm font-medium text-gray-700">
                   自己採点
-                </label>
+                </p>
                 <div className="mt-1 flex gap-2">
                   {(["none", "ka", "ryo", "yu"] as Score[]).map((score) => (
                     <button
@@ -141,10 +143,11 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
 
               {/* Reason */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label htmlFor={`reason-${item.id}`} className="block text-sm font-medium text-gray-700">
                   自己採点理由
                 </label>
                 <textarea
+                  id={`reason-${item.id}`}
                   className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   rows={3}
                   value={reasons[item.uid] ?? ""}
@@ -170,6 +173,21 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
                 )}
               </div>
             </div>
+
+            {/* 評価者採点（読み取り専用） */}
+            {item.managerScore !== null && (
+              <div className="mt-4 rounded-md bg-gray-50 p-3">
+                <p className="mb-1 text-xs font-medium text-gray-500">評価者採点（参考）</p>
+                <div className="flex items-center gap-3">
+                  <span className="rounded-md border bg-white px-2 py-1 text-sm font-medium text-gray-700">
+                    {SCORE_LABELS[item.managerScore]}
+                  </span>
+                  {item.managerReason && (
+                    <span className="min-w-0 break-words text-sm text-gray-600">{item.managerReason}</span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

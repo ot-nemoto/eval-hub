@@ -14,25 +14,25 @@ vi.mock("@/lib/prisma", () => ({
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const enabledSetting = { id: "s-1", user_id: "user-2", fiscal_year: 2025, self_evaluation_enabled: true };
+const enabledSetting = { id: "s-1", userId: "user-2", fiscalYear: 2025, selfEvaluationEnabled: true };
 
 const makeParams = (id: string, year: string, uid: string) =>
   Promise.resolve({ id, year, uid });
 
-const adminSession = { user: { id: "admin-1", role: "admin" } };
-const selfSession = { user: { id: "user-2", role: "member" } };
-const evaluatorSession = { user: { id: "user-1", role: "member" } };
-const otherSession = { user: { id: "other-99", role: "member" } };
+const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
+const selfSession = { user: { id: "user-2", role: "MEMBER" } };
+const evaluatorSession = { user: { id: "user-1", role: "MEMBER" } };
+const otherSession = { user: { id: "other-99", role: "MEMBER" } };
 
 const mockUpsertResult = {
   id: "eval-1",
-  fiscal_year: 2025,
-  evaluatee_id: "user-2",
-  eval_uid: "1-1-1",
-  self_score: "ryo",
-  self_reason: "理由",
-  manager_score: null,
-  manager_reason: null,
+  fiscalYear: 2025,
+  evaluateeId: "user-2",
+  evalItemId: 1,
+  selfScore: "ryo",
+  selfReason: "理由",
+  managerScore: null,
+  managerReason: null,
 };
 
 describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
@@ -61,9 +61,9 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.evaluation.upsert).mockResolvedValue({
       ...mockUpsertResult,
-      manager_score: "yu",
-      manager_reason: "管理者コメント",
-    });
+      managerScore: "yu",
+      managerReason: "管理者コメント",
+    } as never);
 
     const res = await PUT(
       new Request("http://localhost", {
@@ -81,15 +81,15 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
     vi.mocked(getSession).mockResolvedValue(evaluatorSession as never);
     vi.mocked(prisma.evaluationAssignment.findFirst).mockResolvedValue({
       id: "assign-1",
-      fiscal_year: 2025,
-      evaluatee_id: "user-2",
-      evaluator_id: "user-1",
+      fiscalYear: 2025,
+      evaluateeId: "user-2",
+      evaluatorId: "user-1",
     });
     vi.mocked(prisma.evaluation.upsert).mockResolvedValue({
       ...mockUpsertResult,
-      manager_score: "ryo",
-      manager_reason: "コメント",
-    });
+      managerScore: "ryo",
+      managerReason: "コメント",
+    } as never);
 
     const res = await PUT(
       new Request("http://localhost", {
@@ -121,9 +121,9 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
     vi.mocked(getSession).mockResolvedValue(evaluatorSession as never);
     vi.mocked(prisma.evaluationAssignment.findFirst).mockResolvedValue({
       id: "assign-1",
-      fiscal_year: 2025,
-      evaluatee_id: "user-2",
-      evaluator_id: "user-1",
+      fiscalYear: 2025,
+      evaluateeId: "user-2",
+      evaluatorId: "user-1",
     });
 
     const res = await PUT(
@@ -202,7 +202,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
     vi.mocked(getSession).mockResolvedValue(selfSession as never);
     vi.mocked(prisma.evaluationSetting.findUnique).mockResolvedValue({
       ...enabledSetting,
-      self_evaluation_enabled: false,
+      selfEvaluationEnabled: false,
     });
 
     const res = await PUT(

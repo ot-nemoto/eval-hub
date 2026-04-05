@@ -11,7 +11,7 @@ export async function PATCH(
   if (!session) {
     return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
   }
-  if (session.user.role !== "admin") {
+  if (session.user.role !== "ADMIN") {
     return errorResponse("FORBIDDEN", "権限がありません", 403);
   }
 
@@ -22,12 +22,12 @@ export async function PATCH(
   }
 
   const body = await request.json().catch(() => null);
-  const validRole = body?.role === "admin" || body?.role === "member";
-  const validIsActive = body?.is_active === true || body?.is_active === false;
+  const validRole = body?.role === "ADMIN" || body?.role === "MEMBER";
+  const validIsActive = body?.isActive === true || body?.isActive === false;
   if (!body || (!validRole && !validIsActive)) {
     return errorResponse(
       "BAD_REQUEST",
-      "role は 'admin' または 'member'、is_active は true または false で指定してください",
+      "role は 'admin' または 'member'、isActive は true または false で指定してください",
       400,
     );
   }
@@ -37,14 +37,14 @@ export async function PATCH(
     return errorResponse("NOT_FOUND", "ユーザーが見つかりません", 404);
   }
 
-  const data: { role?: "admin" | "member"; is_active?: boolean } = {};
+  const data: { role?: "ADMIN" | "MEMBER"; isActive?: boolean } = {};
   if (validRole) data.role = body.role;
-  if (validIsActive) data.is_active = body.is_active;
+  if (validIsActive) data.isActive = body.isActive;
 
   const updated = await prisma.user.update({
     where: { id },
     data,
-    select: { id: true, name: true, email: true, role: true, is_active: true },
+    select: { id: true, name: true, email: true, role: true, isActive: true },
   });
 
   return successResponse(updated);
@@ -58,7 +58,7 @@ export async function DELETE(
   if (!session) {
     return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
   }
-  if (session.user.role !== "admin") {
+  if (session.user.role !== "ADMIN") {
     return errorResponse("FORBIDDEN", "権限がありません", 403);
   }
 
@@ -76,10 +76,10 @@ export async function DELETE(
   // 関連データが存在する場合は削除不可
   const [assignmentCount, evaluationCount, settingCount] = await Promise.all([
     prisma.evaluationAssignment.count({
-      where: { OR: [{ evaluatee_id: id }, { evaluator_id: id }] },
+      where: { OR: [{ evaluateeId: id }, { evaluatorId: id }] },
     }),
-    prisma.evaluation.count({ where: { evaluatee_id: id } }),
-    prisma.evaluationSetting.count({ where: { user_id: id } }),
+    prisma.evaluation.count({ where: { evaluateeId: id } }),
+    prisma.evaluationSetting.count({ where: { userId: id } }),
   ]);
 
   if (assignmentCount > 0 || evaluationCount > 0 || settingCount > 0) {

@@ -1,6 +1,6 @@
 # auth.md — 認証フロー・移行手順
 
-最終更新: 2026-03-18（認証競合時のエラーページ対応を追記）
+最終更新: 2026-04-05（初回ユーザーを admin として自動作成する仕様を追記）
 
 ---
 
@@ -22,7 +22,7 @@ clerk_id で DB 検索
     Clerk のメールアドレス取得
        ↓
     メールで DB 検索
-      → 未ヒット（新規サインアップ）   → DB にユーザー自動作成（role: member）
+      → 未ヒット（新規サインアップ）   → DB にユーザー自動作成（DBが空なら role: ADMIN、以降は role: MEMBER）
       → ヒット・clerk_id なし         → clerk_id を紐付けてセッション返却
       → ヒット・clerk_id あり         → null
 （既存ユーザー初回ログイン）
@@ -38,6 +38,43 @@ clerk_id で DB 検索
 
 `src/app/auth-error/page.tsx` にエラーメッセージとサインアウトボタンを表示する。
 Clerk middleware では公開ルートとして設定しているため、未認証状態でもアクセス可能。
+
+---
+
+## 保護対象ルート
+
+`src/proxy.ts` は以下のパスを**除いた全ルート**を認証必須とする。
+
+| パス | 認証 | 理由 |
+|------|------|------|
+| `/login` | 不要 | Clerk のサインインページ |
+| `/auth-error` | 不要 | 認証エラー表示ページ（無効化ユーザー等） |
+| その他全パス | **必須** | 未認証なら Clerk が `/login` へリダイレクト |
+
+---
+
+## セッション管理
+
+| 項目 | 内容 |
+|------|------|
+| 戦略 | Clerk JWT |
+| 保存場所 | Clerk が管理する httpOnly Cookie |
+| `session.user.id` | DB の `users.id`（UUID） |
+| `session.user.name` | DB の `users.name` |
+| `session.user.role` | DB の `users.role`（`ADMIN` / `MEMBER`） |
+
+### セッション取得方法
+
+```typescript
+// API ルート・サーバーコンポーネント
+import { getSession } from "@/lib/auth";
+const session = await getSession();
+const userId = session?.user?.id;
+```
+
+`getSession()` が `null` を返した場合：
+- API ルート → 401 を返す
+- ページ（dashboard layout）→ Clerk セッションがなければ `/login`、あれば `/auth-error` へリダイレクト
 
 ---
 
@@ -93,9 +130,9 @@ for (const user of users) {
 
 Clerk でサインアップしたユーザーが DB に存在しない場合、`getSession()` が初回アクセス時に自動的に `users` レコードを作成する。
 
-- `role` はデフォルト `member`
+- `role` は DB にユーザーが 0 人の場合（初回ログイン）は `ADMIN`、以降は `MEMBER`
 - `name` は Clerk の `fullName` → `firstName` → メールアドレスの順でフォールバック
-- `admin` へのロール昇格は DB 直接操作または管理者 API で行う
+- 2 人目以降のユーザーの `ADMIN` 昇格は DB 直接操作または管理者 API で行う
 
 ---
 

@@ -13,8 +13,8 @@ vi.mock("@/lib/prisma", () => ({
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const adminSession = { user: { id: "admin-1", role: "admin" } };
-const memberSession = { user: { id: "member-1", role: "member" } };
+const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
+const memberSession = { user: { id: "member-1", role: "MEMBER" } };
 
 const mockUser = { id: "member-1", name: "山田太郎" };
 
@@ -30,20 +30,20 @@ describe("PUT /api/members/:id/evaluation-settings/:year", () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never);
     vi.mocked(prisma.evaluationSetting.upsert).mockResolvedValue({
       id: "setting-1",
-      user_id: "member-1",
-      fiscal_year: 2026,
-      self_evaluation_enabled: false,
+      userId: "member-1",
+      fiscalYear: 2026,
+      selfEvaluationEnabled: false,
     } as never);
 
     const req = new Request("http://localhost", {
       method: "PUT",
-      body: JSON.stringify({ self_evaluation_enabled: false }),
+      body: JSON.stringify({ selfEvaluationEnabled: false }),
     });
     const res = await PUT(req, makeParams("member-1", "2026"));
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.data).toMatchObject({ fiscal_year: 2026, self_evaluation_enabled: false });
+    expect(body.data).toMatchObject({ fiscalYear: 2026, selfEvaluationEnabled: false });
   });
 
   it("member は更新できない（403）", async () => {
@@ -51,7 +51,7 @@ describe("PUT /api/members/:id/evaluation-settings/:year", () => {
 
     const req = new Request("http://localhost", {
       method: "PUT",
-      body: JSON.stringify({ self_evaluation_enabled: false }),
+      body: JSON.stringify({ selfEvaluationEnabled: false }),
     });
     const res = await PUT(req, makeParams("member-1", "2026"));
 
@@ -63,19 +63,19 @@ describe("PUT /api/members/:id/evaluation-settings/:year", () => {
 
     const req = new Request("http://localhost", {
       method: "PUT",
-      body: JSON.stringify({ self_evaluation_enabled: false }),
+      body: JSON.stringify({ selfEvaluationEnabled: false }),
     });
     const res = await PUT(req, makeParams("member-1", "abc"));
 
     expect(res.status).toBe(400);
   });
 
-  it("self_evaluation_enabled が boolean 以外の場合は 400 を返す", async () => {
+  it("selfEvaluationEnabled が boolean 以外の場合は 400 を返す", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
 
     const req = new Request("http://localhost", {
       method: "PUT",
-      body: JSON.stringify({ self_evaluation_enabled: "yes" }),
+      body: JSON.stringify({ selfEvaluationEnabled: "yes" }),
     });
     const res = await PUT(req, makeParams("member-1", "2026"));
 
@@ -88,7 +88,7 @@ describe("PUT /api/members/:id/evaluation-settings/:year", () => {
 
     const req = new Request("http://localhost", {
       method: "PUT",
-      body: JSON.stringify({ self_evaluation_enabled: false }),
+      body: JSON.stringify({ selfEvaluationEnabled: false }),
     });
     const res = await PUT(req, makeParams("not-exist", "2026"));
 
@@ -100,7 +100,7 @@ describe("PUT /api/members/:id/evaluation-settings/:year", () => {
 
     const req = new Request("http://localhost", {
       method: "PUT",
-      body: JSON.stringify({ self_evaluation_enabled: false }),
+      body: JSON.stringify({ selfEvaluationEnabled: false }),
     });
     const res = await PUT(req, makeParams("member-1", "2026"));
 

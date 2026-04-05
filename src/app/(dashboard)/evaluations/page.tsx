@@ -14,14 +14,14 @@ export default async function EvaluationsPage() {
       orderBy: [{ target_no: "asc" }, { category_no: "asc" }, { item_no: "asc" }],
     }),
     prisma.evaluation.findMany({
-      where: { evaluatee_id: userId, fiscal_year: fiscalYear },
+      where: { evaluateeId: userId, fiscalYear: fiscalYear },
     }),
     prisma.evaluationSetting.findUnique({
-      where: { user_id_fiscal_year: { user_id: userId, fiscal_year: fiscalYear } },
+      where: { userId_fiscalYear: { userId: userId, fiscalYear: fiscalYear } },
     }),
   ]);
 
-  const selfEvaluationEnabled = setting?.self_evaluation_enabled ?? false;
+  const selfEvaluationEnabled = setting?.selfEvaluationEnabled ?? false;
 
   if (!selfEvaluationEnabled) {
     return (
@@ -37,7 +37,7 @@ export default async function EvaluationsPage() {
     );
   }
 
-  const evalMap = Object.fromEntries(evaluations.map((e) => [e.eval_uid, e]));
+  const evalMap = Object.fromEntries(evaluations.map((e) => [e.evalItemId, e]));
 
   const itemsWithEval = items.map((item) => {
     const ev = evalMap[item.uid];
@@ -45,11 +45,13 @@ export default async function EvaluationsPage() {
       uid: item.uid,
       name: item.name,
       description: item.description,
-      eval_criteria: item.eval_criteria,
-      category: item.category,
-      target: item.target,
-      self_score: (ev?.self_score ?? null) as "none" | "ka" | "ryo" | "yu" | null,
-      self_reason: ev?.self_reason ?? null,
+      evalCriteria: item.evalCriteria,
+      category: item.category.name,
+      target: item.target.name,
+      selfScore: ev?.selfScore ?? null,
+      selfReason: ev?.selfReason ?? null,
+      managerScore: ev?.managerScore ?? null,
+      managerReason: ev?.managerReason ?? null,
     };
   });
 
