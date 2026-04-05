@@ -50,9 +50,9 @@ export function CategoryForm({ targetId }: Props) {
   return (
     <form onSubmit={handleSubmit} className="flex items-end gap-2">
       <div>
-        <label htmlFor="category-no" className="mb-1 block text-xs font-medium text-gray-700">No</label>
+        <label htmlFor={`category-no-${targetId}`} className="mb-1 block text-xs font-medium text-gray-700">No</label>
         <input
-          id="category-no"
+          id={`category-no-${targetId}`}
           type="number"
           min={1}
           required
@@ -63,9 +63,9 @@ export function CategoryForm({ targetId }: Props) {
         />
       </div>
       <div>
-        <label htmlFor="category-name" className="mb-1 block text-xs font-medium text-gray-700">名称</label>
+        <label htmlFor={`category-name-${targetId}`} className="mb-1 block text-xs font-medium text-gray-700">名称</label>
         <input
-          id="category-name"
+          id={`category-name-${targetId}`}
           type="text"
           required
           value={form.name}
