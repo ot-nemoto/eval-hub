@@ -88,7 +88,7 @@ vi.mock("@/lib/auth", () => ({
 | メール | ロール | isActive | 主な用途 |
 |--------|--------|----------|---------|
 | `doigaki@example.com` | admin | true | 管理画面の操作確認（評価なし） |
-| `siranui@example.com` | admin | true | 評価者・管理者の複合確認 |
+| `shiranui@example.com` | admin | true | 評価者・管理者の複合確認 |
 | `yamada@example.com` | member | true | 被評価者のメインユーザー |
 | `satonaka@example.com` | member | true | ユーザー分離テスト |
 | `iwaki@example.com` | member | true | 評価なし状態の確認 |
@@ -124,7 +124,7 @@ docs/e2e-scenarios.md の [テストしたいセクション名] を参照して
 | ユーザー名 | メール | ロール | 評価状況 |
 |-----------|--------|--------|---------|
 | 土井垣将 | `doigaki@example.com` | admin | 評価なし |
-| 不知火守 | `siranui@example.com` | admin | 2025年度 自己評価あり |
+| 不知火守 | `shiranui@example.com` | admin | 2025年度 自己評価あり |
 | 山田太郎 | `yamada@example.com` | member | 全年度 評価あり（評価者: 土井垣/不知火） |
 | 里中智 | `satonaka@example.com` | member | 全年度 評価あり（評価者: 不知火/山田） |
 | 岩鬼正美 | `iwaki@example.com` | member | 評価なし |
