@@ -22,6 +22,8 @@ type Item = {
   target: string;
   selfScore: Score | null;
   selfReason: string | null;
+  managerScore: Score | null;
+  managerReason: string | null;
 };
 
 type Props = {
@@ -172,6 +174,21 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
                 )}
               </div>
             </div>
+
+            {/* 評価者採点（読み取り専用） */}
+            {item.managerScore !== null && (
+              <div className="mt-4 rounded-md bg-gray-50 p-3">
+                <p className="mb-1 text-xs font-medium text-gray-500">評価者採点（参考）</p>
+                <div className="flex items-center gap-3">
+                  <span className="rounded-md border bg-white px-2 py-1 text-sm font-medium text-gray-700">
+                    {SCORE_LABELS[item.managerScore]}
+                  </span>
+                  {item.managerReason && (
+                    <span className="text-sm text-gray-600">{item.managerReason}</span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

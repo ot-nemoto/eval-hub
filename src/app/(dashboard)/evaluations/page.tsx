@@ -66,6 +66,8 @@ export default async function EvaluationsPage() {
       target: item.target.name,
       selfScore: (ev?.selfScore ?? null) as "none" | "ka" | "ryo" | "yu" | null,
       selfReason: ev?.selfReason ?? null,
+      managerScore: (ev?.managerScore ?? null) as "none" | "ka" | "ryo" | "yu" | null,
+      managerReason: ev?.managerReason ?? null,
     };
   });
 
