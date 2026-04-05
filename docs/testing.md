@@ -87,11 +87,12 @@ vi.mock("@/lib/auth", () => ({
 
 | メール | ロール | isActive | 主な用途 |
 |--------|--------|----------|---------|
-| `doigaki@example.com` | admin | true | 管理画面の操作確認（評価なし） |
-| `shiranui@example.com` | admin | true | 評価者・管理者の複合確認 |
-| `yamada@example.com` | member | true | 被評価者のメインユーザー |
-| `satonaka@example.com` | member | true | ユーザー分離テスト |
-| `iwaki@example.com` | member | true | 評価なし状態の確認 |
+| `bonjiri@example.com` | ADMIN | true | 管理画面の操作確認（自己評価なし・アサインなし） |
+| `tsukune@example.com` | ADMIN | true | 評価者・管理者の複合確認（2025のみ自己評価） |
+| `tebasaki@example.com` | MEMBER | true | 被評価者のメインユーザー（通年自己評価・採点データあり） |
+| `nankotsu@example.com` | MEMBER | true | ユーザー分離テスト（通年自己評価） |
+| `sunagimo@example.com` | MEMBER | false | auth-error リダイレクト確認（isActive=false） |
+| `torikawa@example.com` | MEMBER | true | 削除テスト用（関連データなし） |
 
 ### Playwright MCP への指示例
 
@@ -121,13 +122,16 @@ docs/e2e-scenarios.md の [テストしたいセクション名] を参照して
 
 ### 投入データ
 
-| ユーザー名 | メール | ロール | 評価状況 |
-|-----------|--------|--------|---------|
-| 土井垣将 | `doigaki@example.com` | admin | 評価なし |
-| 不知火守 | `shiranui@example.com` | admin | 2025年度 自己評価あり |
-| 山田太郎 | `yamada@example.com` | member | 全年度 評価あり（評価者: 土井垣/不知火） |
-| 里中智 | `satonaka@example.com` | member | 全年度 評価あり（評価者: 不知火/山田） |
-| 岩鬼正美 | `iwaki@example.com` | member | 評価なし |
+**共通パスワード**: `Yakitori2026`
+
+| メール | ロール | isActive | 評価状況 |
+|--------|--------|----------|---------|
+| `bonjiri@example.com` | ADMIN | true | 評価なし・アサインなし |
+| `tsukune@example.com` | ADMIN | true | 2025年度 自己評価あり（評価者: bonjiri） |
+| `tebasaki@example.com` | MEMBER | true | 全年度 評価あり・採点データあり（評価者: bonjiri/tsukune） |
+| `nankotsu@example.com` | MEMBER | true | 全年度 評価あり（評価者: tsukune/tebasaki） |
+| `sunagimo@example.com` | MEMBER | false | 無効化ユーザー（auth-error テスト用） |
+| `torikawa@example.com` | MEMBER | true | 評価なし・アサインなし（削除テスト用） |
 
 年度: 2025・2026（current）・2027
 
