@@ -129,7 +129,7 @@ erDiagram
 | name | VARCHAR(100) | NOT NULL | 氏名 |
 | division | VARCHAR(100) | | 所属事業部 |
 | joined_at | DATE | | 入社日 |
-| role | ENUM | NOT NULL | `admin` / `member` |
+| role | ENUM | NOT NULL | `ADMIN` / `MEMBER` |
 | wants_president_meeting | BOOLEAN | DEFAULT false | 社長面談希望 |
 | is_active | BOOLEAN | DEFAULT true | 有効フラグ（false: ログイン不可） |
 | created_at | TIMESTAMP | DEFAULT now() | |

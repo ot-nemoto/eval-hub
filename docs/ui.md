@@ -13,7 +13,7 @@
 | 自己評価一覧 | `/evaluations` | ヘッダーあり | 要ログイン |
 | 社員一覧 | `/members` | ヘッダーあり | 要ログイン |
 | メンバー別評価 | `/members/[id]/evaluations` | ヘッダーあり | 要ログイン（アサイン済み評価者 / admin） |
-| 管理：大分類マスタ | `/admin/targets` | ヘッダーあり | admin のみ |
+| 管理：大分類・中分類マスタ | `/admin/targets` | ヘッダーあり | admin のみ |
 | 管理：評価項目マスタ | `/admin/evaluation-items` | ヘッダーあり | admin のみ |
 | 管理：年度管理 | `/admin/fiscal-years` | ヘッダーあり | admin のみ |
 | 管理：ユーザー一覧 | `/admin/users` | ヘッダーあり | admin のみ |
@@ -32,7 +32,7 @@ flowchart TD
     EVALUATIONS["自己評価一覧"]:::screen
     MEMBERS["社員一覧"]:::screen
     MEMBER_EVAL["メンバー別評価"]:::screen
-    ADMIN_TARGETS["大分類マスタ"]:::screen
+    ADMIN_TARGETS["大分類・中分類マスタ"]:::screen
     ADMIN_ITEMS["評価項目マスタ"]:::screen
     ADMIN_YEARS["年度管理"]:::screen
     ADMIN_USERS["ユーザー一覧"]:::screen
@@ -118,7 +118,7 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 
 アクセス制御：`evaluation_assignments` でアサインされた評価者または admin のみ（サーバー側で検証）。
 
-### 管理：大分類マスタ（`/admin/targets`）
+### 管理：大分類・中分類マスタ（`/admin/targets`）
 
 大分類の一覧表示・追加・編集・削除を行う。中分類が紐づいている場合は削除不可（エラー表示）。
 
@@ -182,7 +182,7 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 | Error | API エラー / アクセス権限なし | エラーメッセージ（`text-red-600`） |
 | SaveError | 採点保存失敗 | ボタン下部にインラインエラー（`text-sm text-red-600`） |
 
-### 管理：大分類マスタ（`/admin/targets`）
+### 管理：大分類・中分類マスタ（`/admin/targets`）
 
 | 状態 | 条件 | 表示 |
 |------|------|------|
