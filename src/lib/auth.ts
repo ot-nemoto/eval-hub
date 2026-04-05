@@ -58,10 +58,15 @@ export async function getSession(): Promise<Session | null> {
   if (!existingUser) {
     // DB に存在しない新規サインアップユーザーを自動作成
     // 並行リクエストによるレースコンディション対策: P2002 をキャッチして既存レコードを返す
+    // DB にユーザーが0人の場合は初回ログインとみなし admin として作成する
+    // 注意: count と create の間に別ユーザーが同時に初回ログインすると複数 admin が作成される可能性があるが、
+    // 初回デプロイ時の同時ログインは極めてまれなため仕様として許容している
+    const userCount = await prisma.user.count();
+    const role = userCount === 0 ? "admin" : "member";
     const name = clerkUser?.fullName ?? clerkUser?.firstName ?? email;
     try {
       const created = await prisma.user.create({
-        data: { clerkId: userId, email, name, role: "member" },
+        data: { clerkId: userId, email, name, role },
         select: { id: true, name: true, role: true },
       });
       return { user: created };

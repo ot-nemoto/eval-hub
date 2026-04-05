@@ -12,6 +12,7 @@ vi.mock("@/lib/prisma", () => ({
       findUnique: vi.fn(),
       updateMany: vi.fn(),
       create: vi.fn(),
+      count: vi.fn(),
     },
   },
 }));
@@ -25,6 +26,7 @@ const mockCurrentUser = vi.mocked(currentUser);
 const mockFindUnique = vi.mocked(prisma.user.findUnique);
 const mockUpdateMany = vi.mocked(prisma.user.updateMany);
 const mockCreate = vi.mocked(prisma.user.create);
+const mockCount = vi.mocked(prisma.user.count);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -282,7 +284,7 @@ describe("getSession", () => {
       });
     });
 
-    it("DBに存在しない新規サインアップユーザーを自動作成してセッションを返す", async () => {
+    it("DBに存在しない新規サインアップユーザーを自動作成してセッションを返す（2人目以降は member）", async () => {
       // @ts-expect-error
       mockAuth.mockResolvedValue({ userId: "clerk_new123" });
       // @ts-expect-error
@@ -295,6 +297,7 @@ describe("getSession", () => {
         fullName: "新規ユーザー",
         firstName: null,
       });
+      mockCount.mockResolvedValue(1); // 既存ユーザーあり → member
       // @ts-expect-error
       mockCreate.mockResolvedValue({ id: "new-uuid", name: "新規ユーザー", role: "member" });
 
@@ -312,6 +315,38 @@ describe("getSession", () => {
         select: { id: true, name: true, role: true },
       });
       expect(mockUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it("DBにユーザーが0人の場合は初回ユーザーとして admin ロールで作成する", async () => {
+      // @ts-expect-error
+      mockAuth.mockResolvedValue({ userId: "clerk_first123" });
+      // @ts-expect-error
+      mockFindUnique
+        .mockResolvedValueOnce(null) // clerkId 検索 → 未ヒット
+        .mockResolvedValueOnce(null); // email 検索 → 未ヒット
+      // @ts-expect-error
+      mockCurrentUser.mockResolvedValue({
+        emailAddresses: [{ emailAddress: "first@example.com" }],
+        fullName: "初回ユーザー",
+        firstName: null,
+      });
+      mockCount.mockResolvedValue(0); // ユーザー0人 → admin
+      // @ts-expect-error
+      mockCreate.mockResolvedValue({ id: "first-uuid", name: "初回ユーザー", role: "admin" });
+
+      const result = await getSession();
+      expect(result).toEqual({
+        user: { id: "first-uuid", name: "初回ユーザー", role: "admin" },
+      });
+      expect(mockCreate).toHaveBeenCalledWith({
+        data: {
+          clerkId: "clerk_first123",
+          email: "first@example.com",
+          name: "初回ユーザー",
+          role: "admin",
+        },
+        select: { id: true, name: true, role: true },
+      });
     });
 
     it("既に別の clerkId に紐付き済みのDBユーザーはnullを返す", async () => {
