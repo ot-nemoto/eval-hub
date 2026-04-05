@@ -29,7 +29,7 @@ async function syncClerkUser(email: string): Promise<string | null> {
   if (existing.data.length > 0) return existing.data[0].id;
   const created = await clerkClient.users.createUser({
     emailAddress: [email],
-    password: "AmericanDogs",
+    password: "Yakitori2026",
     skipPasswordChecks: true,
   });
   return created.id;
@@ -75,31 +75,70 @@ async function seedFiscalYearItems(allItemIds: number[]) {
 
 async function main() {
   // =========================================================================
-  // 0. 旧 seed ユーザーのクリーンアップ
+  // 0. 旧 seed ユーザーのクリーンアップ（旧メールアドレスのユーザーを DB・Clerk から削除）
   // =========================================================================
-  const oldEmails = ["tanaka@example.com", "suzuki@example.com", "sato@example.com"];
+  const oldEmails = [
+    // 旧ユーザー（ドカベンキャラクター）
+    "doigaki@example.com",
+    "shiranui@example.com",
+    "yamada@example.com",
+    "satonaka@example.com",
+    "iwaki@example.com",
+    // さらに旧ユーザー
+    "tanaka@example.com",
+    "suzuki@example.com",
+    "sato@example.com",
+  ];
   for (const email of oldEmails) await cleanupUser(email);
+
+  // =========================================================================
+  // 0-2. 現 seed ユーザーの可変データを初期化
+  //      E2E テストで追加されたデータを毎回クリーンな状態に戻す
+  //      （ユーザー自体は削除しない。Clerk ユーザーも保持する）
+  // =========================================================================
+  const seedEmails = [
+    "bonjiri@example.com",
+    "tsukune@example.com",
+    "tebasaki@example.com",
+    "nankotsu@example.com",
+    "sunagimo@example.com",
+    "torikawa@example.com",
+  ];
+  for (const email of seedEmails) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) continue;
+    await prisma.evaluation.deleteMany({ where: { evaluateeId: user.id } });
+    await prisma.evaluationAssignment.deleteMany({
+      where: { OR: [{ evaluateeId: user.id }, { evaluatorId: user.id }] },
+    });
+    await prisma.evaluationSetting.deleteMany({ where: { userId: user.id } });
+  }
+  console.log("seed users: evaluations / assignments / settings cleared");
 
   // =========================================================================
   // 1. ユーザー
   //
-  // ┌─────────────┬────────┬──────────────────────────────────────────┐
-  // │ 氏名        │ ロール │ 概要                                     │
-  // ├─────────────┼────────┼──────────────────────────────────────────┤
-  // │ 土井垣将    │ admin  │ 自己評価なし。評価アサインなし           │
-  // │ 不知火守    │ admin  │ 2025のみ自己評価あり。上長: 土井垣       │
-  // │ 山田太郎    │ member │ 通年自己評価あり。上長: 土井垣（通年）   │
-  // │             │        │                 不知火（2026〜）         │
-  // │ 里中智      │ member │ 通年自己評価あり。上長: 不知火・山田     │
-  // │ 岩鬼正美    │ member │ 通年自己評価なし。評価アサインなし       │
-  // └─────────────┴────────┴──────────────────────────────────────────┘
+  // ┌──────────────────────────┬────────┬──────────┬───────────────────────────────────────────────┐
+  // │ email                    │ role   │ isActive │ 概要                                          │
+  // ├──────────────────────────┼────────┼──────────┼───────────────────────────────────────────────┤
+  // │ bonjiri@example.com      │ ADMIN  │ true     │ 自己評価なし・評価アサインなし（管理操作確認用）│
+  // │ tsukune@example.com      │ ADMIN  │ true     │ 2025のみ自己評価あり・上長: bonjiri            │
+  // │ tebasaki@example.com     │ MEMBER │ true     │ 通年自己評価あり・上長: bonjiri（通年）        │
+  // │                          │        │          │                       tsukune（2026〜）        │
+  // │ nankotsu@example.com     │ MEMBER │ true     │ 通年自己評価あり・上長: tsukune・tebasaki      │
+  // │ sunagimo@example.com     │ MEMBER │ false    │ 無効化ユーザー（auth-error テスト用）          │
+  // │ torikawa@example.com     │ MEMBER │ true     │ 評価なし・アサインなし（削除テスト用）         │
+  // └──────────────────────────┴────────┴──────────┴───────────────────────────────────────────────┘
+  //
+  // 共通パスワード: Yakitori2026
   // =========================================================================
   const usersData = [
-    { email: "doigaki@example.com", name: "土井垣将", role: "ADMIN" as const },
-    { email: "shiranui@example.com", name: "不知火守", role: "ADMIN" as const },
-    { email: "yamada@example.com", name: "山田太郎", role: "MEMBER" as const },
-    { email: "satonaka@example.com", name: "里中智", role: "MEMBER" as const },
-    { email: "iwaki@example.com", name: "岩鬼正美", role: "MEMBER" as const },
+    { email: "bonjiri@example.com",  name: "bonjiri",  role: "ADMIN"  as const, isActive: true  },
+    { email: "tsukune@example.com",  name: "tsukune",  role: "ADMIN"  as const, isActive: true  },
+    { email: "tebasaki@example.com", name: "tebasaki", role: "MEMBER" as const, isActive: true  },
+    { email: "nankotsu@example.com", name: "nankotsu", role: "MEMBER" as const, isActive: true  },
+    { email: "sunagimo@example.com", name: "sunagimo", role: "MEMBER" as const, isActive: false },
+    { email: "torikawa@example.com", name: "torikawa", role: "MEMBER" as const, isActive: true  },
   ];
 
   const u: Record<string, { id: string }> = {};
@@ -107,11 +146,12 @@ async function main() {
     const clerkId = await syncClerkUser(data.email);
     const user = await prisma.user.upsert({
       where: { email: data.email },
-      update: { name: data.name, role: data.role, ...(clerkId ? { clerkId } : {}) },
+      update: { name: data.name, role: data.role, isActive: data.isActive, ...(clerkId ? { clerkId } : {}) },
       create: {
         email: data.email,
         name: data.name,
         role: data.role,
+        isActive: data.isActive,
         ...(clerkId ? { clerkId } : {}),
       },
     });
@@ -143,20 +183,21 @@ async function main() {
   //
   //              │ 2025  │ 2026  │ 2027
   //  ────────────┼───────┼───────┼──────
-  //  土井垣将    │ false │ false │ false  ← デフォルトのため登録不要
-  //  不知火守    │ true  │ false │ false  ← 2025 のみ登録
-  //  山田太郎    │ true  │ true  │ true
-  //  里中智      │ true  │ true  │ true
-  //  岩鬼正美    │ false │ false │ false  ← デフォルトのため登録不要
+  //  bonjiri     │ false │ false │ false  ← デフォルトのため登録不要
+  //  tsukune     │ true  │ false │ false  ← 2025 のみ登録
+  //  tebasaki    │ true  │ true  │ true
+  //  nankotsu    │ true  │ true  │ true
+  //  sunagimo    │ false │ false │ false  ← デフォルトのため登録不要
+  //  torikawa    │ false │ false │ false  ← デフォルトのため登録不要
   // =========================================================================
   const settingsData: { email: string; fiscalYear: number; selfEvaluationEnabled: boolean }[] = [
-    { email: "shiranui@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
-    { email: "yamada@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
-    { email: "yamada@example.com", fiscalYear: 2026, selfEvaluationEnabled: true },
-    { email: "yamada@example.com", fiscalYear: 2027, selfEvaluationEnabled: true },
-    { email: "satonaka@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
-    { email: "satonaka@example.com", fiscalYear: 2026, selfEvaluationEnabled: true },
-    { email: "satonaka@example.com", fiscalYear: 2027, selfEvaluationEnabled: true },
+    { email: "tsukune@example.com",  fiscalYear: 2025, selfEvaluationEnabled: true },
+    { email: "tebasaki@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
+    { email: "tebasaki@example.com", fiscalYear: 2026, selfEvaluationEnabled: true },
+    { email: "tebasaki@example.com", fiscalYear: 2027, selfEvaluationEnabled: true },
+    { email: "nankotsu@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
+    { email: "nankotsu@example.com", fiscalYear: 2026, selfEvaluationEnabled: true },
+    { email: "nankotsu@example.com", fiscalYear: 2027, selfEvaluationEnabled: true },
   ];
 
   for (const s of settingsData) {
@@ -177,26 +218,26 @@ async function main() {
   //
   //  年度  │ 被評価者  │ 評価者（上長）
   //  ──────┼───────────┼────────────────
-  //  2025  │ 不知火守  │ 土井垣将
-  //  2025  │ 山田太郎  │ 土井垣将
-  //  2025  │ 里中智    │ 不知火守
-  //  2025  │ 里中智    │ 山田太郎
-  //  2026  │ 山田太郎  │ 土井垣将
-  //  2026  │ 山田太郎  │ 不知火守
-  //  2026  │ 里中智    │ 不知火守
-  //  2026  │ 里中智    │ 山田太郎
+  //  2025  │ tsukune   │ bonjiri
+  //  2025  │ tebasaki  │ bonjiri
+  //  2025  │ nankotsu  │ tsukune
+  //  2025  │ nankotsu  │ tebasaki
+  //  2026  │ tebasaki  │ bonjiri
+  //  2026  │ tebasaki  │ tsukune
+  //  2026  │ nankotsu  │ tsukune
+  //  2026  │ nankotsu  │ tebasaki
   // =========================================================================
   const assignmentsData = [
     // 2025
-    { fiscalYear: 2025, evaluatee: "shiranui@example.com", evaluator: "doigaki@example.com" },
-    { fiscalYear: 2025, evaluatee: "yamada@example.com", evaluator: "doigaki@example.com" },
-    { fiscalYear: 2025, evaluatee: "satonaka@example.com", evaluator: "shiranui@example.com" },
-    { fiscalYear: 2025, evaluatee: "satonaka@example.com", evaluator: "yamada@example.com" },
+    { fiscalYear: 2025, evaluatee: "tsukune@example.com",  evaluator: "bonjiri@example.com"  },
+    { fiscalYear: 2025, evaluatee: "tebasaki@example.com", evaluator: "bonjiri@example.com"  },
+    { fiscalYear: 2025, evaluatee: "nankotsu@example.com", evaluator: "tsukune@example.com"  },
+    { fiscalYear: 2025, evaluatee: "nankotsu@example.com", evaluator: "tebasaki@example.com" },
     // 2026
-    { fiscalYear: 2026, evaluatee: "yamada@example.com", evaluator: "doigaki@example.com" },
-    { fiscalYear: 2026, evaluatee: "yamada@example.com", evaluator: "shiranui@example.com" },
-    { fiscalYear: 2026, evaluatee: "satonaka@example.com", evaluator: "shiranui@example.com" },
-    { fiscalYear: 2026, evaluatee: "satonaka@example.com", evaluator: "yamada@example.com" },
+    { fiscalYear: 2026, evaluatee: "tebasaki@example.com", evaluator: "bonjiri@example.com"  },
+    { fiscalYear: 2026, evaluatee: "tebasaki@example.com", evaluator: "tsukune@example.com"  },
+    { fiscalYear: 2026, evaluatee: "nankotsu@example.com", evaluator: "tsukune@example.com"  },
+    { fiscalYear: 2026, evaluatee: "nankotsu@example.com", evaluator: "tebasaki@example.com" },
   ];
 
   for (const a of assignmentsData) {
@@ -298,6 +339,64 @@ async function main() {
   // =========================================================================
   const allItems = await prisma.evaluationItem.findMany({ select: { id: true } });
   await seedFiscalYearItems(allItems.map((i) => i.id));
+
+  // =========================================================================
+  // 9. 評価データ（evaluations）
+  //    「採点欄は表示されるが編集不可」シナリオの表示確認用に事前データを投入する
+  //
+  //  tebasaki（2026年度）: 先頭3件に self_score + manager_score を設定
+  //    → 自己評価画面で評価者採点欄が表示・編集不可であることを確認できる
+  //  nankotsu（2026年度）: 先頭3件に self_score のみ設定
+  //    → 評価者画面で自己採点欄が表示・編集不可であることを確認できる
+  // =========================================================================
+  const seedItems = allItems.slice(0, 3);
+
+  const evaluationsData: {
+    fiscalYear: number;
+    evaluateeEmail: string;
+    itemId: number;
+    selfScore: "ka" | "ryo" | "yu" | null;
+    selfReason: string | null;
+    managerScore: "ka" | "ryo" | "yu" | null;
+    managerReason: string | null;
+  }[] = [
+    // tebasaki: 自己採点 + 評価者採点あり
+    { fiscalYear: 2026, evaluateeEmail: "tebasaki@example.com", itemId: seedItems[0].id, selfScore: "ryo",  selfReason: "積極的に取り組みました",  managerScore: "yu",  managerReason: "非常に優秀な取り組みでした" },
+    { fiscalYear: 2026, evaluateeEmail: "tebasaki@example.com", itemId: seedItems[1].id, selfScore: "ka",   selfReason: "改善の余地があります",       managerScore: "ryo", managerReason: "着実に成長しています"           },
+    { fiscalYear: 2026, evaluateeEmail: "tebasaki@example.com", itemId: seedItems[2].id, selfScore: "yu",   selfReason: "目標を超えて達成できました", managerScore: "yu",  managerReason: "期待以上の成果でした"           },
+    // nankotsu: 自己採点のみ（評価者採点なし）
+    { fiscalYear: 2026, evaluateeEmail: "nankotsu@example.com", itemId: seedItems[0].id, selfScore: "ka",   selfReason: "基本的なことはできました",   managerScore: null,  managerReason: null },
+    { fiscalYear: 2026, evaluateeEmail: "nankotsu@example.com", itemId: seedItems[1].id, selfScore: "ryo",  selfReason: "しっかり対応できました",     managerScore: null,  managerReason: null },
+    { fiscalYear: 2026, evaluateeEmail: "nankotsu@example.com", itemId: seedItems[2].id, selfScore: "ryo",  selfReason: "チームに貢献できました",     managerScore: null,  managerReason: null },
+  ];
+
+  for (const e of evaluationsData) {
+    await prisma.evaluation.upsert({
+      where: {
+        fiscalYear_evaluateeId_evalItemId: {
+          fiscalYear: e.fiscalYear,
+          evaluateeId: u[e.evaluateeEmail].id,
+          evalItemId: e.itemId,
+        },
+      },
+      update: {
+        selfScore: e.selfScore,
+        selfReason: e.selfReason,
+        managerScore: e.managerScore,
+        managerReason: e.managerReason,
+      },
+      create: {
+        fiscalYear: e.fiscalYear,
+        evaluateeId: u[e.evaluateeEmail].id,
+        evalItemId: e.itemId,
+        selfScore: e.selfScore,
+        selfReason: e.selfReason,
+        managerScore: e.managerScore,
+        managerReason: e.managerReason,
+      },
+    });
+  }
+  console.log(`evaluations: ${evaluationsData.length} upserted`);
 }
 
 main()
