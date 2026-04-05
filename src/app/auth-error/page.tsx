@@ -1,23 +1,15 @@
 import { SignOutButton } from "@clerk/nextjs";
 
-type Props = {
-  searchParams: Promise<{ reason?: string | string[] }>;
-};
-
-export default async function AuthErrorPage({ searchParams }: Props) {
-  const { reason } = await searchParams;
-  const normalizedReason = Array.isArray(reason) ? reason[0] : reason;
-  const isInactive = normalizedReason === "inactive";
-
-  const message = isInactive
-    ? "アカウントが無効化されています。管理者にお問い合わせください。"
-    : "このアカウントはすでに別のユーザーに紐付けられています。一度サインアウトして、正しいアカウントでログインしてください。";
-
+export default function AuthErrorPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-sm text-center">
         <h1 className="text-lg font-semibold text-gray-900 mb-2">ログインできません</h1>
-        <p className="text-sm text-gray-600 mb-6">{message}</p>
+        <p className="text-sm text-gray-600 mb-6">
+          このアカウントはすでに別のユーザーに紐付けられています。
+          <br />
+          一度サインアウトして、正しいアカウントでログインしてください。
+        </p>
         <SignOutButton redirectUrl="/login">
           <button
             type="button"

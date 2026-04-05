@@ -15,14 +15,14 @@ vi.mock("@/lib/prisma", () => ({
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
-const memberSession = { user: { id: "member-1", role: "MEMBER" } };
+const adminSession = { user: { id: "admin-1", role: "admin" } };
+const memberSession = { user: { id: "member-1", role: "member" } };
 
 const mockAssignment = {
   id: "assign-1",
-  fiscalYear: 2025,
-  evaluateeId: "user-2",
-  evaluatorId: "user-1",
+  fiscal_year: 2025,
+  evaluatee_id: "user-2",
+  evaluator_id: "user-1",
 };
 
 const makeParams = (id: string) => Promise.resolve({ id });

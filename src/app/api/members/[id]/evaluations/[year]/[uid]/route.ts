@@ -18,7 +18,7 @@ export async function PUT(
   }
 
   const currentUserId = session.user.id;
-  const isAdmin = session.user.role === "ADMIN";
+  const isAdmin = session.user.role === "admin";
   const isSelf = currentUserId === evaluateeId;
 
   const isAssignedEvaluator =
@@ -26,9 +26,9 @@ export async function PUT(
       ? await prisma.evaluationAssignment
           .findFirst({
             where: {
-              fiscalYear: fiscalYear,
-              evaluateeId: evaluateeId,
-              evaluatorId: currentUserId,
+              fiscal_year: fiscalYear,
+              evaluatee_id: evaluateeId,
+              evaluator_id: currentUserId,
             },
           })
           .then((r) => r !== null)
@@ -42,7 +42,6 @@ export async function PUT(
   if (!body || typeof body !== "object") {
     return errorResponse("BAD_REQUEST", "リクエストボディが不正です", 400);
   }
-  // このエンドポイントのリクエスト/レスポンスキーは snake_case を維持する（API contract）
   const { self_score, self_reason, manager_score, manager_reason } = body;
 
   const hasSelfFields = self_score !== undefined || self_reason !== undefined;
@@ -59,9 +58,9 @@ export async function PUT(
 
   if (hasSelfFields && isSelf) {
     const setting = await prisma.evaluationSetting.findUnique({
-      where: { userId_fiscalYear: { userId: evaluateeId, fiscalYear: fiscalYear } },
+      where: { user_id_fiscal_year: { user_id: evaluateeId, fiscal_year: fiscalYear } },
     });
-    if (!setting?.selfEvaluationEnabled) {
+    if (!setting?.self_evaluation_enabled) {
       return errorResponse("FORBIDDEN", "この年度は自己評価が不要に設定されています", 403);
     }
   }
@@ -75,33 +74,33 @@ export async function PUT(
   }
 
   const updateData: Record<string, unknown> = {};
-  if (self_score !== undefined) updateData.selfScore = self_score;
-  if (self_reason !== undefined) updateData.selfReason = self_reason;
-  if (manager_score !== undefined) updateData.managerScore = manager_score;
-  if (manager_reason !== undefined) updateData.managerReason = manager_reason;
+  if (self_score !== undefined) updateData.self_score = self_score;
+  if (self_reason !== undefined) updateData.self_reason = self_reason;
+  if (manager_score !== undefined) updateData.manager_score = manager_score;
+  if (manager_reason !== undefined) updateData.manager_reason = manager_reason;
 
   const evaluation = await prisma.evaluation.upsert({
     where: {
-      fiscalYear_evaluateeId_evalItemId: {
-        fiscalYear: fiscalYear,
-        evaluateeId: evaluateeId,
-        evalItemId: itemId,
+      fiscal_year_evaluatee_id_eval_uid: {
+        fiscal_year: fiscalYear,
+        evaluatee_id: evaluateeId,
+        eval_uid: evalUid,
       },
     },
     create: {
-      fiscalYear: fiscalYear,
-      evaluateeId: evaluateeId,
-      evalItemId: itemId,
+      fiscal_year: fiscalYear,
+      evaluatee_id: evaluateeId,
+      eval_uid: evalUid,
       ...updateData,
     },
     update: updateData,
   });
 
   return successResponse({
-    eval_item_id: evaluation.evalItemId,
-    self_score: evaluation.selfScore,
-    self_reason: evaluation.selfReason,
-    manager_score: evaluation.managerScore,
-    manager_reason: evaluation.managerReason,
+    eval_uid: evaluation.eval_uid,
+    self_score: evaluation.self_score,
+    self_reason: evaluation.self_reason,
+    manager_score: evaluation.manager_score,
+    manager_reason: evaluation.manager_reason,
   });
 }

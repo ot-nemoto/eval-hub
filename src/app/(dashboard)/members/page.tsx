@@ -8,8 +8,8 @@ export default async function MembersPage() {
   if (!session) redirect("/login");
 
   const userId = session.user.id;
-  const isAdmin = session.user.role === "ADMIN";
-  const fiscalYear = await getCurrentFiscalYear();
+  const isAdmin = session.user.role === "admin";
+  const fiscalYear = new Date().getFullYear();
 
   type Member = { id: string; name: string; division: string | null };
   let members: Member[] = [];
@@ -21,7 +21,7 @@ export default async function MembersPage() {
     });
   } else {
     const assignments = await prisma.evaluationAssignment.findMany({
-      where: { evaluatorId: userId, fiscalYear: fiscalYear },
+      where: { evaluator_id: userId, fiscal_year: fiscalYear },
       include: { evaluatee: { select: { id: true, name: true, division: true } } },
       orderBy: { evaluatee: { name: "asc" } },
     });

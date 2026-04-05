@@ -11,7 +11,7 @@ export default async function UserEvaluationSettingsPage({
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/evaluations");
+  if (session.user.role !== "admin") redirect("/evaluations");
 
   const { id } = await params;
 
@@ -25,10 +25,10 @@ export default async function UserEvaluationSettingsPage({
   const years = [currentYear - 1, currentYear, currentYear + 1];
 
   const settings = await prisma.evaluationSetting.findMany({
-    where: { userId: id },
+    where: { user_id: id },
   });
   const settingMap = Object.fromEntries(
-    settings.map((s) => [s.fiscalYear, s.selfEvaluationEnabled]),
+    settings.map((s) => [s.fiscal_year, s.self_evaluation_enabled]),
   );
 
   return (

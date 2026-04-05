@@ -11,18 +11,17 @@ export default async function MemberEvaluationsPage({ params }: Props) {
 
   const { id: evaluateeId } = await params;
   const evaluatorId = session.user.id;
-  const isAdmin = session.user.role === "ADMIN";
-  const fiscalYear = await getCurrentFiscalYear();
-  if (!fiscalYear) notFound();
+  const isAdmin = session.user.role === "admin";
+  const fiscalYear = new Date().getFullYear();
 
   // 権限確認: admin または当該年度にアサインされた評価者のみアクセス可
   if (!isAdmin) {
     const assignment = await prisma.evaluationAssignment.findUnique({
       where: {
-        fiscalYear_evaluateeId_evaluatorId: {
-          fiscalYear: fiscalYear,
-          evaluateeId: evaluateeId,
-          evaluatorId: evaluatorId,
+        fiscal_year_evaluatee_id_evaluator_id: {
+          fiscal_year: fiscalYear,
+          evaluatee_id: evaluateeId,
+          evaluator_id: evaluatorId,
         },
       },
     });
@@ -40,11 +39,11 @@ export default async function MemberEvaluationsPage({ params }: Props) {
       orderBy: [{ target_no: "asc" }, { category_no: "asc" }, { item_no: "asc" }],
     }),
     prisma.evaluation.findMany({
-      where: { evaluateeId: evaluateeId, fiscalYear: fiscalYear },
+      where: { evaluatee_id: evaluateeId, fiscal_year: fiscalYear },
     }),
   ]);
 
-  const evalMap = Object.fromEntries(evaluations.map((e) => [e.evalItemId, e]));
+  const evalMap = Object.fromEntries(evaluations.map((e) => [e.eval_uid, e]));
 
   const itemsWithEval = items.map((item) => {
     const ev = evalMap[item.uid];
@@ -52,13 +51,13 @@ export default async function MemberEvaluationsPage({ params }: Props) {
       uid: item.uid,
       name: item.name,
       description: item.description,
-      evalCriteria: item.evalCriteria,
-      category: item.category.name,
-      target: item.target.name,
-      selfScore: (ev?.selfScore ?? null) as "none" | "ka" | "ryo" | "yu" | null,
-      selfReason: ev?.selfReason ?? null,
-      managerScore: (ev?.managerScore ?? null) as "none" | "ka" | "ryo" | "yu" | null,
-      managerReason: ev?.managerReason ?? null,
+      eval_criteria: item.eval_criteria,
+      category: item.category,
+      target: item.target,
+      self_score: (ev?.self_score ?? null) as "none" | "ka" | "ryo" | "yu" | null,
+      self_reason: ev?.self_reason ?? null,
+      manager_score: (ev?.manager_score ?? null) as "none" | "ka" | "ryo" | "yu" | null,
+      manager_reason: ev?.manager_reason ?? null,
     };
   });
 

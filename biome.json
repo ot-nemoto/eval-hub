@@ -6,17 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": true,
-    "includes": [
-      "src/**",
-      "prisma/**",
-      ".vscode/**",
-      ".devcontainer/**",
-      "!node_modules",
-      "!.next",
-      "!public",
-      "!prisma/migrations"
-    ]
+    "ignoreUnknown": false
   },
   "formatter": {
     "enabled": true,
@@ -27,27 +17,21 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
-      "correctness": {
-        "noUnusedImports": "error",
-        "noUnusedVariables": "error"
-      }
+      "recommended": true
     }
   },
   "javascript": {
     "formatter": {
-      "quoteStyle": "double",
-      "trailingCommas": "all",
-      "semicolons": "always"
+      "quoteStyle": "double"
     }
   },
   "css": {
     "parser": {
-      "allowWrongLineComments": true,
+      "cssModules": true,
       "tailwindDirectives": true
     },
     "linter": {
-      "enabled": false
+      "enabled": true
     }
   },
   "assist": {

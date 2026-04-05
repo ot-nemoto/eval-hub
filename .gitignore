@@ -29,11 +29,6 @@ tsconfig.tsbuildinfo
 # Claude Code
 .claude/settings.local.json
 
-# Playwright
-.playwright-mcp/
-playwright-report/
-test-results/
-
 # Misc
 .DS_Store
 *.pem

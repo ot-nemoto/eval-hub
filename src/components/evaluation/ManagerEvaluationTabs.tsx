@@ -16,13 +16,13 @@ type Item = {
   uid: string;
   name: string;
   description: string | null;
-  evalCriteria: string | null;
+  eval_criteria: string | null;
   category: string;
   target: string;
-  selfScore: Score | null;
-  selfReason: string | null;
-  managerScore: Score | null;
-  managerReason: string | null;
+  self_score: Score | null;
+  self_reason: string | null;
+  manager_score: Score | null;
+  manager_reason: string | null;
 };
 
 type Props = {
@@ -35,11 +35,11 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
   const categories = [...new Set(items.map((i) => i.category))];
   const [activeCategory, setActiveCategory] = useState(categories[0] ?? "");
 
-  const [scores, setScores] = useState<Record<number, Score>>(
-    Object.fromEntries(items.map((i) => [i.id, i.managerScore ?? "none"])),
+  const [scores, setScores] = useState<Record<string, Score>>(
+    Object.fromEntries(items.map((i) => [i.uid, i.manager_score ?? "none"])),
   );
-  const [reasons, setReasons] = useState<Record<number, string>>(
-    Object.fromEntries(items.map((i) => [i.id, i.managerReason ?? ""])),
+  const [reasons, setReasons] = useState<Record<string, string>>(
+    Object.fromEntries(items.map((i) => [i.uid, i.manager_reason ?? ""])),
   );
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
@@ -120,9 +120,9 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
               {item.description && (
                 <p className="mt-1 text-sm text-gray-600">{item.description}</p>
               )}
-              {item.evalCriteria && (
+              {item.eval_criteria && (
                 <p className="mt-1 text-xs text-gray-400">
-                  評価基準: {item.evalCriteria}
+                  評価基準: {item.eval_criteria}
                 </p>
               )}
             </div>
@@ -132,10 +132,10 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
               <p className="mb-1 text-xs font-medium text-gray-500">自己評価（参考）</p>
               <div className="flex items-center gap-3">
                 <span className="rounded-md bg-white px-2 py-1 text-sm font-medium text-gray-700 border">
-                  {item.selfScore ? SCORE_LABELS[item.selfScore] : "未入力"}
+                  {item.self_score ? SCORE_LABELS[item.self_score] : "未入力"}
                 </span>
-                {item.selfReason && (
-                  <span className="min-w-0 break-words text-sm text-gray-600">{item.selfReason}</span>
+                {item.self_reason && (
+                  <span className="text-sm text-gray-600">{item.self_reason}</span>
                 )}
               </div>
             </div>
@@ -143,12 +143,11 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
             <div className="space-y-3">
               {/* 評価者採点 */}
               <div>
-                <p className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700">
                   評価者採点
-                </p>
+                </label>
                 <div role="radiogroup" aria-label="評価者採点" className="mt-1 flex gap-2">
                   {(["none", "ka", "ryo", "yu"] as Score[]).map((score) => (
-                    // biome-ignore lint/a11y/useSemanticElements: カスタムラジオボタン実装（スタイル制御のため button を使用）
                     <button
                       key={score}
                       type="button"

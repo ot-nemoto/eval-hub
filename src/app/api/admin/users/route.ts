@@ -8,7 +8,7 @@ export async function GET() {
   if (!session) {
     return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
   }
-  if (session.user.role !== "ADMIN") {
+  if (session.user.role !== "admin") {
     return errorResponse("FORBIDDEN", "権限がありません", 403);
   }
 
@@ -19,9 +19,9 @@ export async function GET() {
       email: true,
       role: true,
       division: true,
-      joinedAt: true,
-      createdAt: true,
-      isActive: true,
+      joined_at: true,
+      created_at: true,
+      is_active: true,
     },
     orderBy: { name: "asc" },
   });

@@ -99,7 +99,7 @@ erDiagram
 | name | VARCHAR(100) | NOT NULL | 氏名 |
 | division | VARCHAR(100) | | 所属事業部 |
 | joined_at | DATE | | 入社日 |
-| role | ENUM | NOT NULL | `ADMIN` / `MEMBER` |
+| role | ENUM | NOT NULL | `admin` / `member` |
 | wants_president_meeting | BOOLEAN | DEFAULT false | 社長面談希望 |
 | is_active | BOOLEAN | DEFAULT true | 有効フラグ（false: ログイン不可） |
 | created_at | TIMESTAMP | DEFAULT now() | |
@@ -174,23 +174,6 @@ erDiagram
 
 - 未設定の場合は `self_evaluation_enabled = false`（自己評価なし）として扱う
 - admin が年度ごとに設定する
-
----
-
-## インデックス一覧
-
-| テーブル | 種別 | カラム | 用途 |
-|---|---|---|---|
-| `users` | UNIQUE | `clerk_id` | Clerk ID による検索・重複防止 |
-| `users` | UNIQUE | `email` | メールアドレスによる検索・重複防止 |
-| `fiscal_year_items` | PRIMARY KEY（複合） | `(fiscal_year, evaluation_item_id)` | 複合主キー = 重複防止 |
-| `evaluation_settings` | UNIQUE（複合） | `(user_id, fiscal_year)` | ユーザー×年度で1レコード |
-| `evaluation_assignments` | UNIQUE（複合） | `(fiscal_year, evaluatee_id, evaluator_id)` | 重複アサイン防止 |
-| `targets` | UNIQUE | `no` | 全体番号の重複防止 |
-| `categories` | UNIQUE（複合） | `(target_id, no)` | 大分類内番号の重複防止 |
-| `evaluation_items` | UNIQUE（複合） | `(category_id, no)` | 中分類内番号の重複防止 |
-| `evaluations` | UNIQUE（複合） | `(fiscal_year, evaluatee_id, eval_item_id)` | 年度×被評価者×評価項目で1レコード |
-| `fiscal_years` | PARTIAL UNIQUE | `is_current = true` | 現在年度フラグは最大1件（マイグレーションで管理） |
 
 ---
 

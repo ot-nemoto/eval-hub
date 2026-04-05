@@ -45,23 +45,26 @@
 │   │   │   └── login/
 │   │   ├── (dashboard)/
 │   │   │   ├── members/          ← 社員一覧・プロフィール
+│   │   │   ├── career/           ← キャリアプラン
 │   │   │   ├── evaluations/      ← 評価入力・一覧
+│   │   │   ├── roles/            ← ロール認定状況
+│   │   │   ├── records/          ← 月次実績
 │   │   │   └── admin/            ← マスタ管理（admin専用）
-│   │   │       ※ career/・roles/・records/ は v1.1 以降に追加予定（現状は未作成）
 │   │   ├── api/
 │   │   │   ├── auth/
 │   │   │   ├── members/
-│   │   │   ├── evaluation-assignments/
-│   │   │   ├── evaluation-items/
-│   │   │   └── admin/
-│   │   │       ※ career-plans/・roles/・allocations/・records/ は v1.1 以降に追加予定（現状は未作成）
+│   │   │   ├── career-plans/
+│   │   │   ├── evaluations/
+│   │   │   ├── roles/
+│   │   │   ├── allocations/
+│   │   │   └── records/
 │   │   └── layout.tsx
 │   ├── auth.ts
 │   ├── components/
 │   │   ├── ui/                   ← shadcn/ui ベース
 │   │   ├── evaluation/
-│   │   └── admin/
-│   │       ※ career/・role/ は v1.1 以降に追加予定（現状は未作成）
+│   │   ├── career/
+│   │   └── role/
 │   ├── lib/
 │   │   ├── prisma.ts
 │   │   └── utils.ts
@@ -133,45 +136,6 @@ none(0) < 可=ka(1) < 良=ryo(2) < 優=yu(3)
 
 > `manager` ロールは廃止。評価権限は `evaluation_assignments` で動的に管理する。
 
-## 認証フロー
-
-詳細は [`docs/auth.md`](./auth.md) を参照。
-
-概要：
-
-```
-未認証ユーザー
-  → proxy.ts（clerkMiddleware）でセッション確認
-  → 未認証なら /login にリダイレクト（Clerk が処理）
-  → 認証済み → getSession() で DB ユーザーを取得
-    → isActive = false → /auth-error へリダイレクト
-    → clerkId 未紐付け → メールで突合し自動紐付け
-    → セッション返却
-```
-
-非本番環境で `MOCK_USER_ID` または `MOCK_USER_EMAIL` 環境変数が設定されている場合は Clerk をバイパスし、指定した ID またはメールアドレスに対応するユーザーで固定セッションを返す（ローカル開発用）。
-
----
-
-## デプロイフロー
-
-```
-develop ブランチ
-  → git push origin develop
-  → Vercel が自動検知
-  → next build（ビルド）
-  → Vercel にデプロイ（Preview / Production）
-  ※ マイグレーションは手動実行（docs/development.md 参照）
-
-master ブランチ
-  → git push origin master
-  → GitHub Actions (release.yml) が起動
-  → package.json のバージョンを取得
-  → タグが未存在なら GitHub Releases を即時公開
-```
-
----
-
 ## 開発環境
 
 ```bash
@@ -201,34 +165,3 @@ DIRECT_URL="postgresql://<user>:<password>@<direct-host>/<db>?sslmode=require"
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
 CLERK_SECRET_KEY="sk_test_..."
 ```
-
----
-
-## コーディング規約
-
-### 言語・ツール
-
-| 項目 | 選択 |
-|------|------|
-| 言語 | TypeScript（strict モード） |
-| パッケージマネージャ | npm |
-| フォーマッタ・リンター | Biome（`biome.json` の設定に従う） |
-
-### Prisma スキーマのカラム名ルール
-
-- Prisma フィールド名は **camelCase**（TypeScript との一貫性）
-- DB カラム名は **snake_case**（PostgreSQL の慣習）
-- 複数語など **DB カラム名を snake_case に変換する必要があるフィールド** は `@map("snake_case_name")` で明示的にマッピングする
-- `email` / `name` / `role` のように Prisma フィールド名と DB カラム名が同一表記になる単語は `@map` を省略してよい
-
-```prisma
-// 例
-clerkId      String?  @unique @map("clerk_id")
-isActive     Boolean  @default(true) @map("is_active")
-createdAt    DateTime @default(now()) @map("created_at")
-invitedById  String   @map("invited_by_id")
-```
-
-### Next.js バージョン固有の仕様
-
-- **`src/proxy.ts`** は Next.js 16 以降の middleware ファイル名（旧 `middleware.ts` から改名）。`middleware.ts` に変更するよう指摘されても対応不要。（参照: [Next.js 公式 — proxy.ts](https://nextjsjp.org/docs/app/api-reference/file-conventions/proxy)）

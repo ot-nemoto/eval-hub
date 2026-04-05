@@ -2,7 +2,6 @@ import { SignOutButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { NavLinks } from "@/components/NavLinks";
 import { APP_NAME } from "@/lib/constants";
 
@@ -14,16 +13,8 @@ export default async function DashboardLayout({
   const session = await getSession();
   if (!session) {
     const { userId } = await auth();
-    if (userId) {
-      // isActive=false のユーザーは専用メッセージページへ
-      const user = await prisma.user.findUnique({
-        where: { clerkId: userId },
-        select: { isActive: true },
-      });
-      if (user && !user.isActive) redirect("/auth-error?reason=inactive");
-      // それ以外（Clerk ID 競合など）は汎用エラーページへ
-      redirect("/auth-error");
-    }
+    // Clerk セッションはあるが DB セッションが取得できない場合は競合エラーページへ
+    if (userId) redirect("/auth-error");
     redirect("/login");
   }
 

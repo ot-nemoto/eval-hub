@@ -13,7 +13,7 @@ export async function GET(
   }
 
   const { id } = await params;
-  const isAdmin = session.user.role === "ADMIN";
+  const isAdmin = session.user.role === "admin";
   const isSelf = session.user.id === id;
 
   if (!isAdmin && !isSelf) {
@@ -26,14 +26,14 @@ export async function GET(
   }
 
   const settings = await prisma.evaluationSetting.findMany({
-    where: { userId: id },
-    orderBy: { fiscalYear: "desc" },
+    where: { user_id: id },
+    orderBy: { fiscal_year: "desc" },
   });
 
   return successResponse(
     settings.map((s) => ({
-      fiscalYear: s.fiscalYear,
-      selfEvaluationEnabled: s.selfEvaluationEnabled,
+      fiscal_year: s.fiscal_year,
+      self_evaluation_enabled: s.self_evaluation_enabled,
     })),
   );
 }

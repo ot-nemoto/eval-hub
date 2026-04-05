@@ -19,7 +19,7 @@ export function EvaluationSettingToggle({ userId, fiscalYear, enabled }: Props) 
       const res = await fetch(`/api/members/${userId}/evaluation-settings/${fiscalYear}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ selfEvaluationEnabled: !enabled }),
+        body: JSON.stringify({ self_evaluation_enabled: !enabled }),
       });
       if (res.ok) {
         router.refresh();

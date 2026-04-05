@@ -5,7 +5,7 @@ import { useState } from "react";
 
 type Props = {
   userId: string;
-  currentRole: "ADMIN" | "MEMBER";
+  currentRole: "admin" | "member";
   isActive: boolean;
   isSelf: boolean;
 };
@@ -15,8 +15,8 @@ export function UserActions({ userId, currentRole, isActive, isSelf }: Props) {
   const [loading, setLoading] = useState(false);
 
   async function handleRoleChange() {
-    const newRole = currentRole === "ADMIN" ? "MEMBER" : "ADMIN";
-    const label = newRole === "ADMIN" ? "adminに昇格" : "memberに変更";
+    const newRole = currentRole === "admin" ? "member" : "admin";
+    const label = newRole === "admin" ? "adminに昇格" : "memberに変更";
     if (!confirm(`このユーザーを${label}しますか？`)) return;
 
     setLoading(true);
@@ -48,7 +48,7 @@ export function UserActions({ userId, currentRole, isActive, isSelf }: Props) {
       const res = await fetch(`/api/admin/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: !isActive }),
+        body: JSON.stringify({ is_active: !isActive }),
       });
       if (res.ok) {
         router.refresh();
@@ -94,7 +94,7 @@ export function UserActions({ userId, currentRole, isActive, isSelf }: Props) {
         disabled={loading || !isActive}
         className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50"
       >
-        {currentRole === "ADMIN" ? "member に変更" : "admin に昇格"}
+        {currentRole === "admin" ? "member に変更" : "admin に昇格"}
       </button>
       <button
         type="button"

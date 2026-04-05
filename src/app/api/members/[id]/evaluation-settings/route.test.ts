@@ -13,14 +13,14 @@ vi.mock("@/lib/prisma", () => ({
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
-const memberSession = { user: { id: "member-1", role: "MEMBER" } };
-const otherMemberSession = { user: { id: "member-2", role: "MEMBER" } };
+const adminSession = { user: { id: "admin-1", role: "admin" } };
+const memberSession = { user: { id: "member-1", role: "member" } };
+const otherMemberSession = { user: { id: "member-2", role: "member" } };
 
 const mockUser = { id: "member-1", name: "山田太郎" };
 const mockSettings = [
-  { fiscalYear: 2026, selfEvaluationEnabled: true },
-  { fiscalYear: 2025, selfEvaluationEnabled: false },
+  { fiscal_year: 2026, self_evaluation_enabled: true },
+  { fiscal_year: 2025, self_evaluation_enabled: false },
 ];
 
 function makeParams(id: string) {
@@ -40,7 +40,7 @@ describe("GET /api/members/:id/evaluation-settings", () => {
 
     expect(res.status).toBe(200);
     expect(body.data).toHaveLength(2);
-    expect(body.data[0]).toMatchObject({ fiscalYear: 2026, selfEvaluationEnabled: true });
+    expect(body.data[0]).toMatchObject({ fiscal_year: 2026, self_evaluation_enabled: true });
   });
 
   it("本人は自分の設定を取得できる", async () => {

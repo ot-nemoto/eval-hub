@@ -10,11 +10,11 @@ const memberLinks = [
 
 const adminLinks = [{ href: "/admin/users", label: "ユーザー管理" }];
 
-type Props = { role: "ADMIN" | "MEMBER" };
+type Props = { role: "admin" | "member" };
 
 export function NavLinks({ role }: Props) {
   const pathname = usePathname();
-  const links = role === "ADMIN" ? [...memberLinks, ...adminLinks] : memberLinks;
+  const links = role === "admin" ? [...memberLinks, ...adminLinks] : memberLinks;
 
   return (
     <nav className="flex gap-4 text-sm">

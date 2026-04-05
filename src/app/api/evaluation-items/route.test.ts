@@ -17,30 +17,24 @@ vi.mock("@/lib/prisma", () => ({
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const mockTarget = { id: 1, name: "employee", no: 1 };
-const mockCategory = { id: 1, targetId: 1, name: "engagement", no: 1 };
 const mockItems = [
   {
-    id: 1,
-    targetId: 1,
-    categoryId: 1,
-    no: 1,
+    uid: "1-1-1",
+    target: "employee",
+    category: "engagement",
     name: "会社員としての基本姿勢",
     description: "説明",
-    evalCriteria: "基準",
-    target: mockTarget,
-    category: mockCategory,
+    eval_criteria: "基準",
+    two_year_rule: false,
   },
   {
-    id: 2,
-    targetId: 1,
-    categoryId: 1,
-    no: 2,
+    uid: "1-1-2",
+    target: "employee",
+    category: "engagement",
     name: "積極性",
     description: null,
-    evalCriteria: null,
-    target: mockTarget,
-    category: mockCategory,
+    eval_criteria: null,
+    two_year_rule: false,
   },
 ];
 
@@ -50,8 +44,8 @@ describe("GET /api/evaluation-items", () => {
   });
 
   it("認証済みユーザーに評価項目一覧を返す", async () => {
-    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "MEMBER" } } as never);
-    vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue(mockItems as never);
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
+    vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue(mockItems);
 
     const req = new Request("http://localhost/api/evaluation-items");
     const res = await GET(req);
@@ -61,51 +55,39 @@ describe("GET /api/evaluation-items", () => {
     expect(body.data).toEqual(mockItems);
   });
 
-  it("?targetId でフィルタできる", async () => {
-    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "MEMBER" } } as never);
-    vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue([mockItems[0]] as never);
+  it("target クエリで絞り込みができる", async () => {
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
+    vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue([mockItems[0]]);
 
-    const req = new Request("http://localhost/api/evaluation-items?targetId=1");
+    const req = new Request("http://localhost/api/evaluation-items?target=employee");
     const res = await GET(req);
     const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(prisma.evaluationItem.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ targetId: 1 }),
+        where: expect.objectContaining({ target: "employee" }),
       }),
     );
     expect(body.data).toHaveLength(1);
   });
 
-  it("?categoryId でフィルタできる", async () => {
-    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "MEMBER" } } as never);
-    vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue(mockItems as never);
+  it("category クエリで絞り込みができる", async () => {
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
+    vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue(mockItems);
 
-    const req = new Request("http://localhost/api/evaluation-items?categoryId=1");
+    const req = new Request("http://localhost/api/evaluation-items?category=engagement");
     const res = await GET(req);
 
     expect(prisma.evaluationItem.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ categoryId: 1 }),
+        where: expect.objectContaining({ category: "engagement" }),
       }),
     );
     expect(res.status).toBe(200);
   });
 
-  it("?targetId が不正値の場合は 400", async () => {
-    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "MEMBER" } } as never);
-    const res = await GET(new Request("http://localhost/api/evaluation-items?targetId=abc"));
-    expect(res.status).toBe(400);
-  });
-
-  it("?categoryId が不正値の場合は 400", async () => {
-    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "MEMBER" } } as never);
-    const res = await GET(new Request("http://localhost/api/evaluation-items?categoryId=abc"));
-    expect(res.status).toBe(400);
-  });
-
-  it("未認証の場合は 401", async () => {
+  it("未認証の場合は 401 を返す", async () => {
     vi.mocked(getSession).mockResolvedValue(null);
 
     const req = new Request("http://localhost/api/evaluation-items");
