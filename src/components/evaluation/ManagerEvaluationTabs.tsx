@@ -136,7 +136,7 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
                   {item.selfScore ? SCORE_LABELS[item.selfScore] : "未入力"}
                 </span>
                 {item.selfReason && (
-                  <span className="text-sm text-gray-600">{item.selfReason}</span>
+                  <span className="min-w-0 break-words text-sm text-gray-600">{item.selfReason}</span>
                 )}
               </div>
             </div>

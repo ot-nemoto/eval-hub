@@ -64,8 +64,10 @@ export default async function EvaluationsPage() {
       evalCriteria: item.evalCriteria,
       category: item.category.name,
       target: item.target.name,
-      selfScore: (ev?.selfScore ?? null) as "none" | "ka" | "ryo" | "yu" | null,
+      selfScore: ev?.selfScore ?? null,
       selfReason: ev?.selfReason ?? null,
+      managerScore: ev?.managerScore ?? null,
+      managerReason: ev?.managerReason ?? null,
     };
   });
 
