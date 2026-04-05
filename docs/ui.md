@@ -13,7 +13,7 @@
 | 自己評価一覧 | `/evaluations` | ヘッダーあり | 要ログイン |
 | 社員一覧 | `/members` | ヘッダーあり | 要ログイン |
 | メンバー別評価 | `/members/[id]/evaluations` | ヘッダーあり | 要ログイン（アサイン済み評価者 / admin） |
-| 管理：大分類マスタ | `/admin/targets` | ヘッダーあり | admin のみ |
+| 管理：大分類・中分類マスタ | `/admin/targets` | ヘッダーあり | admin のみ |
 | 管理：評価項目マスタ | `/admin/evaluation-items` | ヘッダーあり | admin のみ |
 | 管理：年度管理 | `/admin/fiscal-years` | ヘッダーあり | admin のみ |
 | 管理：ユーザー一覧 | `/admin/users` | ヘッダーあり | admin のみ |
