@@ -75,7 +75,7 @@ async function seedFiscalYearItems(allItemIds: number[]) {
 
 async function main() {
   // =========================================================================
-  // 0. 旧 seed ユーザーのクリーンアップ
+  // 0. 旧 seed ユーザーのクリーンアップ（旧メールアドレスのユーザーを DB・Clerk から削除）
   // =========================================================================
   const oldEmails = [
     // 旧ユーザー（ドカベンキャラクター）
@@ -90,6 +90,30 @@ async function main() {
     "sato@example.com",
   ];
   for (const email of oldEmails) await cleanupUser(email);
+
+  // =========================================================================
+  // 0-2. 現 seed ユーザーの可変データを初期化
+  //      E2E テストで追加されたデータを毎回クリーンな状態に戻す
+  //      （ユーザー自体は削除しない。Clerk ユーザーも保持する）
+  // =========================================================================
+  const seedEmails = [
+    "bonjiri@example.com",
+    "tsukune@example.com",
+    "tebasaki@example.com",
+    "nankotsu@example.com",
+    "sunagimo@example.com",
+    "torikawa@example.com",
+  ];
+  for (const email of seedEmails) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) continue;
+    await prisma.evaluation.deleteMany({ where: { evaluateeId: user.id } });
+    await prisma.evaluationAssignment.deleteMany({
+      where: { OR: [{ evaluateeId: user.id }, { evaluatorId: user.id }] },
+    });
+    await prisma.evaluationSetting.deleteMany({ where: { userId: user.id } });
+  }
+  console.log("seed users: evaluations / assignments / settings cleared");
 
   // =========================================================================
   // 1. ユーザー
