@@ -337,7 +337,7 @@ async function main() {
   // =========================================================================
   // 8. fiscal_year_items（年度と評価項目の紐付け）
   // =========================================================================
-  const allItems = await prisma.evaluationItem.findMany({ select: { id: true } });
+  const allItems = await prisma.evaluationItem.findMany({ select: { id: true }, orderBy: { id: "asc" } });
   await seedFiscalYearItems(allItems.map((i) => i.id));
 
   // =========================================================================
