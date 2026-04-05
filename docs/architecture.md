@@ -45,26 +45,28 @@
 │   │   │   └── login/
 │   │   ├── (dashboard)/
 │   │   │   ├── members/          ← 社員一覧・プロフィール
-│   │   │   ├── career/           ← キャリアプラン
 │   │   │   ├── evaluations/      ← 評価入力・一覧
-│   │   │   ├── roles/            ← ロール認定状況
-│   │   │   ├── records/          ← 月次実績
-│   │   │   └── admin/            ← マスタ管理（admin専用）
+│   │   │   ├── admin/            ← マスタ管理（admin専用）
+│   │   │   ├── career/           ← キャリアプラン（v1.1以降）
+│   │   │   ├── roles/            ← ロール認定状況（v1.1以降）
+│   │   │   └── records/          ← 月次実績（v1.1以降）
 │   │   ├── api/
 │   │   │   ├── auth/
 │   │   │   ├── members/
-│   │   │   ├── career-plans/
-│   │   │   ├── evaluations/
-│   │   │   ├── roles/
-│   │   │   ├── allocations/
-│   │   │   └── records/
+│   │   │   ├── admin/
+│   │   │   ├── career-plans/     ← v1.1以降
+│   │   │   ├── evaluations/      ← v1.1以降
+│   │   │   ├── roles/            ← v1.1以降
+│   │   │   ├── allocations/      ← v1.1以降
+│   │   │   └── records/          ← v1.1以降
 │   │   └── layout.tsx
 │   ├── auth.ts
 │   ├── components/
 │   │   ├── ui/                   ← shadcn/ui ベース
 │   │   ├── evaluation/
-│   │   ├── career/
-│   │   └── role/
+│   │   ├── admin/
+│   │   ├── career/               ← v1.1以降
+│   │   └── role/                 ← v1.1以降
 │   ├── lib/
 │   │   ├── prisma.ts
 │   │   └── utils.ts
