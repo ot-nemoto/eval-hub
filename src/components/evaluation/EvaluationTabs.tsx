@@ -184,7 +184,7 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
                     {SCORE_LABELS[item.managerScore]}
                   </span>
                   {item.managerReason && (
-                    <span className="text-sm text-gray-600">{item.managerReason}</span>
+                    <span className="min-w-0 break-words text-sm text-gray-600">{item.managerReason}</span>
                   )}
                 </div>
               </div>
