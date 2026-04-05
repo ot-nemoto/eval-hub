@@ -46,10 +46,8 @@
 │   │   ├── (dashboard)/
 │   │   │   ├── members/          ← 社員一覧・プロフィール
 │   │   │   ├── evaluations/      ← 評価入力・一覧
-│   │   │   ├── admin/            ← マスタ管理（admin専用）
-│   │   │   ├── career/           ← キャリアプラン（v1.1以降）
-│   │   │   ├── roles/            ← ロール認定状況（v1.1以降）
-│   │   │   └── records/          ← 月次実績（v1.1以降）
+│   │   │   └── admin/            ← マスタ管理（admin専用）
+│   │   │       ※ career/・roles/・records/ は v1.1 以降に追加予定（現状は未作成）
 │   │   ├── api/
 │   │   │   ├── auth/
 │   │   │   ├── members/
