@@ -51,12 +51,10 @@
 │   │   ├── api/
 │   │   │   ├── auth/
 │   │   │   ├── members/
-│   │   │   ├── admin/
-│   │   │   ├── career-plans/     ← v1.1以降
-│   │   │   ├── evaluations/      ← v1.1以降
-│   │   │   ├── roles/            ← v1.1以降
-│   │   │   ├── allocations/      ← v1.1以降
-│   │   │   └── records/          ← v1.1以降
+│   │   │   ├── evaluation-assignments/
+│   │   │   ├── evaluation-items/
+│   │   │   └── admin/
+│   │   │       ※ career-plans/・roles/・allocations/・records/ は v1.1 以降に追加予定（現状は未作成）
 │   │   └── layout.tsx
 │   ├── auth.ts
 │   ├── components/
