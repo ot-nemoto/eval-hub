@@ -1,12 +1,13 @@
 import { SignOutButton } from "@clerk/nextjs";
 
 type Props = {
-  searchParams: Promise<{ reason?: string }>;
+  searchParams: Promise<{ reason?: string | string[] }>;
 };
 
 export default async function AuthErrorPage({ searchParams }: Props) {
   const { reason } = await searchParams;
-  const isInactive = reason === "inactive";
+  const normalizedReason = Array.isArray(reason) ? reason[0] : reason;
+  const isInactive = normalizedReason === "inactive";
 
   const message = isInactive
     ? "アカウントが無効化されています。管理者にお問い合わせください。"
