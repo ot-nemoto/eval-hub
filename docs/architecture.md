@@ -207,3 +207,33 @@ DIRECT_URL="postgresql://<user>:<password>@<direct-host>/<db>?sslmode=require"
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
 CLERK_SECRET_KEY="sk_test_..."
 ```
+
+---
+
+## コーディング規約
+
+### 言語・ツール
+
+| 項目 | 選択 |
+|------|------|
+| 言語 | TypeScript（strict モード） |
+| パッケージマネージャ | npm |
+| フォーマッタ・リンター | Biome（`biome.json` の設定に従う） |
+
+### Prisma スキーマのカラム名ルール
+
+- Prisma フィールド名は **camelCase**（TypeScript との一貫性）
+- DB カラム名は **snake_case**（PostgreSQL の慣習）
+- 必ず `@map("snake_case_name")` で明示的にマッピングする
+
+```prisma
+// 例
+clerkId      String?  @unique @map("clerk_id")
+isActive     Boolean  @default(true) @map("is_active")
+createdAt    DateTime @default(now()) @map("created_at")
+invitedById  String   @map("invited_by_id")
+```
+
+### Next.js バージョン固有の仕様
+
+- **`src/proxy.ts`** は Next.js 16 以降の middleware ファイル名（旧 `middleware.ts` から改名）。`middleware.ts` に変更するよう指摘されても対応不要。
