@@ -96,15 +96,16 @@ npx prisma db seed
 
 シードで作成されるユーザーとパスワードは以下の通り（開発用）：
 
-**共通パスワード**: `AmericanDogs`
+**共通パスワード**: `Yakitori2026`
 
-| email | name | role | 検証シナリオ |
-|-------|------|------|------------|
-| doigaki@example.com | 土井垣将 | admin | 自己評価なし・評価アサインなし |
-| shiranui@example.com | 不知火守 | admin | 2025のみ自己評価あり・上長評価される |
-| yamada@example.com | 山田太郎 | member | 通年自己評価あり・評価者かつ被評価者 |
-| satonaka@example.com | 里中智 | member | 通年自己評価あり・複数の上長に評価される |
-| iwaki@example.com | 岩鬼正美 | member | 通年自己評価なし・評価アサインなし |
+| email | role | isActive | 検証シナリオ |
+|-------|------|----------|------------|
+| bonjiri@example.com | ADMIN | true | 自己評価なし・評価アサインなし（管理操作確認用） |
+| tsukune@example.com | ADMIN | true | 2025のみ自己評価あり・上長評価される |
+| tebasaki@example.com | MEMBER | true | 通年自己評価あり・評価者かつ被評価者・採点データあり |
+| nankotsu@example.com | MEMBER | true | 通年自己評価あり・複数の上長に評価される |
+| sunagimo@example.com | MEMBER | false | 無効化ユーザー（auth-error リダイレクト確認用） |
+| torikawa@example.com | MEMBER | true | 評価なし・アサインなし（削除テスト用） |
 
 > Clerk へのユーザー作成は `NODE_ENV !== 'production'` の場合のみ実行される。本番環境ではスキップされる。
 
