@@ -14,6 +14,8 @@
 git clone https://github.com/ot-nemoto/eval-hub.git
 #    コンテナ起動時に npm install が自動実行される
 
+# 以降のコマンドはすべて devcontainer 内（リポジトリルート）で実行する
+
 # 2. .env.local を作成し、環境変数を設定する（下の「環境変数」節を参照）
 
 # 3. DB マイグレーションを適用する
