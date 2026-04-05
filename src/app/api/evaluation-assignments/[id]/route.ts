@@ -1,11 +1,8 @@
-import { getSession } from "@/lib/auth";
 import { errorResponse } from "@/lib/api-response";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function DELETE(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session) {
     return errorResponse("UNAUTHORIZED", "認証が必要です", 401);

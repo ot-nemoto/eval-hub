@@ -133,7 +133,10 @@ describe("POST /api/admin/evaluation-items", () => {
   it("category が target に属さない場合は 400", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.target.findUnique).mockResolvedValue(mockTarget as never);
-    vi.mocked(prisma.category.findUnique).mockResolvedValue({ ...mockCategory, targetId: 2 } as never);
+    vi.mocked(prisma.category.findUnique).mockResolvedValue({
+      ...mockCategory,
+      targetId: 2,
+    } as never);
 
     const req = new Request("http://localhost/api/admin/evaluation-items", {
       method: "POST",

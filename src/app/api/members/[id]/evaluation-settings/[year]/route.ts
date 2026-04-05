@@ -1,6 +1,7 @@
 // @vitest-environment node
-import { getSession } from "@/lib/auth";
+
 import { errorResponse, successResponse } from "@/lib/api-response";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function PUT(
@@ -34,7 +35,11 @@ export async function PUT(
   const setting = await prisma.evaluationSetting.upsert({
     where: { userId_fiscalYear: { userId: id, fiscalYear: fiscalYear } },
     update: { selfEvaluationEnabled: body.selfEvaluationEnabled },
-    create: { userId: id, fiscalYear: fiscalYear, selfEvaluationEnabled: body.selfEvaluationEnabled },
+    create: {
+      userId: id,
+      fiscalYear: fiscalYear,
+      selfEvaluationEnabled: body.selfEvaluationEnabled,
+    },
   });
 
   return successResponse({

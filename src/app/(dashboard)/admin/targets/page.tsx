@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { CategoryForm } from "@/components/admin/CategoryForm";
 import { CategoryActions } from "@/components/admin/CategoryActions";
+import { CategoryForm } from "@/components/admin/CategoryForm";
 import { TargetActions } from "@/components/admin/TargetActions";
 import { TargetForm } from "@/components/admin/TargetForm";
 import { getSession } from "@/lib/auth";
@@ -78,7 +78,12 @@ export default async function TargetsPage() {
                           <td className="py-2 text-gray-700">{cat.name}</td>
                           <td className="py-2 text-right">
                             <CategoryActions
-                              category={{ id: cat.id, targetId: cat.targetId, name: cat.name, no: cat.no }}
+                              category={{
+                                id: cat.id,
+                                targetId: cat.targetId,
+                                name: cat.name,
+                                no: cat.no,
+                              }}
                               canDelete={cat._count.evaluationItems === 0}
                             />
                           </td>
