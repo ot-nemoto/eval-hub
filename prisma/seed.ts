@@ -349,6 +349,9 @@ async function main() {
   //  nankotsu（2026年度）: 先頭3件に self_score のみ設定
   //    → 評価者画面で自己採点欄が表示・編集不可であることを確認できる
   // =========================================================================
+  if (allItems.length < 3) {
+    throw new Error(`評価データの投入に必要な評価項目が不足しています（取得件数: ${allItems.length}、必要数: 3）`);
+  }
   const seedItems = allItems.slice(0, 3);
 
   const evaluationsData: {
