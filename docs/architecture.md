@@ -60,9 +60,8 @@
 │   ├── components/
 │   │   ├── ui/                   ← shadcn/ui ベース
 │   │   ├── evaluation/
-│   │   ├── admin/
-│   │   ├── career/               ← v1.1以降
-│   │   └── role/                 ← v1.1以降
+│   │   └── admin/
+│   │       ※ career/・role/ は v1.1 以降に追加予定（現状は未作成）
 │   ├── lib/
 │   │   ├── prisma.ts
 │   │   └── utils.ts
