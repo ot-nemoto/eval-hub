@@ -12,8 +12,8 @@ vi.mock("@/lib/prisma", () => ({
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const adminSession = { user: { id: "admin-1", role: "admin" } };
-const memberSession = { user: { id: "member-1", role: "member" } };
+const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
+const memberSession = { user: { id: "member-1", role: "MEMBER" } };
 
 const mockTargets = [
   { id: 1, name: "employee", no: 1 },

@@ -22,7 +22,7 @@ clerk_id で DB 検索
     Clerk のメールアドレス取得
        ↓
     メールで DB 検索
-      → 未ヒット（新規サインアップ）   → DB にユーザー自動作成（DBが空なら role: admin、以降は role: member）
+      → 未ヒット（新規サインアップ）   → DB にユーザー自動作成（DBが空なら role: ADMIN、以降は role: MEMBER）
       → ヒット・clerk_id なし         → clerk_id を紐付けてセッション返却
       → ヒット・clerk_id あり         → null
 （既存ユーザー初回ログイン）
@@ -61,7 +61,7 @@ Clerk middleware では公開ルートとして設定しているため、未認
 | 保存場所 | Clerk が管理する httpOnly Cookie |
 | `session.user.id` | DB の `users.id`（UUID） |
 | `session.user.name` | DB の `users.name` |
-| `session.user.role` | DB の `users.role`（`admin` / `member`） |
+| `session.user.role` | DB の `users.role`（`ADMIN` / `MEMBER`） |
 
 ### セッション取得方法
 
@@ -130,9 +130,9 @@ for (const user of users) {
 
 Clerk でサインアップしたユーザーが DB に存在しない場合、`getSession()` が初回アクセス時に自動的に `users` レコードを作成する。
 
-- `role` は DB にユーザーが 0 人の場合（初回ログイン）は `admin`、以降は `member`
+- `role` は DB にユーザーが 0 人の場合（初回ログイン）は `ADMIN`、以降は `MEMBER`
 - `name` は Clerk の `fullName` → `firstName` → メールアドレスの順でフォールバック
-- 2 人目以降のユーザーの `admin` 昇格は DB 直接操作または管理者 API で行う
+- 2 人目以降のユーザーの `ADMIN` 昇格は DB 直接操作または管理者 API で行う
 
 ---
 

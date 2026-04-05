@@ -13,7 +13,7 @@ export async function GET(
   }
 
   const { id } = await params;
-  const isAdmin = session.user.role === "admin";
+  const isAdmin = session.user.role === "ADMIN";
   const isSelf = session.user.id === id;
 
   if (!isAdmin && !isSelf) {

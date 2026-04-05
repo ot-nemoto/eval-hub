@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 export default async function FiscalYearsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.user.role !== "admin") redirect("/evaluations");
+  if (session.user.role !== "ADMIN") redirect("/evaluations");
 
   const fiscalYears = await prisma.fiscalYear.findMany({
     orderBy: { year: "desc" },

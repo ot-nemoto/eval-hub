@@ -43,7 +43,7 @@ describe("GET /api/evaluation-items", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("認証済みユーザーに評価項目一覧を返す", async () => {
-    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "MEMBER" } } as never);
     vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue(mockItems as never);
 
     const req = new Request("http://localhost/api/evaluation-items");
@@ -55,7 +55,7 @@ describe("GET /api/evaluation-items", () => {
   });
 
   it("?targetId でフィルタできる", async () => {
-    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "MEMBER" } } as never);
     vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue([mockItems[0]] as never);
 
     const req = new Request("http://localhost/api/evaluation-items?targetId=1");
@@ -70,7 +70,7 @@ describe("GET /api/evaluation-items", () => {
   });
 
   it("?categoryId でフィルタできる", async () => {
-    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "MEMBER" } } as never);
     vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue(mockItems as never);
 
     const req = new Request("http://localhost/api/evaluation-items?categoryId=1");
@@ -85,13 +85,13 @@ describe("GET /api/evaluation-items", () => {
   });
 
   it("?targetId が不正値の場合は 400", async () => {
-    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "MEMBER" } } as never);
     const res = await GET(new Request("http://localhost/api/evaluation-items?targetId=abc"));
     expect(res.status).toBe(400);
   });
 
   it("?categoryId が不正値の場合は 400", async () => {
-    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "member" } } as never);
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1", role: "MEMBER" } } as never);
     const res = await GET(new Request("http://localhost/api/evaluation-items?categoryId=abc"));
     expect(res.status).toBe(400);
   });

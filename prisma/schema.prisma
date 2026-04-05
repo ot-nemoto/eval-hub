@@ -9,8 +9,8 @@ datasource db {
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 enum UserRole {
-  admin
-  member
+  ADMIN
+  MEMBER
 }
 
 enum Score {

@@ -49,13 +49,13 @@ describe("getSession", () => {
       mockFindUnique.mockResolvedValue({
         id: "mock-user-id",
         name: "モックユーザー",
-        role: "admin",
+        role: "ADMIN",
         isActive: true,
       });
 
       const result = await getSession();
       expect(result).toEqual({
-        user: { id: "mock-user-id", name: "モックユーザー", role: "admin" },
+        user: { id: "mock-user-id", name: "モックユーザー", role: "ADMIN" },
       });
       expect(mockAuth).not.toHaveBeenCalled();
       expect(mockFindUnique).toHaveBeenCalledWith({
@@ -78,7 +78,7 @@ describe("getSession", () => {
       mockFindUnique.mockResolvedValue({
         id: "mock-user-id",
         name: "無効ユーザー",
-        role: "member",
+        role: "MEMBER",
         isActive: false,
       });
 
@@ -107,12 +107,12 @@ describe("getSession", () => {
       mockFindUnique.mockResolvedValue({
         id: "user-uuid",
         name: "モックユーザー",
-        role: "member",
+        role: "MEMBER",
         isActive: true,
       });
 
       const result = await getSession();
-      expect(result).toEqual({ user: { id: "user-uuid", name: "モックユーザー", role: "member" } });
+      expect(result).toEqual({ user: { id: "user-uuid", name: "モックユーザー", role: "MEMBER" } });
       expect(mockAuth).not.toHaveBeenCalled();
       expect(mockFindUnique).toHaveBeenCalledWith({
         where: { email: "mock@example.com" },
@@ -134,7 +134,7 @@ describe("getSession", () => {
       mockFindUnique.mockResolvedValue({
         id: "user-uuid",
         name: "無効ユーザー",
-        role: "member",
+        role: "MEMBER",
         isActive: false,
       });
 
@@ -148,7 +148,7 @@ describe("getSession", () => {
       mockFindUnique.mockResolvedValue({
         id: "priority-user-id",
         name: "優先ユーザー",
-        role: "admin",
+        role: "ADMIN",
         isActive: true,
       });
 
@@ -177,13 +177,13 @@ describe("getSession", () => {
     mockFindUnique.mockResolvedValue({
       id: "user-uuid",
       name: "テストユーザー",
-      role: "member",
+      role: "MEMBER",
       isActive: true,
     });
 
     const result = await getSession();
     expect(result).toEqual({
-      user: { id: "user-uuid", name: "テストユーザー", role: "member" },
+      user: { id: "user-uuid", name: "テストユーザー", role: "MEMBER" },
     });
     expect(mockCurrentUser).not.toHaveBeenCalled();
   });
@@ -195,7 +195,7 @@ describe("getSession", () => {
     mockFindUnique.mockResolvedValue({
       id: "user-uuid",
       name: "無効ユーザー",
-      role: "member",
+      role: "MEMBER",
       isActive: false,
     });
 
@@ -210,12 +210,12 @@ describe("getSession", () => {
     mockFindUnique.mockResolvedValue({
       id: "admin-uuid",
       name: "管理者",
-      role: "admin",
+      role: "ADMIN",
       isActive: true,
     });
 
     const result = await getSession();
-    expect(result?.user.role).toBe("admin");
+    expect(result?.user.role).toBe("ADMIN");
   });
 
   describe("初回ログイン時の clerkId 自動紐付け", () => {
@@ -229,7 +229,7 @@ describe("getSession", () => {
         .mockResolvedValueOnce({
           id: "user-uuid",
           name: "田中太郎",
-          role: "member",
+          role: "MEMBER",
           clerkId: null,
           isActive: true,
         }); // email 検索
@@ -242,7 +242,7 @@ describe("getSession", () => {
 
       const result = await getSession();
       expect(result).toEqual({
-        user: { id: "user-uuid", name: "田中太郎", role: "member" },
+        user: { id: "user-uuid", name: "田中太郎", role: "MEMBER" },
       });
       expect(mockUpdateMany).toHaveBeenCalledWith({
         where: { email: "tanaka@example.com", clerkId: null },
@@ -260,7 +260,7 @@ describe("getSession", () => {
         .mockResolvedValueOnce({
           id: "user-uuid",
           name: "田中太郎",
-          role: "member",
+          role: "MEMBER",
           clerkId: null,
           isActive: true,
         }) // email 検索
@@ -268,7 +268,7 @@ describe("getSession", () => {
         .mockResolvedValueOnce({
           id: "user-uuid",
           name: "田中太郎",
-          role: "member",
+          role: "MEMBER",
           isActive: true,
         }); // updateMany count=0 後の再取得
       // @ts-expect-error
@@ -280,7 +280,7 @@ describe("getSession", () => {
 
       const result = await getSession();
       expect(result).toEqual({
-        user: { id: "user-uuid", name: "田中太郎", role: "member" },
+        user: { id: "user-uuid", name: "田中太郎", role: "MEMBER" },
       });
     });
 
@@ -299,18 +299,18 @@ describe("getSession", () => {
       });
       mockCount.mockResolvedValue(1); // 既存ユーザーあり → member
       // @ts-expect-error
-      mockCreate.mockResolvedValue({ id: "new-uuid", name: "新規ユーザー", role: "member" });
+      mockCreate.mockResolvedValue({ id: "new-uuid", name: "新規ユーザー", role: "MEMBER" });
 
       const result = await getSession();
       expect(result).toEqual({
-        user: { id: "new-uuid", name: "新規ユーザー", role: "member" },
+        user: { id: "new-uuid", name: "新規ユーザー", role: "MEMBER" },
       });
       expect(mockCreate).toHaveBeenCalledWith({
         data: {
           clerkId: "clerk_new123",
           email: "new@example.com",
           name: "新規ユーザー",
-          role: "member",
+          role: "MEMBER",
         },
         select: { id: true, name: true, role: true },
       });
@@ -332,18 +332,18 @@ describe("getSession", () => {
       });
       mockCount.mockResolvedValue(0); // ユーザー0人 → admin
       // @ts-expect-error
-      mockCreate.mockResolvedValue({ id: "first-uuid", name: "初回ユーザー", role: "admin" });
+      mockCreate.mockResolvedValue({ id: "first-uuid", name: "初回ユーザー", role: "ADMIN" });
 
       const result = await getSession();
       expect(result).toEqual({
-        user: { id: "first-uuid", name: "初回ユーザー", role: "admin" },
+        user: { id: "first-uuid", name: "初回ユーザー", role: "ADMIN" },
       });
       expect(mockCreate).toHaveBeenCalledWith({
         data: {
           clerkId: "clerk_first123",
           email: "first@example.com",
           name: "初回ユーザー",
-          role: "admin",
+          role: "ADMIN",
         },
         select: { id: true, name: true, role: true },
       });
@@ -359,7 +359,7 @@ describe("getSession", () => {
         .mockResolvedValueOnce({
           id: "user-uuid",
           name: "田中太郎",
-          role: "member",
+          role: "MEMBER",
           clerkId: "clerk_other",
           isActive: true,
         }); // email 検索 → 別IDに紐付き済み
@@ -383,7 +383,7 @@ describe("getSession", () => {
         .mockResolvedValueOnce({
           id: "user-uuid",
           name: "無効ユーザー",
-          role: "member",
+          role: "MEMBER",
           clerkId: null,
           isActive: false,
         }); // email 検索

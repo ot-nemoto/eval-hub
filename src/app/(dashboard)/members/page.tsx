@@ -9,7 +9,7 @@ export default async function MembersPage() {
   if (!session) redirect("/login");
 
   const userId = session.user.id;
-  const isAdmin = session.user.role === "admin";
+  const isAdmin = session.user.role === "ADMIN";
   const fiscalYear = await getCurrentFiscalYear();
 
   type Member = { id: string; name: string; division: string | null };

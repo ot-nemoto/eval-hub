@@ -19,14 +19,14 @@ vi.mock("@/lib/prisma", () => ({
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const adminSession = { user: { id: "admin-1", role: "admin" } };
-const memberSession = { user: { id: "member-1", role: "member" } };
+const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
+const memberSession = { user: { id: "member-1", role: "MEMBER" } };
 
 const mockUser = {
   id: "user-2",
   name: "鈴木花子",
   email: "suzuki@example.com",
-  role: "member",
+  role: "MEMBER",
 };
 
 function makeParams(id: string) {
@@ -39,17 +39,17 @@ describe("PATCH /api/admin/users/[id]", () => {
   it("admin は他ユーザーのロールを変更できる", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never);
-    vi.mocked(prisma.user.update).mockResolvedValue({ ...mockUser, role: "admin" } as never);
+    vi.mocked(prisma.user.update).mockResolvedValue({ ...mockUser, role: "ADMIN" } as never);
 
     const req = new Request("http://localhost/api/admin/users/user-2", {
       method: "PATCH",
-      body: JSON.stringify({ role: "admin" }),
+      body: JSON.stringify({ role: "ADMIN" }),
     });
     const res = await PATCH(req, makeParams("user-2"));
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.data.role).toBe("admin");
+    expect(body.data.role).toBe("ADMIN");
   });
 
   it("admin はユーザーを無効化できる", async () => {
@@ -73,7 +73,7 @@ describe("PATCH /api/admin/users/[id]", () => {
 
     const req = new Request("http://localhost/api/admin/users/admin-1", {
       method: "PATCH",
-      body: JSON.stringify({ role: "member" }),
+      body: JSON.stringify({ role: "MEMBER" }),
     });
     const res = await PATCH(req, makeParams("admin-1"));
 
@@ -98,7 +98,7 @@ describe("PATCH /api/admin/users/[id]", () => {
 
     const req = new Request("http://localhost/api/admin/users/not-exist", {
       method: "PATCH",
-      body: JSON.stringify({ role: "admin" }),
+      body: JSON.stringify({ role: "ADMIN" }),
     });
     const res = await PATCH(req, makeParams("not-exist"));
 
@@ -110,7 +110,7 @@ describe("PATCH /api/admin/users/[id]", () => {
 
     const req = new Request("http://localhost/api/admin/users/user-2", {
       method: "PATCH",
-      body: JSON.stringify({ role: "admin" }),
+      body: JSON.stringify({ role: "ADMIN" }),
     });
     const res = await PATCH(req, makeParams("user-2"));
 
@@ -122,7 +122,7 @@ describe("PATCH /api/admin/users/[id]", () => {
 
     const req = new Request("http://localhost/api/admin/users/user-2", {
       method: "PATCH",
-      body: JSON.stringify({ role: "admin" }),
+      body: JSON.stringify({ role: "ADMIN" }),
     });
     const res = await PATCH(req, makeParams("user-2"));
 

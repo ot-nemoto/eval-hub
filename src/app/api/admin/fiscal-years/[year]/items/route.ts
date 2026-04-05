@@ -8,7 +8,7 @@ type Params = { params: Promise<{ year: string }> };
 export async function GET(_request: Request, { params }: Params) {
   const session = await getSession();
   if (!session) return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
-  if (session.user.role !== "admin") return errorResponse("FORBIDDEN", "権限がありません", 403);
+  if (session.user.role !== "ADMIN") return errorResponse("FORBIDDEN", "権限がありません", 403);
 
   const { year: yearStr } = await params;
   const year = Number(yearStr);
@@ -40,7 +40,7 @@ export async function GET(_request: Request, { params }: Params) {
 export async function POST(request: Request, { params }: Params) {
   const session = await getSession();
   if (!session) return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
-  if (session.user.role !== "admin") return errorResponse("FORBIDDEN", "権限がありません", 403);
+  if (session.user.role !== "ADMIN") return errorResponse("FORBIDDEN", "権限がありません", 403);
 
   const { year: yearStr } = await params;
   const year = Number(yearStr);

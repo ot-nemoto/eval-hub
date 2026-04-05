@@ -62,7 +62,7 @@ export async function getSession(): Promise<Session | null> {
     // 注意: count と create の間に別ユーザーが同時に初回ログインすると複数 admin が作成される可能性があるが、
     // 初回デプロイ時の同時ログインは極めてまれなため仕様として許容している
     const userCount = await prisma.user.count();
-    const role = userCount === 0 ? "admin" : "member";
+    const role = userCount === 0 ? "ADMIN" : "MEMBER";
     const name = clerkUser?.fullName ?? clerkUser?.firstName ?? email;
     try {
       const created = await prisma.user.create({

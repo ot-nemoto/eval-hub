@@ -12,7 +12,7 @@ export default async function MemberEvaluationsPage({ params }: Props) {
 
   const { id: evaluateeId } = await params;
   const evaluatorId = session.user.id;
-  const isAdmin = session.user.role === "admin";
+  const isAdmin = session.user.role === "ADMIN";
   const fiscalYear = await getCurrentFiscalYear();
   if (!fiscalYear) notFound();
 

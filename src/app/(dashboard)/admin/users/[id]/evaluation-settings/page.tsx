@@ -12,7 +12,7 @@ export default async function UserEvaluationSettingsPage({
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.user.role !== "admin") redirect("/evaluations");
+  if (session.user.role !== "ADMIN") redirect("/evaluations");
 
   const { id } = await params;
 

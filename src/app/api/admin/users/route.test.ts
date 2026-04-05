@@ -12,15 +12,15 @@ vi.mock("@/lib/prisma", () => ({
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const adminSession = { user: { id: "admin-1", role: "admin" } };
-const memberSession = { user: { id: "member-1", role: "member" } };
+const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
+const memberSession = { user: { id: "member-1", role: "MEMBER" } };
 
 const mockUsers = [
   {
     id: "user-1",
     name: "田中太郎",
     email: "tanaka@example.com",
-    role: "admin",
+    role: "ADMIN",
     division: "開発部",
     joinedAt: null,
     createdAt: new Date("2025-01-01"),
@@ -29,7 +29,7 @@ const mockUsers = [
     id: "user-2",
     name: "鈴木花子",
     email: "suzuki@example.com",
-    role: "member",
+    role: "MEMBER",
     division: null,
     joinedAt: null,
     createdAt: new Date("2025-02-01"),
