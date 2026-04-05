@@ -312,6 +312,8 @@ async function main() {
   );
 
   for (const item of evaluationItemsData) {
+    const target = targetByName[item.target];
+    const category = categoryByKey[categoryKey(item.target, item.category)];
     await prisma.evaluationItem.upsert({
       where: { categoryId_no: { categoryId: category.id, no: item.item_no } },
       update: {

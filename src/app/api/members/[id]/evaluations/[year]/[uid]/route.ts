@@ -11,7 +11,7 @@ export async function PUT(
     return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
   }
 
-  const { id: evaluateeId, year, uid: evalUid } = await params;
+  const { id: evaluateeId, year, uid: _evalUid } = await params;
   const fiscalYear = Number(year);
   if (Number.isNaN(fiscalYear)) {
     return errorResponse("BAD_REQUEST", "year は数値で指定してください", 400);
