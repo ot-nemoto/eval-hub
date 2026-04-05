@@ -42,7 +42,6 @@ describe("GET /api/admin/categories", () => {
 
     const req = new Request("http://localhost/api/admin/categories?targetId=1");
     const res = await GET(req);
-    const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(prisma.category.findMany).toHaveBeenCalledWith(
