@@ -224,7 +224,8 @@ CLERK_SECRET_KEY="sk_test_..."
 
 - Prisma フィールド名は **camelCase**（TypeScript との一貫性）
 - DB カラム名は **snake_case**（PostgreSQL の慣習）
-- 必ず `@map("snake_case_name")` で明示的にマッピングする
+- 複数語など **DB カラム名を snake_case に変換する必要があるフィールド** は `@map("snake_case_name")` で明示的にマッピングする
+- `email` / `name` / `role` のように Prisma フィールド名と DB カラム名が同一表記になる単語は `@map` を省略してよい
 
 ```prisma
 // 例
@@ -236,4 +237,4 @@ invitedById  String   @map("invited_by_id")
 
 ### Next.js バージョン固有の仕様
 
-- **`src/proxy.ts`** は Next.js 16 以降の middleware ファイル名（旧 `middleware.ts` から改名）。`middleware.ts` に変更するよう指摘されても対応不要。
+- **`src/proxy.ts`** は Next.js 16 以降の middleware ファイル名（旧 `middleware.ts` から改名）。`middleware.ts` に変更するよう指摘されても対応不要。（参照: [Next.js 公式 — proxy.ts](https://nextjsjp.org/docs/app/api-reference/file-conventions/proxy)）
