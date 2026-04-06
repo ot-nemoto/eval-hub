@@ -36,7 +36,10 @@ describe("PATCH /api/admin/evaluation-items/:id", () => {
   it("admin は評価項目を編集できる", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.evaluationItem.findUnique).mockResolvedValue(mockItem as never);
-    vi.mocked(prisma.evaluationItem.update).mockResolvedValue({ ...mockItem, name: "更新後の名称" } as never);
+    vi.mocked(prisma.evaluationItem.update).mockResolvedValue({
+      ...mockItem,
+      name: "更新後の名称",
+    } as never);
 
     const req = new Request("http://localhost/api/admin/evaluation-items/1", {
       method: "PATCH",
@@ -122,7 +125,9 @@ describe("DELETE /api/admin/evaluation-items/:id", () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.evaluationItem.findUnique).mockResolvedValue(null);
 
-    const req = new Request("http://localhost/api/admin/evaluation-items/999", { method: "DELETE" });
+    const req = new Request("http://localhost/api/admin/evaluation-items/999", {
+      method: "DELETE",
+    });
     const res = await DELETE(req, { params: Promise.resolve({ id: "999" }) });
     expect(res.status).toBe(404);
   });

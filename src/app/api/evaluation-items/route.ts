@@ -1,5 +1,5 @@
-import { getSession } from "@/lib/auth";
 import { errorResponse, successResponse } from "@/lib/api-response";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
@@ -29,11 +29,8 @@ export async function GET(request: Request) {
   }
 
   const items = await prisma.evaluationItem.findMany({
-    where: {
-      ...(target ? { target } : {}),
-      ...(category ? { category } : {}),
-    },
-    orderBy: [{ target_no: "asc" }, { category_no: "asc" }, { item_no: "asc" }],
+    where,
+    orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
     select: {
       id: true,
       targetId: true,
