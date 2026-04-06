@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { ConflictError, NotFoundError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 
@@ -19,10 +20,17 @@ export async function createCategory(data: { targetId: number; name: string; no:
   });
   if (existing) throw new ConflictError("同じ targetId と no の中分類がすでに存在します");
 
-  return prisma.category.create({
-    data: { targetId: data.targetId, name: data.name, no: data.no },
-    select: { id: true, targetId: true, name: true, no: true },
-  });
+  try {
+    return await prisma.category.create({
+      data: { targetId: data.targetId, name: data.name, no: data.no },
+      select: { id: true, targetId: true, name: true, no: true },
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new ConflictError("同じ targetId と no の中分類がすでに存在します");
+    }
+    throw e;
+  }
 }
 
 export async function updateCategory(id: number, data: { name?: string; no?: number }) {
