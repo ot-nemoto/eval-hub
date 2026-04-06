@@ -1,13 +1,15 @@
 import { redirect } from "next/navigation";
 import EvaluationTabs from "@/components/evaluation/EvaluationTabs";
 import { getSession } from "@/lib/auth";
+import { getCurrentFiscalYear } from "@/lib/fiscal-year";
 import { prisma } from "@/lib/prisma";
 
 export default async function EvaluationsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
   const userId = session.user.id;
-  const fiscalYear = new Date().getFullYear();
+  const fiscalYear = await getCurrentFiscalYear();
+  if (!fiscalYear) redirect("/login");
 
   const [items, evaluations, setting] = await Promise.all([
     prisma.evaluationItem.findMany({
