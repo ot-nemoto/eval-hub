@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { ConflictError, NotFoundError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 
@@ -12,10 +13,17 @@ export async function createTarget(data: { name: string; no: number }) {
   const existing = await prisma.target.findUnique({ where: { no: data.no } });
   if (existing) throw new ConflictError("同じ no の大分類がすでに存在します");
 
-  return prisma.target.create({
-    data: { name: data.name, no: data.no },
-    select: { id: true, name: true, no: true },
-  });
+  try {
+    return await prisma.target.create({
+      data: { name: data.name, no: data.no },
+      select: { id: true, name: true, no: true },
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new ConflictError("同じ no の大分類がすでに存在します");
+    }
+    throw e;
+  }
 }
 
 export async function updateTarget(id: number, data: { name?: string; no?: number }) {
