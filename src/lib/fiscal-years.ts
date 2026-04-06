@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { BadRequestError, ConflictError, NotFoundError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 
@@ -42,29 +43,36 @@ export async function createFiscalYear(data: {
     select: { year: true },
   });
 
-  return prisma.$transaction(async (tx) => {
-    const fy = await tx.fiscalYear.create({
-      data: { year: data.year, name: data.name, startDate, endDate },
-      select: fiscalYearSelect,
-    });
-
-    if (latestFy) {
-      const sourceItems = await tx.fiscalYearItem.findMany({
-        where: { fiscalYear: latestFy.year },
-        select: { evaluationItemId: true },
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const fy = await tx.fiscalYear.create({
+        data: { year: data.year, name: data.name, startDate, endDate },
+        select: fiscalYearSelect,
       });
-      if (sourceItems.length > 0) {
-        await tx.fiscalYearItem.createMany({
-          data: sourceItems.map((item) => ({
-            fiscalYear: data.year,
-            evaluationItemId: item.evaluationItemId,
-          })),
-        });
-      }
-    }
 
-    return fy;
-  });
+      if (latestFy) {
+        const sourceItems = await tx.fiscalYearItem.findMany({
+          where: { fiscalYear: latestFy.year },
+          select: { evaluationItemId: true },
+        });
+        if (sourceItems.length > 0) {
+          await tx.fiscalYearItem.createMany({
+            data: sourceItems.map((item) => ({
+              fiscalYear: data.year,
+              evaluationItemId: item.evaluationItemId,
+            })),
+          });
+        }
+      }
+
+      return fy;
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new ConflictError("同じ年度がすでに存在します");
+    }
+    throw e;
+  }
 }
 
 export async function updateFiscalYear(

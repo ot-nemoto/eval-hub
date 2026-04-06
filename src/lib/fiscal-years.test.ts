@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BadRequestError, ConflictError, NotFoundError } from "./errors";
 import {
@@ -127,6 +128,18 @@ describe("createFiscalYear", () => {
 
   it("同じ year が存在する場合は ConflictError をスロー", async () => {
     vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
+
+    await expect(
+      createFiscalYear({ year: 2024, name: "x", startDate: "2024-01-01", endDate: "2024-12-31" }),
+    ).rejects.toThrow(ConflictError);
+  });
+
+  it("DB の P2002（同時実行競合）の場合は ConflictError をスロー", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.fiscalYear.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.$transaction).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", { code: "P2002", clientVersion: "5" }),
+    );
 
     await expect(
       createFiscalYear({ year: 2024, name: "x", startDate: "2024-01-01", endDate: "2024-12-31" }),
