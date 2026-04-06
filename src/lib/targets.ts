@@ -35,11 +35,18 @@ export async function updateTarget(id: number, data: { name?: string; no?: numbe
     if (conflict) throw new ConflictError("同じ no の大分類がすでに存在します");
   }
 
-  return prisma.target.update({
-    where: { id },
-    data,
-    select: { id: true, name: true, no: true },
-  });
+  try {
+    return await prisma.target.update({
+      where: { id },
+      data,
+      select: { id: true, name: true, no: true },
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new ConflictError("同じ no の大分類がすでに存在します");
+    }
+    throw e;
+  }
 }
 
 export async function deleteTarget(id: number) {
