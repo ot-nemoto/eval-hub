@@ -31,9 +31,14 @@ describe("PATCH /api/admin/categories/:id", () => {
   it("admin は name を更新できる", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.category.findUnique).mockResolvedValue(mockCategory as never);
-    vi.mocked(prisma.category.update).mockResolvedValue({ ...mockCategory, name: "updated" } as never);
+    vi.mocked(prisma.category.update).mockResolvedValue({
+      ...mockCategory,
+      name: "updated",
+    } as never);
 
-    const res = await PATCH(makeRequest({ name: "updated" }), { params: Promise.resolve({ id: "1" }) });
+    const res = await PATCH(makeRequest({ name: "updated" }), {
+      params: Promise.resolve({ id: "1" }),
+    });
     const body = await res.json();
 
     expect(res.status).toBe(200);

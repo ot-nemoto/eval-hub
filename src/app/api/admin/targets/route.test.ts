@@ -53,7 +53,11 @@ describe("POST /api/admin/targets", () => {
   it("admin は大分類を追加できる", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.target.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.target.create).mockResolvedValue({ id: 3, name: "new target", no: 3 } as never);
+    vi.mocked(prisma.target.create).mockResolvedValue({
+      id: 3,
+      name: "new target",
+      no: 3,
+    } as never);
 
     const req = new Request("http://localhost/api/admin/targets", {
       method: "POST",
