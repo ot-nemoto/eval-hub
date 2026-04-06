@@ -56,6 +56,8 @@ export function FiscalYearActions({ fiscalYear }: Props) {
         setEditing(false);
         router.refresh();
       }
+    } catch {
+      alert("通信エラーが発生しました");
     } finally {
       setLoading(false);
     }
