@@ -9,8 +9,9 @@ export function LogoutButton() {
 
   async function handleSignOut() {
     try {
-      await signOut();
-    } finally {
+      await signOut({ redirectUrl: "/login" });
+    } catch {
+      // mock モード等 Clerk セッションが存在しない場合のフォールバック
       router.push("/login");
     }
   }
