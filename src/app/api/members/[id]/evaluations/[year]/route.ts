@@ -1,5 +1,5 @@
-import { getSession } from "@/lib/auth";
 import { errorResponse, successResponse } from "@/lib/api-response";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
@@ -22,15 +22,18 @@ export async function GET(
   const isSelf = currentUserId === evaluateeId;
 
   // 評価者かどうかチェック
-  const isAssignedEvaluator = !isSelf && !isAdmin
-    ? await prisma.evaluationAssignment.findFirst({
-        where: {
-          fiscalYear: fiscalYear,
-          evaluateeId: evaluateeId,
-          evaluatorId: currentUserId,
-        },
-      }).then((r) => r !== null)
-    : false;
+  const isAssignedEvaluator =
+    !isSelf && !isAdmin
+      ? await prisma.evaluationAssignment
+          .findFirst({
+            where: {
+              fiscalYear: fiscalYear,
+              evaluateeId: evaluateeId,
+              evaluatorId: currentUserId,
+            },
+          })
+          .then((r) => r !== null)
+      : false;
 
   if (!isAdmin && !isSelf && !isAssignedEvaluator) {
     return errorResponse("FORBIDDEN", "権限がありません", 403);

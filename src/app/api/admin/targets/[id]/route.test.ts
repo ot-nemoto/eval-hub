@@ -33,7 +33,9 @@ describe("PATCH /api/admin/targets/:id", () => {
     vi.mocked(prisma.target.findUnique).mockResolvedValue(mockTarget as never);
     vi.mocked(prisma.target.update).mockResolvedValue({ ...mockTarget, name: "updated" } as never);
 
-    const res = await PATCH(makeRequest({ name: "updated" }), { params: Promise.resolve({ id: "1" }) });
+    const res = await PATCH(makeRequest({ name: "updated" }), {
+      params: Promise.resolve({ id: "1" }),
+    });
     const body = await res.json();
 
     expect(res.status).toBe(200);

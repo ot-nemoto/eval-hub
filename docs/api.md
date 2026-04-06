@@ -73,7 +73,7 @@
 | POST | `/api/evaluation-assignments` | 評価者アサイン作成 | admin |
 | DELETE | `/api/evaluation-assignments/:id` | 評価者アサイン削除 | admin |
 | GET | `/api/members/:id/evaluations/:year` | 採点一覧取得 | member（本人・評価者）/ admin |
-| PUT | `/api/members/:id/evaluations/:year/:itemId` | 採点登録・更新 | member（本人・評価者）/ admin |
+| PUT | `/api/members/:id/evaluations/:year/:uid` | 採点登録・更新 | member（本人・評価者）/ admin |
 | GET | `/api/members/:id/evaluation-settings` | 自己評価要否設定取得 | member（本人）/ admin |
 | PUT | `/api/members/:id/evaluation-settings/:year` | 自己評価要否設定更新 | admin |
 | GET | `/api/admin/fiscal-years` | 年度一覧取得 | admin |
@@ -337,7 +337,7 @@
 - アサインされた評価者（`evaluation_assignments` に `evaluateeId == :id` かつ `evaluatorId == 自分` のレコードがある）
 - admin
 
-### PUT /api/members/:id/evaluations/:year/:itemId
+### PUT /api/members/:id/evaluations/:year/:uid
 採点入力・更新
 
 **Request（本人の場合）**

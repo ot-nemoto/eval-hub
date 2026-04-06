@@ -1,7 +1,8 @@
-import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import ManagerEvaluationTabs from "@/components/evaluation/ManagerEvaluationTabs";
+import { getSession } from "@/lib/auth";
+import { getCurrentFiscalYear } from "@/lib/fiscal-year";
+import { prisma } from "@/lib/prisma";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -37,7 +38,8 @@ export default async function MemberEvaluationsPage({ params }: Props) {
 
   const [items, evaluations] = await Promise.all([
     prisma.evaluationItem.findMany({
-      orderBy: [{ target_no: "asc" }, { category_no: "asc" }, { item_no: "asc" }],
+      orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
+      include: { target: true, category: true },
     }),
     prisma.evaluation.findMany({
       where: { evaluateeId: evaluateeId, fiscalYear: fiscalYear },
@@ -47,9 +49,9 @@ export default async function MemberEvaluationsPage({ params }: Props) {
   const evalMap = Object.fromEntries(evaluations.map((e) => [e.evalItemId, e]));
 
   const itemsWithEval = items.map((item) => {
-    const ev = evalMap[item.uid];
+    const ev = evalMap[item.id];
     return {
-      uid: item.uid,
+      uid: String(item.id),
       name: item.name,
       description: item.description,
       evalCriteria: item.evalCriteria,
