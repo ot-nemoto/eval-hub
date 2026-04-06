@@ -8,6 +8,7 @@ describe("NotFoundError", () => {
     expect(error.message).toBe("Not found");
     expect(error.name).toBe("NotFoundError");
     expect(error).toBeInstanceOf(Error);
+    expect(error).toBeInstanceOf(NotFoundError);
   });
 
   it("カスタムメッセージで生成できる", () => {
@@ -23,6 +24,7 @@ describe("ForbiddenError", () => {
     expect(error.message).toBe("Forbidden");
     expect(error.name).toBe("ForbiddenError");
     expect(error).toBeInstanceOf(Error);
+    expect(error).toBeInstanceOf(ForbiddenError);
   });
 
   it("カスタムメッセージで生成できる", () => {
@@ -38,6 +40,7 @@ describe("ConflictError", () => {
     expect(error.message).toBe("Conflict");
     expect(error.name).toBe("ConflictError");
     expect(error).toBeInstanceOf(Error);
+    expect(error).toBeInstanceOf(ConflictError);
   });
 
   it("カスタムメッセージで生成できる", () => {
@@ -53,6 +56,7 @@ describe("BadRequestError", () => {
     expect(error.message).toBe("Bad request");
     expect(error.name).toBe("BadRequestError");
     expect(error).toBeInstanceOf(Error);
+    expect(error).toBeInstanceOf(BadRequestError);
   });
 
   it("カスタムメッセージで生成できる", () => {
