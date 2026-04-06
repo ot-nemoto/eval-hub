@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { createFiscalYearAction } from "@/app/(dashboard)/admin/fiscal-years/actions";
+
 export function FiscalYearForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -25,23 +27,18 @@ export function FiscalYearForm() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/fiscal-years", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          year: Number(form.year),
-          name: form.name,
-          startDate: form.startDate,
-          endDate: form.endDate,
-        }),
+      const result = await createFiscalYearAction({
+        year: Number(form.year),
+        name: form.name,
+        startDate: form.startDate,
+        endDate: form.endDate,
       });
-      if (res.ok) {
+      if (result.error) {
+        alert(result.error);
+      } else {
         setOpen(false);
         setForm({ year: "", name: "", startDate: "", endDate: "" });
         router.refresh();
-      } else {
-        const json = await res.json().catch(() => ({}));
-        alert(json.error?.message ?? "年度の追加に失敗しました");
       }
     } catch {
       alert("通信エラーが発生しました");

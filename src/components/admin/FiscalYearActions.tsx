@@ -3,6 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import {
+  deleteFiscalYearAction,
+  updateFiscalYearAction,
+} from "@/app/(dashboard)/admin/fiscal-years/actions";
+
 type FiscalYear = {
   year: number;
   name: string;
@@ -27,16 +32,11 @@ export function FiscalYearActions({ fiscalYear }: Props) {
     if (!confirm(`${fiscalYear.name}を現在年度に設定しますか？`)) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/fiscal-years/${fiscalYear.year}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isCurrent: true }),
-      });
-      if (res.ok) {
-        router.refresh();
+      const result = await updateFiscalYearAction(fiscalYear.year, { isCurrent: true });
+      if (result.error) {
+        alert(result.error);
       } else {
-        const json = await res.json().catch(() => ({}));
-        alert(json.error?.message ?? "更新に失敗しました");
+        router.refresh();
       }
     } catch {
       alert("通信エラーが発生しました");
@@ -49,17 +49,12 @@ export function FiscalYearActions({ fiscalYear }: Props) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/fiscal-years/${fiscalYear.year}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (res.ok) {
+      const result = await updateFiscalYearAction(fiscalYear.year, form);
+      if (result.error) {
+        alert(result.error);
+      } else {
         setEditing(false);
         router.refresh();
-      } else {
-        const json = await res.json().catch(() => ({}));
-        alert(json.error?.message ?? "更新に失敗しました");
       }
     } catch {
       alert("通信エラーが発生しました");
@@ -72,12 +67,11 @@ export function FiscalYearActions({ fiscalYear }: Props) {
     if (!confirm(`${fiscalYear.name}を削除しますか？この操作は取り消せません。`)) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/fiscal-years/${fiscalYear.year}`, { method: "DELETE" });
-      if (res.status === 204) {
-        router.refresh();
+      const result = await deleteFiscalYearAction(fiscalYear.year);
+      if (result.error) {
+        alert(result.error);
       } else {
-        const json = await res.json().catch(() => ({}));
-        alert(json.error?.message ?? "削除に失敗しました");
+        router.refresh();
       }
     } catch {
       alert("通信エラーが発生しました");
