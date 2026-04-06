@@ -1,13 +1,15 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import {
+  deleteCategoryAction,
+  updateCategoryAction,
+} from "@/app/(dashboard)/admin/targets/actions";
 
 type Category = { id: number; targetId: number; name: string; no: number };
 type Props = { category: Category; canDelete: boolean };
 
 export function CategoryActions({ category, canDelete }: Props) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: category.name, no: String(category.no) });
@@ -16,17 +18,14 @@ export function CategoryActions({ category, canDelete }: Props) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/categories/${category.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: form.name, no: Number(form.no) }),
+      const result = await updateCategoryAction(category.id, {
+        name: form.name,
+        no: Number(form.no),
       });
-      if (res.ok) {
+      if (!result.error) {
         setEditing(false);
-        router.refresh();
       } else {
-        const json = await res.json().catch(() => ({}));
-        alert(json.error?.message ?? "更新に失敗しました");
+        alert(result.error);
       }
     } catch {
       alert("通信エラーが発生しました");
@@ -39,12 +38,9 @@ export function CategoryActions({ category, canDelete }: Props) {
     if (!confirm(`中分類「${category.name}」を削除しますか？`)) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/categories/${category.id}`, { method: "DELETE" });
-      if (res.status === 204) {
-        router.refresh();
-      } else {
-        const json = await res.json().catch(() => ({}));
-        alert(json.error?.message ?? "削除に失敗しました");
+      const result = await deleteCategoryAction(category.id);
+      if (result.error) {
+        alert(result.error);
       }
     } catch {
       alert("通信エラーが発生しました");

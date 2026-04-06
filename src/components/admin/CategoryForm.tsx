@@ -1,12 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { createCategoryAction } from "@/app/(dashboard)/admin/targets/actions";
 
 type Props = { targetId: number };
 
 export function CategoryForm({ targetId }: Props) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", no: "" });
@@ -15,18 +14,16 @@ export function CategoryForm({ targetId }: Props) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/categories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetId: targetId, name: form.name, no: Number(form.no) }),
+      const result = await createCategoryAction({
+        targetId,
+        name: form.name,
+        no: Number(form.no),
       });
-      if (res.ok) {
+      if (!result.error) {
         setOpen(false);
         setForm({ name: "", no: "" });
-        router.refresh();
       } else {
-        const json = await res.json().catch(() => ({}));
-        alert(json.error?.message ?? "追加に失敗しました");
+        alert(result.error);
       }
     } catch {
       alert("通信エラーが発生しました");

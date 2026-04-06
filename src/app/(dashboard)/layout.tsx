@@ -1,6 +1,6 @@
-import { SignOutButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { LogoutButton } from "@/components/LogoutButton";
 import { NavLinks } from "@/components/NavLinks";
 import { getSession } from "@/lib/auth";
 import { APP_NAME } from "@/lib/constants";
@@ -33,14 +33,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">{session.user.name}</span>
-            <SignOutButton redirectUrl="/login">
-              <button
-                type="button"
-                className="cursor-pointer rounded border border-gray-300 px-3 py-1 text-sm text-gray-600 hover:bg-gray-100"
-              >
-                ログアウト
-              </button>
-            </SignOutButton>
+            <LogoutButton />
           </div>
         </div>
       </header>
