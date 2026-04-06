@@ -38,6 +38,8 @@ export async function createEvaluationItem(data: {
   description?: string | null;
   evalCriteria?: string | null;
 }) {
+  if (!data.name.trim()) throw new BadRequestError("name は必須です");
+
   const target = await prisma.target.findUnique({ where: { id: data.targetId } });
   if (!target) throw new NotFoundError("大分類が見つかりません");
 

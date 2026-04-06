@@ -127,6 +127,12 @@ describe("createEvaluationItem", () => {
     ).rejects.toThrow(NotFoundError);
   });
 
+  it("name が空の場合は BadRequestError をスロー", async () => {
+    await expect(
+      createEvaluationItem({ targetId: 1, categoryId: 1, name: "  " }),
+    ).rejects.toThrow(BadRequestError);
+  });
+
   it("categoryId が targetId と一致しない場合は BadRequestError をスロー", async () => {
     vi.mocked(prisma.target.findUnique).mockResolvedValue(mockTarget as never);
     vi.mocked(prisma.category.findUnique).mockResolvedValue({
