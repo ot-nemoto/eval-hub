@@ -97,7 +97,7 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 
 ### 社員一覧（`/members`）
 
-全メンバー（`is_active = true`）の一覧を表示する。現在年度（`fiscal_years.is_current = true`）が未設定の場合は `/evaluations` にリダイレクトする。
+全メンバー（`is_active = true`）の一覧を表示する。
 
 | 機能 | 説明 |
 |------|------|

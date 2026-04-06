@@ -12,8 +12,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
   const { id: idStr } = await params;
   const id = Number(idStr);
-  if (!Number.isInteger(id))
-    return errorResponse("BAD_REQUEST", "id は整数で指定してください", 400);
+  if (!Number.isInteger(id)) return errorResponse("BAD_REQUEST", "id は整数で指定してください", 400);
 
   const body = await request.json().catch(() => null);
   if (!body) return errorResponse("BAD_REQUEST", "リクエストボディが不正です", 400);
@@ -32,8 +31,7 @@ export async function PATCH(request: Request, { params }: Params) {
     const conflict = await prisma.category.findUnique({
       where: { targetId_no: { targetId: category.targetId, no: data.no } },
     });
-    if (conflict)
-      return errorResponse("CONFLICT", "同じ targetId と no の中分類がすでに存在します", 409);
+    if (conflict) return errorResponse("CONFLICT", "同じ targetId と no の中分類がすでに存在します", 409);
   }
 
   const updated = await prisma.category.update({
@@ -52,15 +50,13 @@ export async function DELETE(_request: Request, { params }: Params) {
 
   const { id: idStr } = await params;
   const id = Number(idStr);
-  if (!Number.isInteger(id))
-    return errorResponse("BAD_REQUEST", "id は整数で指定してください", 400);
+  if (!Number.isInteger(id)) return errorResponse("BAD_REQUEST", "id は整数で指定してください", 400);
 
   const category = await prisma.category.findUnique({ where: { id } });
   if (!category) return errorResponse("NOT_FOUND", "中分類が見つかりません", 404);
 
   const itemCount = await prisma.evaluationItem.count({ where: { categoryId: id } });
-  if (itemCount > 0)
-    return errorResponse("CONFLICT", "紐づく評価項目が存在するため削除できません", 409);
+  if (itemCount > 0) return errorResponse("CONFLICT", "紐づく評価項目が存在するため削除できません", 409);
 
   await prisma.category.delete({ where: { id } });
   return new Response(null, { status: 204 });

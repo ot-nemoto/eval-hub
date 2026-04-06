@@ -7,8 +7,7 @@ type Params = { params: Promise<{ id: string }> };
 export async function PATCH(request: Request, { params }: Params) {
   const session = await getSession();
   if (!session) return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
-  if (session.user.role !== "ADMIN")
-    return errorResponse("FORBIDDEN", "管理者のみアクセス可能です", 403);
+  if (session.user.role !== "ADMIN") return errorResponse("FORBIDDEN", "管理者のみアクセス可能です", 403);
 
   const { id: idStr } = await params;
   const id = Number(idStr);
@@ -23,22 +22,18 @@ export async function PATCH(request: Request, { params }: Params) {
 
   const data: Record<string, unknown> = {};
   if ("name" in body) {
-    if (typeof body.name !== "string" || !body.name)
-      return errorResponse("BAD_REQUEST", "name は空にできません", 400);
+    if (typeof body.name !== "string" || !body.name) return errorResponse("BAD_REQUEST", "name は空にできません", 400);
     data.name = body.name;
   }
   if ("description" in body) {
-    if (body.description !== null && typeof body.description !== "string")
-      return errorResponse("BAD_REQUEST", "description の型が不正です", 400);
+    if (body.description !== null && typeof body.description !== "string") return errorResponse("BAD_REQUEST", "description の型が不正です", 400);
     data.description = body.description;
   }
   if ("evalCriteria" in body) {
-    if (body.evalCriteria !== null && typeof body.evalCriteria !== "string")
-      return errorResponse("BAD_REQUEST", "evalCriteria の型が不正です", 400);
+    if (body.evalCriteria !== null && typeof body.evalCriteria !== "string") return errorResponse("BAD_REQUEST", "evalCriteria の型が不正です", 400);
     data.evalCriteria = body.evalCriteria;
   }
-  if (Object.keys(data).length === 0)
-    return errorResponse("BAD_REQUEST", "更新するフィールドを指定してください", 400);
+  if (Object.keys(data).length === 0) return errorResponse("BAD_REQUEST", "更新するフィールドを指定してください", 400);
 
   const item = await prisma.evaluationItem.update({
     where: { id },
@@ -62,8 +57,7 @@ export async function PATCH(request: Request, { params }: Params) {
 export async function DELETE(_request: Request, { params }: Params) {
   const session = await getSession();
   if (!session) return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
-  if (session.user.role !== "ADMIN")
-    return errorResponse("FORBIDDEN", "管理者のみアクセス可能です", 403);
+  if (session.user.role !== "ADMIN") return errorResponse("FORBIDDEN", "管理者のみアクセス可能です", 403);
 
   const { id: idStr } = await params;
   const id = Number(idStr);

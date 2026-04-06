@@ -1,12 +1,16 @@
 import { SignOutButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { NavLinks } from "@/components/NavLinks";
 import { getSession } from "@/lib/auth";
-import { APP_NAME } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
+import { NavLinks } from "@/components/NavLinks";
+import { APP_NAME } from "@/lib/constants";
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const session = await getSession();
   if (!session) {
     const { userId } = await auth();

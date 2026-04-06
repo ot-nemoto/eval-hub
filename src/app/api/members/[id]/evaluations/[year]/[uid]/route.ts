@@ -1,5 +1,5 @@
-import { errorResponse, successResponse } from "@/lib/api-response";
 import { getSession } from "@/lib/auth";
+import { errorResponse, successResponse } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
 
 export async function PUT(
@@ -11,12 +11,10 @@ export async function PUT(
     return errorResponse("UNAUTHORIZED", "認証が必要です", 401);
   }
 
-  const resolvedParams = await params;
-  const evaluateeId = resolvedParams.id;
-  const evalItemId = Number(resolvedParams.uid);
-  const fiscalYear = Number(resolvedParams.year);
-  if (Number.isNaN(fiscalYear) || Number.isNaN(evalItemId)) {
-    return errorResponse("BAD_REQUEST", "year・uid は数値で指定してください", 400);
+  const { id: evaluateeId, year, uid: _evalUid } = await params;
+  const fiscalYear = Number(year);
+  if (Number.isNaN(fiscalYear)) {
+    return errorResponse("BAD_REQUEST", "year は数値で指定してください", 400);
   }
 
   const currentUserId = session.user.id;
@@ -48,10 +46,15 @@ export async function PUT(
   const { self_score, self_reason, manager_score, manager_reason } = body;
 
   const hasSelfFields = self_score !== undefined || self_reason !== undefined;
-  const hasManagerFields = manager_score !== undefined || manager_reason !== undefined;
+  const hasManagerFields =
+    manager_score !== undefined || manager_reason !== undefined;
 
   if (hasSelfFields && !isSelf) {
-    return errorResponse("FORBIDDEN", "self_score/self_reason は本人のみ更新できます", 403);
+    return errorResponse(
+      "FORBIDDEN",
+      "self_score/self_reason は本人のみ更新できます",
+      403,
+    );
   }
 
   if (hasSelfFields && isSelf) {
@@ -82,13 +85,13 @@ export async function PUT(
       fiscalYear_evaluateeId_evalItemId: {
         fiscalYear: fiscalYear,
         evaluateeId: evaluateeId,
-        evalItemId: evalItemId,
+        evalItemId: itemId,
       },
     },
     create: {
       fiscalYear: fiscalYear,
       evaluateeId: evaluateeId,
-      evalItemId: evalItemId,
+      evalItemId: itemId,
       ...updateData,
     },
     update: updateData,

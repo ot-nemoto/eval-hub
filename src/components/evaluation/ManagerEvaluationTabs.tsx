@@ -35,11 +35,11 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
   const categories = [...new Set(items.map((i) => i.category))];
   const [activeCategory, setActiveCategory] = useState(categories[0] ?? "");
 
-  const [scores, setScores] = useState<Record<string, Score>>(
-    Object.fromEntries(items.map((i) => [i.uid, i.managerScore ?? "none"])),
+  const [scores, setScores] = useState<Record<number, Score>>(
+    Object.fromEntries(items.map((i) => [i.id, i.managerScore ?? "none"])),
   );
-  const [reasons, setReasons] = useState<Record<string, string>>(
-    Object.fromEntries(items.map((i) => [i.uid, i.managerReason ?? ""])),
+  const [reasons, setReasons] = useState<Record<number, string>>(
+    Object.fromEntries(items.map((i) => [i.id, i.managerReason ?? ""])),
   );
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
@@ -61,18 +61,24 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
     setSaving((s) => ({ ...s, [uid]: true }));
     setErrors((e) => ({ ...e, [uid]: "" }));
     try {
-      const res = await fetch(`/api/members/${evaluateeId}/evaluations/${fiscalYear}/${uid}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          manager_score: scores[uid] ?? "none",
-          manager_reason: reasons[uid] ?? "",
-        }),
-      });
+      const res = await fetch(
+        `/api/members/${evaluateeId}/evaluations/${fiscalYear}/${uid}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            manager_score: scores[uid] ?? "none",
+            manager_reason: reasons[uid] ?? "",
+          }),
+        },
+      );
       if (!res.ok) throw new Error();
       setSaved((s) => ({ ...s, [uid]: true }));
       clearTimeout(savedTimers.current[uid]);
-      savedTimers.current[uid] = setTimeout(() => setSaved((s) => ({ ...s, [uid]: false })), 2000);
+      savedTimers.current[uid] = setTimeout(
+        () => setSaved((s) => ({ ...s, [uid]: false })),
+        2000,
+      );
     } catch {
       setErrors((e) => ({ ...e, [uid]: "保存に失敗しました" }));
     } finally {
@@ -111,9 +117,13 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
             <div className="mb-4">
               <span className="text-xs font-medium text-gray-400">{item.uid}</span>
               <h3 className="text-base font-semibold text-gray-900">{item.name}</h3>
-              {item.description && <p className="mt-1 text-sm text-gray-600">{item.description}</p>}
+              {item.description && (
+                <p className="mt-1 text-sm text-gray-600">{item.description}</p>
+              )}
               {item.evalCriteria && (
-                <p className="mt-1 text-xs text-gray-400">評価基準: {item.evalCriteria}</p>
+                <p className="mt-1 text-xs text-gray-400">
+                  評価基準: {item.evalCriteria}
+                </p>
               )}
             </div>
 
@@ -125,9 +135,7 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
                   {item.selfScore ? SCORE_LABELS[item.selfScore] : "未入力"}
                 </span>
                 {item.selfReason && (
-                  <span className="min-w-0 break-words text-sm text-gray-600">
-                    {item.selfReason}
-                  </span>
+                  <span className="min-w-0 break-words text-sm text-gray-600">{item.selfReason}</span>
                 )}
               </div>
             </div>
@@ -135,7 +143,9 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
             <div className="space-y-3">
               {/* 評価者採点 */}
               <div>
-                <p className="block text-sm font-medium text-gray-700">評価者採点</p>
+                <p className="block text-sm font-medium text-gray-700">
+                  評価者採点
+                </p>
                 <div role="radiogroup" aria-label="評価者採点" className="mt-1 flex gap-2">
                   {(["none", "ka", "ryo", "yu"] as Score[]).map((score) => (
                     // biome-ignore lint/a11y/useSemanticElements: カスタムラジオボタン実装（スタイル制御のため button を使用）
@@ -159,10 +169,7 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
 
               {/* 評価者採点理由 */}
               <div>
-                <label
-                  htmlFor={`${item.uid}-manager-reason`}
-                  className="block text-sm font-medium text-gray-700"
-                >
+                <label htmlFor={`${item.uid}-manager-reason`} className="block text-sm font-medium text-gray-700">
                   評価者採点理由
                 </label>
                 <textarea
@@ -170,15 +177,23 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
                   className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   rows={3}
                   value={reasons[item.uid] ?? ""}
-                  onChange={(e) => setReasons((r) => ({ ...r, [item.uid]: e.target.value }))}
+                  onChange={(e) =>
+                    setReasons((r) => ({ ...r, [item.uid]: e.target.value }))
+                  }
                 />
               </div>
 
               <div className="flex items-center gap-3">
-                <Button size="sm" onClick={() => handleSave(item.uid)} disabled={saving[item.uid]}>
+                <Button
+                  size="sm"
+                  onClick={() => handleSave(item.uid)}
+                  disabled={saving[item.uid]}
+                >
                   {saving[item.uid] ? "保存中..." : "保存"}
                 </Button>
-                {saved[item.uid] && <span className="text-sm text-green-600">保存しました</span>}
+                {saved[item.uid] && (
+                  <span className="text-sm text-green-600">保存しました</span>
+                )}
                 {errors[item.uid] && (
                   <span className="text-sm text-red-600">{errors[item.uid]}</span>
                 )}

@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
-import EvaluationTabs from "@/components/evaluation/EvaluationTabs";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
+import EvaluationTabs from "@/components/evaluation/EvaluationTabs";
 
 export default async function EvaluationsPage() {
   const session = await getSession();
@@ -11,8 +11,7 @@ export default async function EvaluationsPage() {
 
   const [items, evaluations, setting] = await Promise.all([
     prisma.evaluationItem.findMany({
-      orderBy: [{ targetId: "asc" }, { categoryId: "asc" }, { no: "asc" }],
-      include: { target: true, category: true },
+      orderBy: [{ target_no: "asc" }, { category_no: "asc" }, { item_no: "asc" }],
     }),
     prisma.evaluation.findMany({
       where: { evaluateeId: userId, fiscalYear: fiscalYear },
@@ -41,9 +40,9 @@ export default async function EvaluationsPage() {
   const evalMap = Object.fromEntries(evaluations.map((e) => [e.evalItemId, e]));
 
   const itemsWithEval = items.map((item) => {
-    const ev = evalMap[item.id];
+    const ev = evalMap[item.uid];
     return {
-      uid: String(item.id),
+      uid: item.uid,
       name: item.name,
       description: item.description,
       evalCriteria: item.evalCriteria,
@@ -62,7 +61,11 @@ export default async function EvaluationsPage() {
         <h2 className="text-xl font-bold text-gray-900">自己評価</h2>
         <p className="text-sm text-gray-500">{fiscalYear}年度</p>
       </div>
-      <EvaluationTabs items={itemsWithEval} userId={userId} fiscalYear={fiscalYear} />
+      <EvaluationTabs
+        items={itemsWithEval}
+        userId={userId}
+        fiscalYear={fiscalYear}
+      />
     </div>
   );
 }

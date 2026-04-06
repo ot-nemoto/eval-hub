@@ -35,11 +35,11 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
   const categories = [...new Set(items.map((i) => i.category))];
   const [activeCategory, setActiveCategory] = useState(categories[0] ?? "");
 
-  const [scores, setScores] = useState<Record<string, Score>>(
-    Object.fromEntries(items.map((i) => [i.uid, i.selfScore ?? "none"])),
+  const [scores, setScores] = useState<Record<number, Score>>(
+    Object.fromEntries(items.map((i) => [i.id, i.selfScore ?? "none"])),
   );
-  const [reasons, setReasons] = useState<Record<string, string>>(
-    Object.fromEntries(items.map((i) => [i.uid, i.selfReason ?? ""])),
+  const [reasons, setReasons] = useState<Record<number, string>>(
+    Object.fromEntries(items.map((i) => [i.id, i.selfReason ?? ""])),
   );
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
@@ -52,14 +52,17 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
     setSaving((s) => ({ ...s, [uid]: true }));
     setErrors((e) => ({ ...e, [uid]: "" }));
     try {
-      const res = await fetch(`/api/members/${userId}/evaluations/${fiscalYear}/${uid}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          self_score: scores[uid] ?? "none",
-          self_reason: reasons[uid] ?? "",
-        }),
-      });
+      const res = await fetch(
+        `/api/members/${userId}/evaluations/${fiscalYear}/${uid}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            self_score: scores[uid] ?? "none",
+            self_reason: reasons[uid] ?? "",
+          }),
+        },
+      );
       if (!res.ok) throw new Error();
       setSaved((s) => ({ ...s, [uid]: true }));
       clearTimeout(savedTimers.current[uid]);
@@ -102,22 +105,30 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
             <div className="mb-4">
               <span className="text-xs font-medium text-gray-400">{item.uid}</span>
               <h3 className="text-base font-semibold text-gray-900">{item.name}</h3>
-              {item.description && <p className="mt-1 text-sm text-gray-600">{item.description}</p>}
+              {item.description && (
+                <p className="mt-1 text-sm text-gray-600">{item.description}</p>
+              )}
               {item.evalCriteria && (
-                <p className="mt-1 text-xs text-gray-400">評価基準: {item.evalCriteria}</p>
+                <p className="mt-1 text-xs text-gray-400">
+                  評価基準: {item.evalCriteria}
+                </p>
               )}
             </div>
 
             <div className="space-y-3">
               {/* Score */}
               <div>
-                <p className="block text-sm font-medium text-gray-700">自己採点</p>
+                <p className="block text-sm font-medium text-gray-700">
+                  自己採点
+                </p>
                 <div className="mt-1 flex gap-2">
                   {(["none", "ka", "ryo", "yu"] as Score[]).map((score) => (
                     <button
                       key={score}
                       type="button"
-                      onClick={() => setScores((s) => ({ ...s, [item.uid]: score }))}
+                      onClick={() =>
+                        setScores((s) => ({ ...s, [item.uid]: score }))
+                      }
                       className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                         scores[item.uid] === score
                           ? "bg-blue-600 text-white"
@@ -132,26 +143,31 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
 
               {/* Reason */}
               <div>
-                <label
-                  htmlFor={`reason-${item.uid}`}
-                  className="block text-sm font-medium text-gray-700"
-                >
+                <label htmlFor={`reason-${item.id}`} className="block text-sm font-medium text-gray-700">
                   自己採点理由
                 </label>
                 <textarea
-                  id={`reason-${item.uid}`}
+                  id={`reason-${item.id}`}
                   className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   rows={3}
                   value={reasons[item.uid] ?? ""}
-                  onChange={(e) => setReasons((r) => ({ ...r, [item.uid]: e.target.value }))}
+                  onChange={(e) =>
+                    setReasons((r) => ({ ...r, [item.uid]: e.target.value }))
+                  }
                 />
               </div>
 
               <div className="flex items-center gap-3">
-                <Button size="sm" onClick={() => handleSave(item.uid)} disabled={saving[item.uid]}>
+                <Button
+                  size="sm"
+                  onClick={() => handleSave(item.uid)}
+                  disabled={saving[item.uid]}
+                >
                   {saving[item.uid] ? "保存中..." : "保存"}
                 </Button>
-                {saved[item.uid] && <span className="text-sm text-green-600">保存しました</span>}
+                {saved[item.uid] && (
+                  <span className="text-sm text-green-600">保存しました</span>
+                )}
                 {errors[item.uid] && (
                   <span className="text-sm text-red-600">{errors[item.uid]}</span>
                 )}
@@ -167,9 +183,7 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
                     {SCORE_LABELS[item.managerScore]}
                   </span>
                   {item.managerReason && (
-                    <span className="min-w-0 break-words text-sm text-gray-600">
-                      {item.managerReason}
-                    </span>
+                    <span className="min-w-0 break-words text-sm text-gray-600">{item.managerReason}</span>
                   )}
                 </div>
               </div>

@@ -20,6 +20,10 @@ export function successResponse<T>(data: T, meta?: Meta, status = 200) {
   return NextResponse.json(body, { status });
 }
 
-export function errorResponse(code: ErrorCode, message: string, status: number) {
+export function errorResponse(
+  code: ErrorCode,
+  message: string,
+  status: number,
+) {
   return NextResponse.json({ error: { code, message } }, { status });
 }

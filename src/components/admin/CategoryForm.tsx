@@ -50,12 +50,7 @@ export function CategoryForm({ targetId }: Props) {
   return (
     <form onSubmit={handleSubmit} className="flex items-end gap-2">
       <div>
-        <label
-          htmlFor={`category-no-${targetId}`}
-          className="mb-1 block text-xs font-medium text-gray-700"
-        >
-          No
-        </label>
+        <label htmlFor={`category-no-${targetId}`} className="mb-1 block text-xs font-medium text-gray-700">No</label>
         <input
           id={`category-no-${targetId}`}
           type="number"
@@ -68,12 +63,7 @@ export function CategoryForm({ targetId }: Props) {
         />
       </div>
       <div>
-        <label
-          htmlFor={`category-name-${targetId}`}
-          className="mb-1 block text-xs font-medium text-gray-700"
-        >
-          名称
-        </label>
+        <label htmlFor={`category-name-${targetId}`} className="mb-1 block text-xs font-medium text-gray-700">名称</label>
         <input
           id={`category-name-${targetId}`}
           type="text"
@@ -93,10 +83,7 @@ export function CategoryForm({ targetId }: Props) {
       </button>
       <button
         type="button"
-        onClick={() => {
-          setOpen(false);
-          setForm({ name: "", no: "" });
-        }}
+        onClick={() => { setOpen(false); setForm({ name: "", no: "" }); }}
         disabled={loading}
         className="rounded border border-gray-300 px-3 py-1 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50"
       >

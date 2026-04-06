@@ -49,19 +49,22 @@ erDiagram
         TEXT evaluator_id FK
     }
     evaluation_items {
-        INT id PK
-        INT target_id FK
-        INT category_id FK
-        INT no
+        VARCHAR uid PK
+        VARCHAR target
+        INT target_no
+        VARCHAR category
+        INT category_no
+        INT item_no
         VARCHAR name
         TEXT description
         TEXT eval_criteria
+        BOOLEAN two_year_rule
     }
     evaluations {
         TEXT id PK
         INT fiscal_year
         TEXT evaluatee_id FK
-        INT eval_item_id FK
+        VARCHAR eval_uid FK
         ENUM self_score
         TEXT self_reason
         ENUM manager_score
@@ -79,7 +82,7 @@ erDiagram
     users ||--o{ evaluation_assignments : "evaluator_id"
     users ||--o{ evaluations : "evaluatee_id"
     users ||--o{ evaluation_settings : "user_id"
-    evaluation_items ||--o{ evaluations : "eval_item_id"
+    evaluation_items ||--o{ evaluations : "eval_uid"
 ```
 
 ---
@@ -126,14 +129,16 @@ erDiagram
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| id | INTEGER | PK, AUTOINCREMENT | 評価項目ID |
-| target_id | INTEGER | FK → targets.id, NOT NULL | 大分類 |
-| category_id | INTEGER | FK → categories.id, NOT NULL | 中分類 |
-| no | INTEGER | NOT NULL | 中分類内での項目番号 |
+| uid | VARCHAR(20) | PK | 例: `1-1-1`, `2-3-3` |
+| target | VARCHAR(50) | NOT NULL | 大分類（例: employee, projects） |
+| target_no | INTEGER | | 大分類番号 |
+| category | VARCHAR(100) | NOT NULL | 中分類（例: engagement, programming） |
+| category_no | INTEGER | | 中分類番号 |
+| item_no | INTEGER | NOT NULL | 項目番号 |
 | name | VARCHAR(255) | NOT NULL | 評価項目名 |
 | description | TEXT | | 説明 |
 | eval_criteria | TEXT | | 評価事例・基準 |
-| UNIQUE | (category_id, no) | | 中分類内番号の重複防止 |
+| two_year_rule | BOOLEAN | DEFAULT false | ２年ルール適用 |
 
 ---
 
@@ -144,12 +149,12 @@ erDiagram
 | id | TEXT | PK, DEFAULT uuid() | UUID 値を TEXT で保存 |
 | fiscal_year | INTEGER | NOT NULL | 年度 |
 | evaluatee_id | TEXT | FK → users.id | 評価される人 |
-| eval_item_id | INTEGER | FK → evaluation_items.id | 評価項目 |
+| eval_uid | VARCHAR(20) | FK → evaluation_items.uid | 評価項目 |
 | self_score | ENUM | | `none` / `ka` / `ryo` / `yu` |
 | self_reason | TEXT | | 自己採点理由 |
 | manager_score | ENUM | | `none` / `ka` / `ryo` / `yu`（評価者側がまとめた1つ） |
 | manager_reason | TEXT | | 評価者側採点理由 |
-| UNIQUE | (fiscal_year, evaluatee_id, eval_item_id) | | 年度×被評価者×項目で1レコード |
+| UNIQUE | (fiscal_year, evaluatee_id, eval_uid) | | 年度×被評価者×項目で1レコード |
 
 - 自己評価（`self_score / self_reason`）は本人が入力
 - 評価者評価（`manager_score / manager_reason`）は `evaluation_assignments` でアサインされた評価者が入力

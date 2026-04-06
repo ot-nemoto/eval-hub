@@ -52,8 +52,7 @@ export async function POST(request: Request) {
   const existing = await prisma.category.findUnique({
     where: { targetId_no: { targetId: body.targetId, no: body.no } },
   });
-  if (existing)
-    return errorResponse("CONFLICT", "同じ targetId と no の中分類がすでに存在します", 409);
+  if (existing) return errorResponse("CONFLICT", "同じ targetId と no の中分類がすでに存在します", 409);
 
   const created = await prisma.category.create({
     data: { targetId: body.targetId, name: body.name, no: body.no },

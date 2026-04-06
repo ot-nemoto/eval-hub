@@ -133,12 +133,12 @@ async function main() {
   // 共通パスワード: Yakitori2026
   // =========================================================================
   const usersData = [
-    { email: "bonjiri@example.com", name: "bonjiri", role: "ADMIN" as const, isActive: true },
-    { email: "tsukune@example.com", name: "tsukune", role: "ADMIN" as const, isActive: true },
-    { email: "tebasaki@example.com", name: "tebasaki", role: "MEMBER" as const, isActive: true },
-    { email: "nankotsu@example.com", name: "nankotsu", role: "MEMBER" as const, isActive: true },
+    { email: "bonjiri@example.com",  name: "bonjiri",  role: "ADMIN"  as const, isActive: true  },
+    { email: "tsukune@example.com",  name: "tsukune",  role: "ADMIN"  as const, isActive: true  },
+    { email: "tebasaki@example.com", name: "tebasaki", role: "MEMBER" as const, isActive: true  },
+    { email: "nankotsu@example.com", name: "nankotsu", role: "MEMBER" as const, isActive: true  },
     { email: "sunagimo@example.com", name: "sunagimo", role: "MEMBER" as const, isActive: false },
-    { email: "torikawa@example.com", name: "torikawa", role: "MEMBER" as const, isActive: true },
+    { email: "torikawa@example.com", name: "torikawa", role: "MEMBER" as const, isActive: true  },
   ];
 
   const u: Record<string, { id: string }> = {};
@@ -146,12 +146,7 @@ async function main() {
     const clerkId = await syncClerkUser(data.email);
     const user = await prisma.user.upsert({
       where: { email: data.email },
-      update: {
-        name: data.name,
-        role: data.role,
-        isActive: data.isActive,
-        ...(clerkId ? { clerkId } : {}),
-      },
+      update: { name: data.name, role: data.role, isActive: data.isActive, ...(clerkId ? { clerkId } : {}) },
       create: {
         email: data.email,
         name: data.name,
@@ -168,44 +163,18 @@ async function main() {
   // 2. 年度マスタ（fiscal_years のみ、fiscal_year_items は後で登録）
   // =========================================================================
   const fiscalYearsBase = [
-    {
-      year: 2025,
-      name: "2025年度",
-      startDate: new Date("2025-04-01"),
-      endDate: new Date("2026-03-31"),
-      isCurrent: false,
-    },
-    {
-      year: 2026,
-      name: "2026年度",
-      startDate: new Date("2026-04-01"),
-      endDate: new Date("2027-03-31"),
-      isCurrent: true,
-    },
-    {
-      year: 2027,
-      name: "2027年度",
-      startDate: new Date("2027-04-01"),
-      endDate: new Date("2028-03-31"),
-      isCurrent: false,
-    },
+    { year: 2025, name: "2025年度", startDate: new Date("2025-04-01"), endDate: new Date("2026-03-31"), isCurrent: false },
+    { year: 2026, name: "2026年度", startDate: new Date("2026-04-01"), endDate: new Date("2027-03-31"), isCurrent: true },
+    { year: 2027, name: "2027年度", startDate: new Date("2027-04-01"), endDate: new Date("2028-03-31"), isCurrent: false },
   ];
   for (const fy of fiscalYearsBase) {
     await prisma.fiscalYear.upsert({
       where: { year: fy.year },
-      update: {
-        name: fy.name,
-        startDate: fy.startDate,
-        endDate: fy.endDate,
-        isCurrent: fy.isCurrent,
-      },
+      update: { name: fy.name, startDate: fy.startDate, endDate: fy.endDate, isCurrent: fy.isCurrent },
       create: fy,
     });
   }
-  await prisma.fiscalYear.updateMany({
-    where: { year: { not: 2026 } },
-    data: { isCurrent: false },
-  });
+  await prisma.fiscalYear.updateMany({ where: { year: { not: 2026 } }, data: { isCurrent: false } });
   console.log(`fiscal_years: ${fiscalYearsBase.length} upserted`);
 
   // =========================================================================
@@ -222,7 +191,7 @@ async function main() {
   //  torikawa    │ false │ false │ false  ← デフォルトのため登録不要
   // =========================================================================
   const settingsData: { email: string; fiscalYear: number; selfEvaluationEnabled: boolean }[] = [
-    { email: "tsukune@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
+    { email: "tsukune@example.com",  fiscalYear: 2025, selfEvaluationEnabled: true },
     { email: "tebasaki@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
     { email: "tebasaki@example.com", fiscalYear: 2026, selfEvaluationEnabled: true },
     { email: "tebasaki@example.com", fiscalYear: 2027, selfEvaluationEnabled: true },
@@ -260,14 +229,14 @@ async function main() {
   // =========================================================================
   const assignmentsData = [
     // 2025
-    { fiscalYear: 2025, evaluatee: "tsukune@example.com", evaluator: "bonjiri@example.com" },
-    { fiscalYear: 2025, evaluatee: "tebasaki@example.com", evaluator: "bonjiri@example.com" },
-    { fiscalYear: 2025, evaluatee: "nankotsu@example.com", evaluator: "tsukune@example.com" },
+    { fiscalYear: 2025, evaluatee: "tsukune@example.com",  evaluator: "bonjiri@example.com"  },
+    { fiscalYear: 2025, evaluatee: "tebasaki@example.com", evaluator: "bonjiri@example.com"  },
+    { fiscalYear: 2025, evaluatee: "nankotsu@example.com", evaluator: "tsukune@example.com"  },
     { fiscalYear: 2025, evaluatee: "nankotsu@example.com", evaluator: "tebasaki@example.com" },
     // 2026
-    { fiscalYear: 2026, evaluatee: "tebasaki@example.com", evaluator: "bonjiri@example.com" },
-    { fiscalYear: 2026, evaluatee: "tebasaki@example.com", evaluator: "tsukune@example.com" },
-    { fiscalYear: 2026, evaluatee: "nankotsu@example.com", evaluator: "tsukune@example.com" },
+    { fiscalYear: 2026, evaluatee: "tebasaki@example.com", evaluator: "bonjiri@example.com"  },
+    { fiscalYear: 2026, evaluatee: "tebasaki@example.com", evaluator: "tsukune@example.com"  },
+    { fiscalYear: 2026, evaluatee: "nankotsu@example.com", evaluator: "tsukune@example.com"  },
     { fiscalYear: 2026, evaluatee: "nankotsu@example.com", evaluator: "tebasaki@example.com" },
   ];
 
@@ -368,10 +337,7 @@ async function main() {
   // =========================================================================
   // 8. fiscal_year_items（年度と評価項目の紐付け）
   // =========================================================================
-  const allItems = await prisma.evaluationItem.findMany({
-    select: { id: true },
-    orderBy: { id: "asc" },
-  });
+  const allItems = await prisma.evaluationItem.findMany({ select: { id: true }, orderBy: { id: "asc" } });
   await seedFiscalYearItems(allItems.map((i) => i.id));
 
   // =========================================================================
@@ -384,9 +350,7 @@ async function main() {
   //    → 評価者画面で自己採点欄が表示・編集不可であることを確認できる
   // =========================================================================
   if (allItems.length < 3) {
-    throw new Error(
-      `評価データの投入に必要な評価項目が不足しています（取得件数: ${allItems.length}、必要数: 3）`,
-    );
+    throw new Error(`評価データの投入に必要な評価項目が不足しています（取得件数: ${allItems.length}、必要数: 3）`);
   }
   const seedItems = allItems.slice(0, 3);
 
@@ -400,61 +364,13 @@ async function main() {
     managerReason: string | null;
   }[] = [
     // tebasaki: 自己採点 + 評価者採点あり
-    {
-      fiscalYear: 2026,
-      evaluateeEmail: "tebasaki@example.com",
-      itemId: seedItems[0].id,
-      selfScore: "ryo",
-      selfReason: "積極的に取り組みました",
-      managerScore: "yu",
-      managerReason: "非常に優秀な取り組みでした",
-    },
-    {
-      fiscalYear: 2026,
-      evaluateeEmail: "tebasaki@example.com",
-      itemId: seedItems[1].id,
-      selfScore: "ka",
-      selfReason: "改善の余地があります",
-      managerScore: "ryo",
-      managerReason: "着実に成長しています",
-    },
-    {
-      fiscalYear: 2026,
-      evaluateeEmail: "tebasaki@example.com",
-      itemId: seedItems[2].id,
-      selfScore: "yu",
-      selfReason: "目標を超えて達成できました",
-      managerScore: "yu",
-      managerReason: "期待以上の成果でした",
-    },
+    { fiscalYear: 2026, evaluateeEmail: "tebasaki@example.com", itemId: seedItems[0].id, selfScore: "ryo",  selfReason: "積極的に取り組みました",  managerScore: "yu",  managerReason: "非常に優秀な取り組みでした" },
+    { fiscalYear: 2026, evaluateeEmail: "tebasaki@example.com", itemId: seedItems[1].id, selfScore: "ka",   selfReason: "改善の余地があります",       managerScore: "ryo", managerReason: "着実に成長しています"           },
+    { fiscalYear: 2026, evaluateeEmail: "tebasaki@example.com", itemId: seedItems[2].id, selfScore: "yu",   selfReason: "目標を超えて達成できました", managerScore: "yu",  managerReason: "期待以上の成果でした"           },
     // nankotsu: 自己採点のみ（評価者採点なし）
-    {
-      fiscalYear: 2026,
-      evaluateeEmail: "nankotsu@example.com",
-      itemId: seedItems[0].id,
-      selfScore: "ka",
-      selfReason: "基本的なことはできました",
-      managerScore: null,
-      managerReason: null,
-    },
-    {
-      fiscalYear: 2026,
-      evaluateeEmail: "nankotsu@example.com",
-      itemId: seedItems[1].id,
-      selfScore: "ryo",
-      selfReason: "しっかり対応できました",
-      managerScore: null,
-      managerReason: null,
-    },
-    {
-      fiscalYear: 2026,
-      evaluateeEmail: "nankotsu@example.com",
-      itemId: seedItems[2].id,
-      selfScore: "ryo",
-      selfReason: "チームに貢献できました",
-      managerScore: null,
-      managerReason: null,
-    },
+    { fiscalYear: 2026, evaluateeEmail: "nankotsu@example.com", itemId: seedItems[0].id, selfScore: "ka",   selfReason: "基本的なことはできました",   managerScore: null,  managerReason: null },
+    { fiscalYear: 2026, evaluateeEmail: "nankotsu@example.com", itemId: seedItems[1].id, selfScore: "ryo",  selfReason: "しっかり対応できました",     managerScore: null,  managerReason: null },
+    { fiscalYear: 2026, evaluateeEmail: "nankotsu@example.com", itemId: seedItems[2].id, selfScore: "ryo",  selfReason: "チームに貢献できました",     managerScore: null,  managerReason: null },
   ];
 
   for (const e of evaluationsData) {
@@ -487,10 +403,5 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .catch((e) => { console.error(e); process.exit(1); })
+  .finally(async () => { await prisma.$disconnect(); });

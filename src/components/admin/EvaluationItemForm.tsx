@@ -27,9 +27,7 @@ export function EvaluationItemForm({ targets, categories }: Props) {
     ? categories.filter((c) => c.targetId === Number(form.targetId))
     : [];
 
-  function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
-  ) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value } = e.target;
     if (name === "targetId") {
       setForm((prev) => ({ ...prev, targetId: value, categoryId: "" }));
@@ -98,9 +96,7 @@ export function EvaluationItemForm({ targets, categories }: Props) {
           >
             <option value="">選択してください</option>
             {targets.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
+              <option key={t.id} value={t.id}>{t.name}</option>
             ))}
           </select>
         </div>
@@ -119,9 +115,7 @@ export function EvaluationItemForm({ targets, categories }: Props) {
           >
             <option value="">選択してください</option>
             {filteredCategories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
+              <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
         </div>

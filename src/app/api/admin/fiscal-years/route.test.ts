@@ -128,12 +128,7 @@ describe("POST /api/admin/fiscal-years", () => {
 
     const req = new Request("http://localhost/api/admin/fiscal-years", {
       method: "POST",
-      body: JSON.stringify({
-        year: 2028.5,
-        name: "2028年度",
-        startDate: "2028-04-01",
-        endDate: "2029-03-31",
-      }),
+      body: JSON.stringify({ year: 2028.5, name: "2028年度", startDate: "2028-04-01", endDate: "2029-03-31" }),
     });
     const res = await POST(req);
     expect(res.status).toBe(400);
@@ -144,12 +139,7 @@ describe("POST /api/admin/fiscal-years", () => {
 
     const req = new Request("http://localhost/api/admin/fiscal-years", {
       method: "POST",
-      body: JSON.stringify({
-        year: 1800,
-        name: "1800年度",
-        startDate: "1800-04-01",
-        endDate: "1801-03-31",
-      }),
+      body: JSON.stringify({ year: 1800, name: "1800年度", startDate: "1800-04-01", endDate: "1801-03-31" }),
     });
     const res = await POST(req);
     expect(res.status).toBe(400);
@@ -160,12 +150,7 @@ describe("POST /api/admin/fiscal-years", () => {
 
     const req = new Request("http://localhost/api/admin/fiscal-years", {
       method: "POST",
-      body: JSON.stringify({
-        year: 2028,
-        name: "2028年度",
-        startDate: "not-a-date",
-        endDate: "2029-03-31",
-      }),
+      body: JSON.stringify({ year: 2028, name: "2028年度", startDate: "not-a-date", endDate: "2029-03-31" }),
     });
     const res = await POST(req);
     expect(res.status).toBe(400);
@@ -176,12 +161,7 @@ describe("POST /api/admin/fiscal-years", () => {
 
     const req = new Request("http://localhost/api/admin/fiscal-years", {
       method: "POST",
-      body: JSON.stringify({
-        year: 2028,
-        name: "2028年度",
-        startDate: "2029-03-31",
-        endDate: "2028-04-01",
-      }),
+      body: JSON.stringify({ year: 2028, name: "2028年度", startDate: "2029-03-31", endDate: "2028-04-01" }),
     });
     const res = await POST(req);
     expect(res.status).toBe(400);

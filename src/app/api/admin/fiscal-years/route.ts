@@ -37,11 +37,7 @@ export async function POST(request: Request) {
   const startDate = new Date(body.startDate);
   const endDate = new Date(body.endDate);
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-    return errorResponse(
-      "BAD_REQUEST",
-      "startDate, endDate は有効な日付形式で指定してください",
-      400,
-    );
+    return errorResponse("BAD_REQUEST", "startDate, endDate は有効な日付形式で指定してください", 400);
   }
   if (startDate > endDate) {
     return errorResponse("BAD_REQUEST", "startDate は endDate 以前の日付を指定してください", 400);

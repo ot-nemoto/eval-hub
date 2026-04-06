@@ -1,5 +1,5 @@
-import { errorResponse, successResponse } from "@/lib/api-response";
 import { getSession } from "@/lib/auth";
+import { errorResponse, successResponse } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
@@ -67,11 +67,7 @@ export async function POST(request: Request) {
     },
   });
   if (existing) {
-    return errorResponse(
-      "CONFLICT",
-      "同一年度・被評価者・評価者の組み合わせがすでに存在します",
-      409,
-    );
+    return errorResponse("CONFLICT", "同一年度・被評価者・評価者の組み合わせがすでに存在します", 409);
   }
 
   const assignment = await prisma.evaluationAssignment.create({

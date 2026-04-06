@@ -14,14 +14,10 @@ vi.mock("@/lib/prisma", () => ({
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const enabledSetting = {
-  id: "s-1",
-  userId: "user-2",
-  fiscalYear: 2025,
-  selfEvaluationEnabled: true,
-};
+const enabledSetting = { id: "s-1", userId: "user-2", fiscalYear: 2025, selfEvaluationEnabled: true };
 
-const makeParams = (id: string, year: string, uid: string) => Promise.resolve({ id, year, uid });
+const makeParams = (id: string, year: string, uid: string) =>
+  Promise.resolve({ id, year, uid });
 
 const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
 const selfSession = { user: { id: "user-2", role: "MEMBER" } };
@@ -52,12 +48,12 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
         method: "PUT",
         body: JSON.stringify({ self_score: "ryo", self_reason: "理由" }),
       }),
-      { params: makeParams("user-2", "2025", "1") },
+      { params: makeParams("user-2", "2025", "1-1-1") },
     );
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.data).toMatchObject({ eval_item_id: 1, self_score: "ryo" });
+    expect(body.data).toMatchObject({ eval_uid: "1-1-1", self_score: "ryo" });
     expect(prisma.evaluationAssignment.findFirst).not.toHaveBeenCalled();
   });
 
@@ -74,7 +70,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
         method: "PUT",
         body: JSON.stringify({ manager_score: "yu", manager_reason: "管理者コメント" }),
       }),
-      { params: makeParams("user-2", "2025", "1") },
+      { params: makeParams("user-2", "2025", "1-1-1") },
     );
 
     expect(res.status).toBe(200);
@@ -100,7 +96,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
         method: "PUT",
         body: JSON.stringify({ manager_score: "ryo", manager_reason: "コメント" }),
       }),
-      { params: makeParams("user-2", "2025", "1") },
+      { params: makeParams("user-2", "2025", "1-1-1") },
     );
 
     expect(res.status).toBe(200);
@@ -114,7 +110,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
         method: "PUT",
         body: JSON.stringify({ manager_score: "yu" }),
       }),
-      { params: makeParams("user-2", "2025", "1") },
+      { params: makeParams("user-2", "2025", "1-1-1") },
     );
 
     expect(res.status).toBe(403);
@@ -135,7 +131,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
         method: "PUT",
         body: JSON.stringify({ self_score: "ryo" }),
       }),
-      { params: makeParams("user-2", "2025", "1") },
+      { params: makeParams("user-2", "2025", "1-1-1") },
     );
 
     expect(res.status).toBe(403);
@@ -151,7 +147,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
         method: "PUT",
         body: JSON.stringify({ manager_score: "ryo" }),
       }),
-      { params: makeParams("user-2", "2025", "1") },
+      { params: makeParams("user-2", "2025", "1-1-1") },
     );
 
     expect(res.status).toBe(403);
@@ -166,7 +162,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
         method: "PUT",
         body: JSON.stringify({ self_score: "ryo" }),
       }),
-      { params: makeParams("user-2", "2025", "1") },
+      { params: makeParams("user-2", "2025", "1-1-1") },
     );
 
     expect(res.status).toBe(401);
@@ -180,7 +176,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
         method: "PUT",
         body: JSON.stringify({ self_score: "ryo" }),
       }),
-      { params: makeParams("user-2", "abc", "1") },
+      { params: makeParams("user-2", "abc", "1-1-1") },
     );
 
     expect(res.status).toBe(400);
@@ -195,7 +191,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
         method: "PUT",
         body: JSON.stringify({ self_score: "ryo" }),
       }),
-      { params: makeParams("user-2", "2025", "1") },
+      { params: makeParams("user-2", "2025", "1-1-1") },
     );
 
     expect(res.status).toBe(403);
@@ -214,7 +210,7 @@ describe("PUT /api/members/:id/evaluations/:year/:uid", () => {
         method: "PUT",
         body: JSON.stringify({ self_score: "ryo" }),
       }),
-      { params: makeParams("user-2", "2025", "1") },
+      { params: makeParams("user-2", "2025", "1-1-1") },
     );
 
     expect(res.status).toBe(403);
