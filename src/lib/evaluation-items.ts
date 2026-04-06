@@ -86,6 +86,9 @@ export async function updateEvaluationItem(
   if (Object.keys(data).length === 0)
     throw new BadRequestError("更新するフィールドを指定してください");
 
+  if (data.name !== undefined && !data.name.trim())
+    throw new BadRequestError("name は空にできません");
+
   return prisma.evaluationItem.update({
     where: { id },
     data,

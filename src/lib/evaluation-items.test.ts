@@ -186,6 +186,12 @@ describe("updateEvaluationItem", () => {
 
     await expect(updateEvaluationItem(1, {})).rejects.toThrow(BadRequestError);
   });
+
+  it("name に空文字を渡すと BadRequestError をスロー", async () => {
+    vi.mocked(prisma.evaluationItem.findUnique).mockResolvedValue(mockItem as never);
+
+    await expect(updateEvaluationItem(1, { name: "  " })).rejects.toThrow(BadRequestError);
+  });
 });
 
 describe("deleteEvaluationItem", () => {
