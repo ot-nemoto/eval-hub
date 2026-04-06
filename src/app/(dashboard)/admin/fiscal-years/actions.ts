@@ -71,6 +71,9 @@ export async function deleteFiscalYearAction(year: number): Promise<{ error?: st
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
+  if (!Number.isInteger(year) || year < 1900 || year > 9999)
+    return { error: "year は 1900〜9999 の整数で指定してください" };
+
   try {
     await deleteFiscalYear(year);
   } catch (e) {
