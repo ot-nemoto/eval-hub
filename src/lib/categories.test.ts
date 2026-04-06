@@ -116,7 +116,7 @@ describe("updateCategory", () => {
   it("no を変更する際に重複がある場合は ConflictError をスロー", async () => {
     vi.mocked(prisma.category.findUnique)
       .mockResolvedValueOnce(mockCategories[0] as never) // category exists
-      .mockResolvedValueOnce(mockCategories[1] as never); // no conflict exists
+      .mockResolvedValueOnce(mockCategories[1] as never); // conflicting category exists
 
     await expect(updateCategory(1, { no: 2 })).rejects.toThrow(ConflictError);
   });
