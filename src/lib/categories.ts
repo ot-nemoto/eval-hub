@@ -44,11 +44,18 @@ export async function updateCategory(id: number, data: { name?: string; no?: num
     if (conflict) throw new ConflictError("同じ targetId と no の中分類がすでに存在します");
   }
 
-  return prisma.category.update({
-    where: { id },
-    data,
-    select: { id: true, targetId: true, name: true, no: true },
-  });
+  try {
+    return await prisma.category.update({
+      where: { id },
+      data,
+      select: { id: true, targetId: true, name: true, no: true },
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new ConflictError("同じ targetId と no の中分類がすでに存在します");
+    }
+    throw e;
+  }
 }
 
 export async function deleteCategory(id: number) {
