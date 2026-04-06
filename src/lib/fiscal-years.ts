@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { BadRequestError, ConflictError, NotFoundError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 
