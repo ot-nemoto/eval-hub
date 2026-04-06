@@ -206,6 +206,12 @@ describe("updateFiscalYear", () => {
     await expect(updateFiscalYear(9999, { name: "x" })).rejects.toThrow(NotFoundError);
   });
 
+  it("name が空の場合は BadRequestError をスロー", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
+
+    await expect(updateFiscalYear(2024, { name: "  " })).rejects.toThrow(BadRequestError);
+  });
+
   it("startDate が不正な場合は BadRequestError をスロー", async () => {
     vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
 

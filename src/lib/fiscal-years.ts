@@ -91,7 +91,10 @@ export async function updateFiscalYear(
     endDate?: Date;
     isCurrent?: boolean;
   } = {};
-  if (data.name !== undefined) updateData.name = data.name;
+  if (data.name !== undefined) {
+    if (!data.name.trim()) throw new BadRequestError("name は必須です");
+    updateData.name = data.name.trim();
+  }
   if (data.startDate !== undefined) {
     const d = new Date(data.startDate);
     if (Number.isNaN(d.getTime()))
