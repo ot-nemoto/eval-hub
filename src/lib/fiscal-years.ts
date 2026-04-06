@@ -178,10 +178,17 @@ export async function addFiscalYearItem(year: number, itemId: number) {
   });
   if (existing) throw new ConflictError("すでに紐づいています");
 
-  return prisma.fiscalYearItem.create({
-    data: { fiscalYear: year, evaluationItemId: itemId },
-    select: { fiscalYear: true, evaluationItemId: true },
-  });
+  try {
+    return await prisma.fiscalYearItem.create({
+      data: { fiscalYear: year, evaluationItemId: itemId },
+      select: { fiscalYear: true, evaluationItemId: true },
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new ConflictError("すでに紐づいています");
+    }
+    throw e;
+  }
 }
 
 export async function removeFiscalYearItem(year: number, itemId: number) {

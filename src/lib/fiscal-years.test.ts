@@ -324,6 +324,17 @@ describe("addFiscalYearItem", () => {
 
     await expect(addFiscalYearItem(2024, 1)).rejects.toThrow(ConflictError);
   });
+
+  it("DB の P2002（同時実行競合）の場合は ConflictError をスロー", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
+    vi.mocked(prisma.evaluationItem.findUnique).mockResolvedValue(mockItem as never);
+    vi.mocked(prisma.fiscalYearItem.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.fiscalYearItem.create).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", { code: "P2002", clientVersion: "5" }),
+    );
+
+    await expect(addFiscalYearItem(2024, 1)).rejects.toThrow(ConflictError);
+  });
 });
 
 describe("removeFiscalYearItem", () => {
