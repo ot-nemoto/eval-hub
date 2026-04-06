@@ -49,6 +49,9 @@ export async function updateFiscalYearAction(
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
+  if (!Number.isInteger(year) || year < 1900 || year > 9999)
+    return { error: "year は 1900〜9999 の整数で指定してください" };
+
   if (Object.keys(data).length === 0)
     return { error: "更新するフィールドを指定してください" };
 
