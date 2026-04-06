@@ -73,6 +73,14 @@ describe("getEvaluationItems", () => {
       expect.objectContaining({ where: { categoryId: 1 } }),
     );
   });
+
+  it("targetId に 0 以下を渡すと BadRequestError をスロー", async () => {
+    await expect(getEvaluationItems({ targetId: 0 })).rejects.toThrow(BadRequestError);
+  });
+
+  it("categoryId に 0 以下を渡すと BadRequestError をスロー", async () => {
+    await expect(getEvaluationItems({ categoryId: -1 })).rejects.toThrow(BadRequestError);
+  });
 });
 
 describe("createEvaluationItem", () => {

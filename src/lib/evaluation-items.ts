@@ -15,6 +15,11 @@ const itemSelect = {
 } as const;
 
 export async function getEvaluationItems(filter?: { targetId?: number; categoryId?: number }) {
+  if (filter?.targetId !== undefined && (!Number.isInteger(filter.targetId) || filter.targetId < 1))
+    throw new BadRequestError("targetId は 1 以上の整数で指定してください");
+  if (filter?.categoryId !== undefined && (!Number.isInteger(filter.categoryId) || filter.categoryId < 1))
+    throw new BadRequestError("categoryId は 1 以上の整数で指定してください");
+
   const where: { targetId?: number; categoryId?: number } = {};
   if (filter?.targetId !== undefined) where.targetId = filter.targetId;
   if (filter?.categoryId !== undefined) where.categoryId = filter.categoryId;
