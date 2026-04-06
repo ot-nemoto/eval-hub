@@ -18,6 +18,11 @@ export async function createTargetAction(data: {
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
+  if (typeof data.name !== "string" || !data.name.trim())
+    return { error: "name は必須です" };
+  if (!Number.isInteger(data.no) || data.no < 1)
+    return { error: "no は 1 以上の整数で指定してください" };
+
   try {
     await createTarget(data);
   } catch (e) {
@@ -37,6 +42,15 @@ export async function updateTargetAction(
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
+  if (!Number.isInteger(id) || id < 1)
+    return { error: "id は 1 以上の整数で指定してください" };
+  if (data.name !== undefined && (typeof data.name !== "string" || !data.name.trim()))
+    return { error: "name が不正です" };
+  if (data.no !== undefined && (!Number.isInteger(data.no) || data.no < 1))
+    return { error: "no は 1 以上の整数で指定してください" };
+  if (data.name === undefined && data.no === undefined)
+    return { error: "更新可能なフィールドが指定されていません" };
+
   try {
     await updateTarget(id, data);
   } catch (e) {
@@ -52,6 +66,9 @@ export async function deleteTargetAction(id: number): Promise<{ error?: string }
   const session = await getSession();
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
+
+  if (!Number.isInteger(id) || id < 1)
+    return { error: "id は 1 以上の整数で指定してください" };
 
   try {
     await deleteTarget(id);
@@ -75,6 +92,13 @@ export async function createCategoryAction(data: {
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
+  if (!Number.isInteger(data.targetId) || data.targetId < 1)
+    return { error: "targetId は 1 以上の整数で指定してください" };
+  if (typeof data.name !== "string" || !data.name.trim())
+    return { error: "name は必須です" };
+  if (!Number.isInteger(data.no) || data.no < 1)
+    return { error: "no は 1 以上の整数で指定してください" };
+
   try {
     await createCategory(data);
   } catch (e) {
@@ -94,6 +118,15 @@ export async function updateCategoryAction(
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
+  if (!Number.isInteger(id) || id < 1)
+    return { error: "id は 1 以上の整数で指定してください" };
+  if (data.name !== undefined && (typeof data.name !== "string" || !data.name.trim()))
+    return { error: "name が不正です" };
+  if (data.no !== undefined && (!Number.isInteger(data.no) || data.no < 1))
+    return { error: "no は 1 以上の整数で指定してください" };
+  if (data.name === undefined && data.no === undefined)
+    return { error: "更新可能なフィールドが指定されていません" };
+
   try {
     await updateCategory(id, data);
   } catch (e) {
@@ -109,6 +142,9 @@ export async function deleteCategoryAction(id: number): Promise<{ error?: string
   const session = await getSession();
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
+
+  if (!Number.isInteger(id) || id < 1)
+    return { error: "id は 1 以上の整数で指定してください" };
 
   try {
     await deleteCategory(id);
