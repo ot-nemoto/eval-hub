@@ -38,7 +38,7 @@ export default async function MemberEvaluationsPage({ params }: Props) {
 
   const [items, evaluations] = await Promise.all([
     prisma.evaluationItem.findMany({
-      orderBy: [{ targetId: "asc" }, { categoryId: "asc" }, { no: "asc" }],
+      orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
       include: { target: true, category: true },
     }),
     prisma.evaluation.findMany({
