@@ -27,7 +27,7 @@ export default async function MemberEvaluationsPage({ params }: Props) {
         },
       },
     });
-    if (!assignment) notFound();
+    if (!assignment) redirect("/members");
   }
 
   const evaluatee = await prisma.user.findUnique({
