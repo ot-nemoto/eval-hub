@@ -1,10 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { createTargetAction } from "@/app/(dashboard)/admin/targets/actions";
 
 export function TargetForm() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", no: "" });
@@ -13,18 +12,12 @@ export function TargetForm() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/targets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: form.name, no: Number(form.no) }),
-      });
-      if (res.ok) {
+      const result = await createTargetAction({ name: form.name, no: Number(form.no) });
+      if (!result.error) {
         setOpen(false);
         setForm({ name: "", no: "" });
-        router.refresh();
       } else {
-        const json = await res.json().catch(() => ({}));
-        alert(json.error?.message ?? "追加に失敗しました");
+        alert(result.error);
       }
     } catch {
       alert("通信エラーが発生しました");
