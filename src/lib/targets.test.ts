@@ -79,7 +79,7 @@ describe("updateTarget", () => {
   it("no を変更する際に重複がある場合は ConflictError をスロー", async () => {
     vi.mocked(prisma.target.findUnique)
       .mockResolvedValueOnce(mockTargets[0] as never) // target exists
-      .mockResolvedValueOnce(mockTargets[1] as never); // no conflict exists
+      .mockResolvedValueOnce(mockTargets[1] as never); // conflicting target exists
 
     await expect(updateTarget(1, { no: 2 })).rejects.toThrow(ConflictError);
   });
