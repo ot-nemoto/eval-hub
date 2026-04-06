@@ -1,7 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import {
+  deleteEvaluationItemAction,
+  updateEvaluationItemAction,
+} from "@/app/(dashboard)/admin/evaluation-items/actions";
 
 type EvaluationItem = {
   id: number;
@@ -13,7 +16,6 @@ type EvaluationItem = {
 type Props = { item: EvaluationItem; hasEvaluations: boolean };
 
 export function EvaluationItemActions({ item, hasEvaluations }: Props) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
@@ -31,21 +33,15 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/evaluation-items/${item.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: form.name,
-          description: form.description || null,
-          evalCriteria: form.evalCriteria || null,
-        }),
+      const result = await updateEvaluationItemAction(item.id, {
+        name: form.name,
+        description: form.description || null,
+        evalCriteria: form.evalCriteria || null,
       });
-      if (res.ok) {
+      if (!result.error) {
         setEditing(false);
-        router.refresh();
       } else {
-        const json = await res.json().catch(() => ({}));
-        alert(json.error?.message ?? "更新に失敗しました");
+        alert(result.error);
       }
     } catch {
       alert("通信エラーが発生しました");
@@ -58,12 +54,9 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
     if (!confirm(`「${item.name}」を削除しますか？この操作は取り消せません。`)) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/evaluation-items/${item.id}`, { method: "DELETE" });
-      if (res.status === 204) {
-        router.refresh();
-      } else {
-        const json = await res.json().catch(() => ({}));
-        alert(json.error?.message ?? "削除に失敗しました");
+      const result = await deleteEvaluationItemAction(item.id);
+      if (result.error) {
+        alert(result.error);
       }
     } catch {
       alert("通信エラーが発生しました");
