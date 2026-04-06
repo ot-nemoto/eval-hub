@@ -15,8 +15,8 @@ export async function PUT(
   const evaluateeId = resolvedParams.id;
   const evalItemId = Number(resolvedParams.uid);
   const fiscalYear = Number(resolvedParams.year);
-  if (Number.isNaN(fiscalYear) || Number.isNaN(evalItemId)) {
-    return errorResponse("BAD_REQUEST", "year・uid は数値で指定してください", 400);
+  if (!Number.isInteger(fiscalYear) || fiscalYear < 1 || !Number.isInteger(evalItemId) || evalItemId < 1) {
+    return errorResponse("BAD_REQUEST", "year・uid は正の整数で指定してください", 400);
   }
 
   const currentUserId = session.user.id;
