@@ -118,6 +118,8 @@ export async function removeFiscalYearItemAction(
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
+  if (!Number.isInteger(year) || year < 1900 || year > 9999)
+    return { error: "year は 1900〜9999 の整数で指定してください" };
   if (!Number.isInteger(itemId) || itemId < 1)
     return { error: "itemId は正の整数で指定してください" };
 
