@@ -30,7 +30,7 @@ export async function GET(request: Request) {
 
   const items = await prisma.evaluationItem.findMany({
     where,
-    orderBy: [{ targetId: "asc" }, { categoryId: "asc" }, { no: "asc" }],
+    orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
     select: {
       id: true,
       targetId: true,
