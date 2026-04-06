@@ -38,6 +38,8 @@ export function FiscalYearActions({ fiscalYear }: Props) {
       } else {
         router.refresh();
       }
+    } catch {
+      alert("通信エラーが発生しました");
     } finally {
       setLoading(false);
     }
