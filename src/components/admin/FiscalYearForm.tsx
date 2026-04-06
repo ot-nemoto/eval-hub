@@ -40,6 +40,8 @@ export function FiscalYearForm() {
         setForm({ year: "", name: "", startDate: "", endDate: "" });
         router.refresh();
       }
+    } catch {
+      alert("通信エラーが発生しました");
     } finally {
       setLoading(false);
     }
