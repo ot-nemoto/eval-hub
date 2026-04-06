@@ -218,4 +218,14 @@ describe("deleteEvaluationItem", () => {
 
     await expect(deleteEvaluationItem(1)).rejects.toThrow(ConflictError);
   });
+
+  it("DB の外部キー制約違反（P2003）の場合は ConflictError をスロー", async () => {
+    vi.mocked(prisma.evaluationItem.findUnique).mockResolvedValue(mockItem as never);
+    vi.mocked(prisma.fiscalYearItem.count).mockResolvedValue(0);
+    vi.mocked(prisma.evaluationItem.delete).mockRejectedValue(
+      Object.assign(new Prisma.PrismaClientKnownRequestError("Foreign key constraint", { code: "P2003", clientVersion: "5" }), {}),
+    );
+
+    await expect(deleteEvaluationItem(1)).rejects.toThrow(ConflictError);
+  });
 });
