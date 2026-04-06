@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BadRequestError, ConflictError, NotFoundError } from "./errors";
 import {
@@ -143,6 +144,19 @@ describe("createEvaluationItem", () => {
     await expect(
       createEvaluationItem({ targetId: 1, categoryId: 1, name: "x" }),
     ).rejects.toThrow(BadRequestError);
+  });
+
+  it("DB の一意制約違反（P2002）の場合は ConflictError をスロー", async () => {
+    vi.mocked(prisma.target.findUnique).mockResolvedValue(mockTarget as never);
+    vi.mocked(prisma.category.findUnique).mockResolvedValue(mockCategory as never);
+    vi.mocked(prisma.evaluationItem.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.evaluationItem.create).mockRejectedValue(
+      Object.assign(new Prisma.PrismaClientKnownRequestError("Unique constraint", { code: "P2002", clientVersion: "5" }), {}),
+    );
+
+    await expect(
+      createEvaluationItem({ targetId: 1, categoryId: 1, name: "dup" }),
+    ).rejects.toThrow(ConflictError);
   });
 });
 

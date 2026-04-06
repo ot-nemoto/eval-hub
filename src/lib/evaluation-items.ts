@@ -56,17 +56,24 @@ export async function createEvaluationItem(data: {
   });
   const no = (maxItem?.no ?? 0) + 1;
 
-  return prisma.evaluationItem.create({
-    data: {
-      targetId: data.targetId,
-      categoryId: data.categoryId,
-      no,
-      name: data.name,
-      description: data.description ?? null,
-      evalCriteria: data.evalCriteria ?? null,
-    },
-    select: itemSelect,
-  });
+  try {
+    return await prisma.evaluationItem.create({
+      data: {
+        targetId: data.targetId,
+        categoryId: data.categoryId,
+        no,
+        name: data.name,
+        description: data.description ?? null,
+        evalCriteria: data.evalCriteria ?? null,
+      },
+      select: itemSelect,
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new ConflictError("同じ名称の評価項目が既に存在します");
+    }
+    throw e;
+  }
 }
 
 export async function updateEvaluationItem(
