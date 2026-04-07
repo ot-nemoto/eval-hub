@@ -1,4 +1,4 @@
-> 最終更新: 2026-03-16 (デプロイ先を Cloudflare Workers → Vercel に変更)
+> 最終更新: 2026-04-07 (Server Actions 移行完了に伴うドキュメント更新)
 
 # architecture.md — 実装方針・技術スタック
 
@@ -8,7 +8,7 @@
 |---|---|---|
 | Frontend | Next.js (App Router) + TypeScript | SSR/CSR の柔軟な使い分け、型安全 |
 | Styling | Tailwind CSS + shadcn/ui | 高速なUI構築、デザイン統一 |
-| Backend | Next.js API Routes | フロントと同リポジトリで管理しやすい |
+| Backend | Next.js Server Actions | フロントと同リポジトリで管理・型安全なサーバー呼び出し |
 | ORM | Prisma | TypeScript との親和性、スキーマ管理 |
 | DB | Neon (PostgreSQL) | PostgreSQL 互換・Edge 対応・無料10プロジェクト・ブランチ機能あり |
 | 認証 | Clerk | ホスト型UI・セッション管理・ロール制御が容易 |
@@ -21,9 +21,10 @@
     │ HTTPS
     ▼
 [Next.js (Vercel / Serverless Functions)]
-├── /src/app         ← ページ（App Router）
-├── /src/app/api     ← API Routes（RESTful）
-└── /src/components  ← UI コンポーネント
+├── /src/app              ← ページ（App Router）
+├── /src/app/**/actions.ts ← Server Actions（フォーム・ボタン操作）
+├── /src/app/api          ← API Routes（外部連携・認証用のみ残存）
+└── /src/components       ← UI コンポーネント
     │
     │ Prisma + @prisma/adapter-neon (WebSocket)
     ▼
@@ -44,29 +45,56 @@
 │   │   ├── (auth)/
 │   │   │   └── login/
 │   │   ├── (dashboard)/
-│   │   │   ├── members/          ← 社員一覧・プロフィール
-│   │   │   ├── evaluations/      ← 評価入力・一覧
-│   │   │   └── admin/            ← マスタ管理（admin専用）
+│   │   │   ├── members/
+│   │   │   │   ├── page.tsx            ← 社員一覧
+│   │   │   │   ├── actions.ts          ← 評価者評価 Server Actions
+│   │   │   │   └── [id]/evaluations/
+│   │   │   ├── evaluations/
+│   │   │   │   ├── page.tsx            ← 自己評価
+│   │   │   │   └── actions.ts          ← 自己評価 Server Actions
+│   │   │   └── admin/                  ← マスタ管理（admin専用）
+│   │   │       ├── targets/
+│   │   │       │   ├── page.tsx
+│   │   │       │   └── actions.ts
+│   │   │       ├── evaluation-items/
+│   │   │       │   ├── page.tsx
+│   │   │       │   └── actions.ts
+│   │   │       ├── fiscal-years/
+│   │   │       │   ├── page.tsx
+│   │   │       │   └── actions.ts
+│   │   │       ├── users/
+│   │   │       │   ├── page.tsx
+│   │   │       │   ├── actions.ts
+│   │   │       │   └── [id]/evaluation-settings/
+│   │   │       │       ├── page.tsx
+│   │   │       │       └── actions.ts
+│   │   │       └── evaluation-assignments/
+│   │   │           └── actions.ts      ← アサイン管理 Server Actions（UI は T62 で実装予定）
 │   │   │       ※ career/・roles/・records/ は v1.1 以降に追加予定（現状は未作成）
 │   │   ├── api/
-│   │   │   ├── auth/
-│   │   │   ├── members/
-│   │   │   ├── evaluation-assignments/
-│   │   │   ├── evaluation-items/
-│   │   │   └── admin/
-│   │   │       ※ career-plans/・roles/・allocations/・records/ は v1.1 以降に追加予定（現状は未作成）
+│   │   │   ├── auth/[...nextauth]/     ← NextAuth スタブ（404 応答・削除対象）
+│   │   │   └── members/[id]/evaluation-settings/  ← 削除対象（#182）
 │   │   └── layout.tsx
 │   ├── auth.ts
 │   ├── components/
-│   │   ├── ui/                   ← shadcn/ui ベース
+│   │   ├── ui/                         ← shadcn/ui ベース
 │   │   ├── evaluation/
 │   │   └── admin/
 │   │       ※ career/・role/ は v1.1 以降に追加予定（現状は未作成）
 │   ├── lib/
-│   │   ├── prisma.ts
+│   │   ├── prisma.ts                   ← Prisma クライアント
+│   │   ├── auth.ts                     ← セッション取得
+│   │   ├── errors.ts                   ← カスタムエラークラス
+│   │   ├── targets.ts                  ← 大分類・中分類 共通メソッド
+│   │   ├── evaluation-items.ts         ← 評価項目 共通メソッド
+│   │   ├── fiscal-years.ts             ← 年度 共通メソッド
+│   │   ├── users.ts                    ← ユーザー 共通メソッド
+│   │   ├── evaluation-settings.ts      ← 評価設定 共通メソッド
+│   │   ├── evaluation-assignments.ts   ← 評価者アサイン 共通メソッド
+│   │   ├── evaluations.ts              ← 採点 共通メソッド
 │   │   └── utils.ts
 │   ├── test/
-│   │   └── setup.ts              ← Vitest セットアップ
+│   │   └── setup.ts                    ← Vitest セットアップ
 │   └── types/
 ├── prisma/
 │   └── schema.prisma
@@ -105,10 +133,21 @@ datasource db {
 | `main` | 本番用（予定） | Vercel 環境変数（Production） |
 | `develop` | 検証用 | Vercel 環境変数（Preview） / `.env.local` |
 
-### API 設計
-- RESTful に統一（GET / POST / PUT / DELETE）
-- レスポンスは `{ data, error, meta }` の統一フォーマット
-- 認証は Clerk のセッショントークンを使用する
+### Server Actions 設計
+- ページ内の操作（フォーム送信・ボタン操作）はすべて Server Actions で処理する（`"use server"` ディレクティブ）
+- 各 `(dashboard)` ページディレクトリに `actions.ts` を配置する
+- 戻り値は `Promise<{ error?: string }>` に統一し、エラー時はメッセージを返す
+- 認証は各 Server Action の先頭で `getSession()` を呼び出す
+  - 未認証: `redirect("/login")`
+  - 権限なし（非 ADMIN が admin 系 Action を呼んだ場合）: `redirect("/evaluations")`
+- 処理成功後は `revalidatePath()` でキャッシュを更新する
+- lib 層のカスタムエラー（`BadRequestError` / `NotFoundError` 等）は catch して `{ error: message }` を返す。それ以外は再 throw する
+
+### API Routes（残存）
+- 現時点で維持する API Routes はなし
+- 残存しているルートはすべて削除対象：
+  - `GET/POST /api/auth/[...nextauth]`：NextAuth スタブ（404 応答）— 削除対象（#182）
+  - `GET/PUT /api/members/:id/evaluation-settings`：呼び出し元なし — 削除対象（#182）
 
 ### 評価ロジック
 - 自己採点・評価者採点は同一テーブル（`evaluations`）の別カラムに保存
@@ -126,7 +165,7 @@ none(0) < 可=ka(1) < 良=ryo(2) < 優=yu(3)
 - `evaluation_assignments` も年度単位で管理（年度ごとに評価者を変更可）
 
 ### 権限制御
-- API Routes でセッション + DB 参照によるアクセス制御
+- Server Actions・API Routes ともにセッション + DB 参照によるアクセス制御
 - `member`（自己評価）: `evaluatee_id == 自分` のレコードの `self_score / self_reason` のみ更新可
 - `member`（評価者）: `evaluation_assignments` に `evaluator_id == 自分` のレコードがある被評価者の `manager_score / manager_reason` を更新可
 - `admin`: すべてのデータ操作可
