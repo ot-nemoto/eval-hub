@@ -70,7 +70,7 @@ describe("upsertEvaluation", () => {
       fiscalYear: 2024,
       evaluateeId: "user-1",
       evalItemId: 1,
-      selfScore: 3,
+      selfScore: "ryo",
       selfReason: "理由",
     });
 
