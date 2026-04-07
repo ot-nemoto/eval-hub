@@ -1,10 +1,9 @@
 "use client";
 
+import { Score } from "@prisma/client";
 import { useRef, useState } from "react";
 import { upsertSelfEvaluationAction } from "@/app/(dashboard)/evaluations/actions";
 import { Button } from "@/components/ui/button";
-
-type Score = "none" | "ka" | "ryo" | "yu";
 
 const SCORE_LABELS: Record<Score, string> = {
   none: "なし",

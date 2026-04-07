@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { Score } from "@prisma/client";
 import { getSession } from "@/lib/auth";
 import { BadRequestError, ForbiddenError } from "@/lib/errors";
 import { upsertEvaluation } from "@/lib/evaluations";
@@ -12,7 +13,7 @@ export async function upsertManagerEvaluationAction(
   evaluateeId: string,
   fiscalYear: number,
   evalItemId: number,
-  data: { managerScore?: string | null; managerReason?: string | null },
+  data: { managerScore?: Score | null; managerReason?: string | null },
 ): Promise<{ error?: string }> {
   const session = await getSession();
   if (!session) redirect("/login");

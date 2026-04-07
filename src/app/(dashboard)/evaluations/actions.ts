@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { Score } from "@prisma/client";
 import { getSession } from "@/lib/auth";
 import { BadRequestError } from "@/lib/errors";
 import { upsertEvaluation } from "@/lib/evaluations";
@@ -11,7 +12,7 @@ import { prisma } from "@/lib/prisma";
 export async function upsertSelfEvaluationAction(
   fiscalYear: number,
   evalItemId: number,
-  data: { selfScore?: string | null; selfReason?: string | null },
+  data: { selfScore?: Score | null; selfReason?: string | null },
 ): Promise<{ error?: string }> {
   const session = await getSession();
   if (!session) redirect("/login");

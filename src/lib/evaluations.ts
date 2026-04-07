@@ -1,3 +1,4 @@
+import { Score } from "@prisma/client";
 import { BadRequestError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 
@@ -25,9 +26,9 @@ export async function upsertEvaluation(data: {
   fiscalYear: number;
   evaluateeId: string;
   evalItemId: number;
-  selfScore?: number | null;
+  selfScore?: Score | null;
   selfReason?: string | null;
-  managerScore?: number | null;
+  managerScore?: Score | null;
   managerReason?: string | null;
 }) {
   if (!Number.isInteger(data.fiscalYear) || data.fiscalYear < 1900 || data.fiscalYear > 9999)
