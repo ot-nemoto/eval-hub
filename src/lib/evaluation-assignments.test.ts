@@ -84,8 +84,14 @@ describe("createEvaluationAssignment", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("アサインを作成して返す", async () => {
+    const mockCreated = {
+      id: "assign-1",
+      fiscalYear: 2024,
+      evaluateeId: "user-1",
+      evaluatorId: "user-2",
+    };
     vi.mocked(prisma.evaluationAssignment.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.evaluationAssignment.create).mockResolvedValue(mockAssignment as never);
+    vi.mocked(prisma.evaluationAssignment.create).mockResolvedValue(mockCreated as never);
 
     const result = await createEvaluationAssignment({
       fiscalYear: 2024,
@@ -96,7 +102,7 @@ describe("createEvaluationAssignment", () => {
     expect(prisma.evaluationAssignment.create).toHaveBeenCalledWith({
       data: { fiscalYear: 2024, evaluateeId: "user-1", evaluatorId: "user-2" },
     });
-    expect(result).toEqual(mockAssignment);
+    expect(result).toEqual(mockCreated);
   });
 
   it("fiscalYear が範囲外の場合は BadRequestError をスロー", async () => {
