@@ -81,12 +81,7 @@ export default async function FiscalYearsPage() {
                   <td className="px-4 py-3 text-right">
                     <FiscalYearActions
                       fiscalYear={fy}
-                      isDeletable={
-                        fy._count.fiscalYearItems === 0 &&
-                        fy._count.evaluationSettings === 0 &&
-                        fy._count.evaluationAssignments === 0 &&
-                        fy._count.evaluations === 0
-                      }
+                      isDeletable={Object.values(fy._count).every((count) => count === 0)}
                     />
                   </td>
                 </tr>
