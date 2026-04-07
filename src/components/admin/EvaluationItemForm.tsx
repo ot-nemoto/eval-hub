@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { createEvaluationItemAction } from "@/app/(dashboard)/admin/evaluation-items/actions";
 
 type Target = { id: number; name: string };
 type Category = { id: number; targetId: number; name: string };
@@ -12,7 +12,6 @@ type Props = {
 };
 
 export function EvaluationItemForm({ targets, categories }: Props) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -42,24 +41,18 @@ export function EvaluationItemForm({ targets, categories }: Props) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/evaluation-items", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          targetId: Number(form.targetId),
-          categoryId: Number(form.categoryId),
-          name: form.name,
-          description: form.description || null,
-          evalCriteria: form.evalCriteria || null,
-        }),
+      const result = await createEvaluationItemAction({
+        targetId: Number(form.targetId),
+        categoryId: Number(form.categoryId),
+        name: form.name,
+        description: form.description || null,
+        evalCriteria: form.evalCriteria || null,
       });
-      if (res.ok) {
+      if (!result.error) {
         setOpen(false);
         setForm({ targetId: "", categoryId: "", name: "", description: "", evalCriteria: "" });
-        router.refresh();
       } else {
-        const json = await res.json().catch(() => ({}));
-        alert(json.error?.message ?? "評価項目の追加に失敗しました");
+        alert(result.error);
       }
     } catch {
       alert("通信エラーが発生しました");

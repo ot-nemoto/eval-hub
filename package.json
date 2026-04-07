@@ -1,6 +1,6 @@
 {
   "name": "eval-hub",
-  "version": "0.10.1",
+  "version": "0.12.0",
   "private": true,
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -28,7 +28,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.577.0",
-    "next": "16.2.1",
+    "next": "16.2.2",
     "prisma": "^7.6.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",

@@ -1,579 +1,682 @@
-> 最終更新: 2026-03-26 (エラーレスポンス定義セクションを追加)
+> 最終更新: 2026-04-07 (Server Actions 移行完了に伴い、移行済み API Routes の記載を削除・Server Actions 仕様を追加)
 
 # api.md — API 仕様
 
-## 共通仕様
+## 概要
 
-### ベース URL
-```
-/api
-```
+Phase 8 の Server Actions 移行により、以下の操作は Server Actions に移行済みです（`docs/architecture.md` 参照）。
 
-### 認証
-- すべてのエンドポイントで Clerk セッション（httpOnly Cookie）が必要
-- サーバー側で `getSession()` を呼び出し、未認証の場合は 401 を返す
+- 大分類・中分類マスタ（targets / categories）
+- 評価項目マスタ（evaluation-items）
+- 年度管理（fiscal-years）
+- ユーザー管理（admin/users）
+- 評価者アサイン管理（evaluation-assignments）
+- 自己評価・評価者評価入力（evaluations）
 
-### レスポンス形式（成功）
-```json
-{ "data": {...}, "meta": { "total": 100 } }
-```
-
-### スコア値の定義
-
-| 値 | 意味 |
-|---|---|
-| `"none"` | なし（未評価） |
-| `"ka"` | 可 |
-| `"ryo"` | 良 |
-| `"yu"` | 優 |
+本ドキュメントには **Server Actions の仕様** および **外部連携用途で残存する API Routes** を記載します。
 
 ---
 
-## エラーレスポンス定義
+## Server Actions
 
-### 形式
+> 全 Action は認証必須。未認証の場合は `/login` にリダイレクトする。
+> 管理系 Action（`createTargetAction` 等、`admin/` 配下）は ADMIN 権限必須で、権限不足時は `/evaluations` にリダイレクトする。
 
-すべてのエラーレスポンスは以下の JSON 形式で返す。
+### Action 一覧
 
-```json
-{ "error": { "code": "ERROR_CODE", "message": "エラーメッセージ" } }
-```
-
-### ステータスコード一覧
-
-| コード | HTTP | 説明 |
-|---|---|---|
-| `BAD_REQUEST` | 400 | リクエストの形式・値が不正 |
-| `UNAUTHORIZED` | 401 | 未認証 |
-| `FORBIDDEN` | 403 | 権限なし |
-| `NOT_FOUND` | 404 | リソースが存在しない |
-| `CONFLICT` | 409 | リソースの重複 |
-| `INTERNAL_SERVER_ERROR` | 500 | サーバー内部エラー |
-
----
-
-## エンドポイント一覧
-
-| メソッド | パス | 説明 | ロール |
-|---|---|---|---|
-| GET | `/api/admin/targets` | 大分類一覧取得 | admin |
-| POST | `/api/admin/targets` | 大分類作成 | admin |
-| PATCH | `/api/admin/targets/:id` | 大分類更新 | admin |
-| DELETE | `/api/admin/targets/:id` | 大分類削除 | admin |
-| GET | `/api/admin/categories` | 中分類一覧取得 | admin |
-| POST | `/api/admin/categories` | 中分類作成 | admin |
-| PATCH | `/api/admin/categories/:id` | 中分類更新 | admin |
-| DELETE | `/api/admin/categories/:id` | 中分類削除 | admin |
-| GET | `/api/admin/evaluation-items` | 評価項目一覧取得（admin） | admin |
-| POST | `/api/admin/evaluation-items` | 評価項目作成 | admin |
-| PATCH | `/api/admin/evaluation-items/:id` | 評価項目更新 | admin |
-| DELETE | `/api/admin/evaluation-items/:id` | 評価項目削除 | admin |
-| GET | `/api/evaluation-items` | 評価項目一覧取得（一般） | member / admin |
-| GET | `/api/evaluation-assignments` | 評価者アサイン一覧取得 | admin |
-| POST | `/api/evaluation-assignments` | 評価者アサイン作成 | admin |
-| DELETE | `/api/evaluation-assignments/:id` | 評価者アサイン削除 | admin |
-| GET | `/api/members/:id/evaluations/:year` | 採点一覧取得 | member（本人・評価者）/ admin |
-| PUT | `/api/members/:id/evaluations/:year/:uid` | 採点登録・更新 | member（本人・評価者）/ admin |
-| GET | `/api/members/:id/evaluation-settings` | 自己評価要否設定取得 | member（本人）/ admin |
-| PUT | `/api/members/:id/evaluation-settings/:year` | 自己評価要否設定更新 | admin |
-| GET | `/api/admin/fiscal-years` | 年度一覧取得 | admin |
-| POST | `/api/admin/fiscal-years` | 年度作成 | admin |
-| PATCH | `/api/admin/fiscal-years/:year` | 年度更新 | admin |
-| DELETE | `/api/admin/fiscal-years/:year` | 年度削除 | admin |
-| GET | `/api/admin/fiscal-years/:year/items` | 年度別有効評価項目取得 | admin |
-| POST | `/api/admin/fiscal-years/:year/items` | 年度別有効評価項目追加 | admin |
-| DELETE | `/api/admin/fiscal-years/:year/items/:itemId` | 年度別有効評価項目削除 | admin |
-| GET | `/api/admin/users` | ユーザー一覧取得 | admin |
-| PATCH | `/api/admin/users/:id` | ユーザー更新（ロール・有効化） | admin |
-| DELETE | `/api/admin/users/:id` | ユーザー削除 | admin |
+| Action | ファイル | 概要 | 認可 |
+|--------|---------|------|------|
+| `createTargetAction` | `src/app/(dashboard)/admin/targets/actions.ts` | 大分類作成 | ADMIN のみ |
+| `updateTargetAction` | `src/app/(dashboard)/admin/targets/actions.ts` | 大分類更新 | ADMIN のみ |
+| `deleteTargetAction` | `src/app/(dashboard)/admin/targets/actions.ts` | 大分類削除 | ADMIN のみ |
+| `createCategoryAction` | `src/app/(dashboard)/admin/targets/actions.ts` | 中分類作成 | ADMIN のみ |
+| `updateCategoryAction` | `src/app/(dashboard)/admin/targets/actions.ts` | 中分類更新 | ADMIN のみ |
+| `deleteCategoryAction` | `src/app/(dashboard)/admin/targets/actions.ts` | 中分類削除 | ADMIN のみ |
+| `createEvaluationItemAction` | `src/app/(dashboard)/admin/evaluation-items/actions.ts` | 評価項目作成 | ADMIN のみ |
+| `updateEvaluationItemAction` | `src/app/(dashboard)/admin/evaluation-items/actions.ts` | 評価項目更新 | ADMIN のみ |
+| `deleteEvaluationItemAction` | `src/app/(dashboard)/admin/evaluation-items/actions.ts` | 評価項目削除 | ADMIN のみ |
+| `createFiscalYearAction` | `src/app/(dashboard)/admin/fiscal-years/actions.ts` | 年度作成 | ADMIN のみ |
+| `updateFiscalYearAction` | `src/app/(dashboard)/admin/fiscal-years/actions.ts` | 年度更新 | ADMIN のみ |
+| `deleteFiscalYearAction` | `src/app/(dashboard)/admin/fiscal-years/actions.ts` | 年度削除 | ADMIN のみ |
+| `addFiscalYearItemAction` | `src/app/(dashboard)/admin/fiscal-years/actions.ts` | 年度に評価項目を追加 | ADMIN のみ |
+| `removeFiscalYearItemAction` | `src/app/(dashboard)/admin/fiscal-years/actions.ts` | 年度から評価項目を除外 | ADMIN のみ |
+| `updateUserAction` | `src/app/(dashboard)/admin/users/actions.ts` | ユーザー情報更新 | ADMIN のみ |
+| `deleteUserAction` | `src/app/(dashboard)/admin/users/actions.ts` | ユーザー削除 | ADMIN のみ |
+| `upsertEvaluationSettingAction` | `src/app/(dashboard)/admin/users/[id]/evaluation-settings/actions.ts` | 評価設定を登録・更新 | ADMIN のみ |
+| `createEvaluationAssignmentAction` | `src/app/(dashboard)/admin/evaluation-assignments/actions.ts` | 評価者アサイン作成 | ADMIN のみ |
+| `deleteEvaluationAssignmentAction` | `src/app/(dashboard)/admin/evaluation-assignments/actions.ts` | 評価者アサイン削除 | ADMIN のみ |
+| `upsertSelfEvaluationAction` | `src/app/(dashboard)/evaluations/actions.ts` | 自己評価を登録・更新 | 要ログイン |
+| `upsertManagerEvaluationAction` | `src/app/(dashboard)/members/actions.ts` | 評価者評価を登録・更新 | 要ログイン（アサイン済み評価者または ADMIN） |
 
 ---
 
-## 大分類マスタ
+## 大分類・中分類
 
-### GET /api/admin/targets
-大分類一覧取得（admin のみ）
+### `createTargetAction`
 
-**Response**
-```json
-{
-  "data": [
-    { "id": 1, "name": "employee", "no": 1 },
-    { "id": 2, "name": "projects", "no": 2 }
-  ]
-}
+**ファイル:** `src/app/(dashboard)/admin/targets/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `data.name` | `string` | YES | 空文字不可 |
+| `data.no` | `number` | YES | 1 以上の整数 |
+
+**戻り値**
+
+```ts
+{ error?: string }
 ```
 
-### POST /api/admin/targets
-大分類追加（admin のみ）
+**エラー**
 
-**Request**
-```json
-{ "name": "新しい大分類", "no": 3 }
-```
-
-**Response**: `201 Created`
-
-### PATCH /api/admin/targets/:id
-大分類編集（admin のみ）。`name`・`no` を更新可。
-
-**Request**
-```json
-{ "name": "更新後の名称" }
-```
-
-**Response**: `200 OK`
-
-### DELETE /api/admin/targets/:id
-大分類削除（admin のみ）
-
-- `categories` が紐づいている場合は `409 Conflict`
-
-**Response**: `204 No Content`
+| error | 原因 |
+|-------|------|
+| `"name は必須です"` | name が空文字 |
+| `"no は 1 以上の整数で指定してください"` | no が不正値 |
+| `"同一の no が既に存在します"` | no 重複（ConflictError） |
 
 ---
 
-## 中分類マスタ
+### `updateTargetAction`
 
-### GET /api/admin/categories
-中分類一覧取得（admin のみ）
+**ファイル:** `src/app/(dashboard)/admin/targets/actions.ts`
 
-**Query**: `?targetId=1`
+**引数**（`name` と `no` はいずれかが必須）
 
-**Response**
-```json
-{
-  "data": [
-    { "id": 1, "targetId": 1, "name": "engagement", "no": 1 },
-    { "id": 2, "targetId": 1, "name": "skill", "no": 2 }
-  ]
-}
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `id` | `number` | YES | 1 以上の整数 |
+| `data.name` | `string` | いずれか必須 | 空文字不可 |
+| `data.no` | `number` | いずれか必須 | 1 以上の整数 |
+
+**戻り値**
+
+```ts
+{ error?: string }
 ```
 
-### POST /api/admin/categories
-中分類追加（admin のみ）
+**エラー**
 
-**Request**
-```json
-{ "targetId": 1, "name": "新しい中分類", "no": 3 }
-```
-
-**Response**: `201 Created`
-
-### PATCH /api/admin/categories/:id
-中分類編集（admin のみ）。`name`・`no` を更新可。
-
-**Request**
-```json
-{ "name": "更新後の名称" }
-```
-
-**Response**: `200 OK`
-
-### DELETE /api/admin/categories/:id
-中分類削除（admin のみ）
-
-- `evaluation_items` が紐づいている場合は `409 Conflict`
-
-**Response**: `204 No Content`
+| error | 原因 |
+|-------|------|
+| `"id は 1 以上の整数で指定してください"` | id が不正値 |
+| `"name が不正です"` | name が空文字 |
+| `"no は 1 以上の整数で指定してください"` | no が不正値 |
+| `"更新可能なフィールドが指定されていません"` | name・no が両方 undefined |
+| `"大分類が見つかりません"` | 指定 id が存在しない（NotFoundError） |
+| `"同一の no が既に存在します"` | no 重複（ConflictError） |
 
 ---
 
-## 評価項目マスタ
+### `deleteTargetAction`
 
-### GET /api/admin/evaluation-items
-評価項目一覧取得（admin のみ）
+**ファイル:** `src/app/(dashboard)/admin/targets/actions.ts`
 
-**Response**
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "targetId": 1,
-      "categoryId": 1,
-      "no": 1,
-      "name": "会社員としての基本姿勢",
-      "description": "...",
-      "evalCriteria": "...",
-      "target": { "id": 1, "name": "employee", "no": 1 },
-      "category": { "id": 1, "targetId": 1, "name": "engagement", "no": 1 }
-    }
-  ]
-}
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `id` | `number` | YES | 1 以上の整数 |
+
+**戻り値**
+
+```ts
+{ error?: string }
 ```
 
-### POST /api/admin/evaluation-items
-評価項目追加（admin のみ）。no はカテゴリ内の最大値 +1 でサーバー側自動採番。uid（`{target.no}-{category.no}-{no}`）は表示用に動的算出。
+**エラー**
 
-**Request**
-```json
-{
-  "targetId": 1,
-  "categoryId": 1,
-  "name": "新しい評価項目",
-  "description": null,
-  "evalCriteria": null
-}
-```
-
-**Response**: `201 Created`
-
-### PATCH /api/admin/evaluation-items/:id
-評価項目編集（admin のみ）。`name`・`description`・`evalCriteria` を更新可。
-
-**Request**
-```json
-{ "name": "更新後の名称" }
-```
-
-**Response**: `200 OK`
-
-### DELETE /api/admin/evaluation-items/:id
-評価項目削除（admin のみ）
-
-- 年度（`fiscal_year_items`）に紐づいている場合は `409 Conflict`
-
-**Response**: `204 No Content`
+| error | 原因 |
+|-------|------|
+| `"id は 1 以上の整数で指定してください"` | id が不正値 |
+| `"大分類が見つかりません"` | 指定 id が存在しない（NotFoundError） |
+| 紐づきデータに関するエラーメッセージ | 中分類・評価項目が存在する（ConflictError） |
 
 ---
 
-### GET /api/evaluation-items
-評価項目一覧
+### `createCategoryAction`
 
-**Query**: `?targetId=1&categoryId=1`
+**ファイル:** `src/app/(dashboard)/admin/targets/actions.ts`
 
-**Response**
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "targetId": 1,
-      "categoryId": 1,
-      "no": 1,
-      "name": "会社員としての基本姿勢",
-      "description": "...",
-      "evalCriteria": "...",
-      "target": { "id": 1, "name": "employee", "no": 1 },
-      "category": { "id": 1, "targetId": 1, "name": "engagement", "no": 1 }
-    }
-  ]
-}
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `data.targetId` | `number` | YES | 1 以上の整数 |
+| `data.name` | `string` | YES | 空文字不可 |
+| `data.no` | `number` | YES | 1 以上の整数 |
+
+**戻り値**
+
+```ts
+{ error?: string }
 ```
 
-**権限**: 認証済みユーザー全員
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"targetId は 1 以上の整数で指定してください"` | targetId が不正値 |
+| `"name は必須です"` | name が空文字 |
+| `"no は 1 以上の整数で指定してください"` | no が不正値 |
+| `"大分類が見つかりません"` | 指定 targetId が存在しない（NotFoundError） |
+| 重複エラーメッセージ | 同一大分類内で no が重複（ConflictError） |
+
+---
+
+### `updateCategoryAction`
+
+**ファイル:** `src/app/(dashboard)/admin/targets/actions.ts`
+
+**引数**（`name` と `no` はいずれかが必須）
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `id` | `number` | YES | 1 以上の整数 |
+| `data.name` | `string` | いずれか必須 | 空文字不可 |
+| `data.no` | `number` | いずれか必須 | 1 以上の整数 |
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"id は 1 以上の整数で指定してください"` | id が不正値 |
+| `"name が不正です"` | name が空文字 |
+| `"no は 1 以上の整数で指定してください"` | no が不正値 |
+| `"更新可能なフィールドが指定されていません"` | name・no が両方 undefined |
+| `"中分類が見つかりません"` | 指定 id が存在しない（NotFoundError） |
+| 重複エラーメッセージ | 同一大分類内で no が重複（ConflictError） |
+
+---
+
+### `deleteCategoryAction`
+
+**ファイル:** `src/app/(dashboard)/admin/targets/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `id` | `number` | YES | 1 以上の整数 |
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"id は 1 以上の整数で指定してください"` | id が不正値 |
+| `"中分類が見つかりません"` | 指定 id が存在しない（NotFoundError） |
+| 紐づきデータに関するエラーメッセージ | 評価項目が存在する（ConflictError） |
+
+---
+
+## 評価項目
+
+### `createEvaluationItemAction`
+
+**ファイル:** `src/app/(dashboard)/admin/evaluation-items/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `data.targetId` | `number` | YES | 1 以上の整数 |
+| `data.categoryId` | `number` | YES | 1 以上の整数 |
+| `data.name` | `string` | YES | 空文字不可 |
+| `data.description` | `string \| null` | NO | — |
+| `data.evalCriteria` | `string \| null` | NO | — |
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"targetId は 1 以上の整数で指定してください"` | targetId が不正値 |
+| `"categoryId は 1 以上の整数で指定してください"` | categoryId が不正値 |
+| `"name は必須です"` | name が空文字 |
+| `"大分類が見つかりません"` / `"中分類が見つかりません"` | 指定 ID が存在しない（NotFoundError） |
+| バリデーションエラーメッセージ | その他不正入力（BadRequestError） |
+
+---
+
+### `updateEvaluationItemAction`
+
+**ファイル:** `src/app/(dashboard)/admin/evaluation-items/actions.ts`
+
+**引数**（`name`・`description`・`evalCriteria` はいずれかが必須）
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `id` | `number` | YES | 1 以上の整数 |
+| `data.name` | `string` | いずれか必須 | 空文字不可 |
+| `data.description` | `string \| null` | いずれか必須 | — |
+| `data.evalCriteria` | `string \| null` | いずれか必須 | — |
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"id は 1 以上の整数で指定してください"` | id が不正値 |
+| `"name は空にできません"` | name が空文字 |
+| `"更新するフィールドを指定してください"` | 更新フィールドが全て undefined |
+| `"評価項目が見つかりません"` | 指定 id が存在しない（NotFoundError） |
+
+---
+
+### `deleteEvaluationItemAction`
+
+**ファイル:** `src/app/(dashboard)/admin/evaluation-items/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `id` | `number` | YES | 1 以上の整数 |
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"id は 1 以上の整数で指定してください"` | id が不正値 |
+| `"評価項目が見つかりません"` | 指定 id が存在しない（NotFoundError） |
+| 紐づきデータに関するエラーメッセージ | 評価レコードが存在する（ConflictError） |
+
+---
+
+## 年度管理
+
+### `createFiscalYearAction`
+
+**ファイル:** `src/app/(dashboard)/admin/fiscal-years/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `data.year` | `number` | YES | 1900〜9999 の整数 |
+| `data.name` | `string` | YES | 空文字不可 |
+| `data.startDate` | `string` | YES | `YYYY-MM-DD` 形式 |
+| `data.endDate` | `string` | YES | `YYYY-MM-DD` 形式 |
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"year は 1900〜9999 の整数で指定してください"` | year が範囲外または非整数 |
+| `"name は必須です"` | name が空文字 |
+| `"startDate, endDate は必須です"` | 日付が未指定 |
+| `"同一の年度がすでに存在します"` | year 重複（ConflictError） |
+| バリデーションエラーメッセージ | 日付形式不正など（BadRequestError） |
+
+---
+
+### `updateFiscalYearAction`
+
+**ファイル:** `src/app/(dashboard)/admin/fiscal-years/actions.ts`
+
+**引数**（`name`・`startDate`・`endDate`・`isCurrent` はいずれかが必須）
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `year` | `number` | YES | 1900〜9999 の整数 |
+| `data.name` | `string` | いずれか必須 | 空文字不可 |
+| `data.startDate` | `string` | いずれか必須 | `YYYY-MM-DD` 形式 |
+| `data.endDate` | `string` | いずれか必須 | `YYYY-MM-DD` 形式 |
+| `data.isCurrent` | `boolean` | いずれか必須 | — |
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"year は 1900〜9999 の整数で指定してください"` | year が範囲外または非整数 |
+| `"更新するフィールドを指定してください"` | 更新フィールドが全て未指定 |
+| `"年度が見つかりません"` | 指定 year が存在しない（NotFoundError） |
+| バリデーションエラーメッセージ | 日付形式不正など（BadRequestError） |
+
+---
+
+### `deleteFiscalYearAction`
+
+**ファイル:** `src/app/(dashboard)/admin/fiscal-years/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `year` | `number` | YES | 1900〜9999 の整数 |
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"year は 1900〜9999 の整数で指定してください"` | year が範囲外または非整数 |
+| `"年度が見つかりません"` | 指定 year が存在しない（NotFoundError） |
+| 紐づきデータに関するエラーメッセージ | 評価レコードやアサインが存在する（ConflictError） |
+
+---
+
+### `addFiscalYearItemAction`
+
+**ファイル:** `src/app/(dashboard)/admin/fiscal-years/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `year` | `number` | YES | 1900〜9999 の整数 |
+| `itemId` | `number` | YES | 1 以上の整数 |
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"year は 1900〜9999 の整数で指定してください"` | year が範囲外または非整数 |
+| `"evaluationItemId は正の整数で指定してください"` | itemId が不正値 |
+| `"年度が見つかりません"` / `"評価項目が見つかりません"` | 指定 ID が存在しない（NotFoundError） |
+| 重複エラーメッセージ | 既に追加済み（ConflictError） |
+| バリデーションエラーメッセージ | その他不正入力（BadRequestError） |
+
+---
+
+### `removeFiscalYearItemAction`
+
+**ファイル:** `src/app/(dashboard)/admin/fiscal-years/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `year` | `number` | YES | 1900〜9999 の整数 |
+| `itemId` | `number` | YES | 1 以上の整数 |
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"year は 1900〜9999 の整数で指定してください"` | year が範囲外または非整数 |
+| `"itemId は正の整数で指定してください"` | itemId が不正値 |
+| `"年度が見つかりません"` / `"評価項目が見つかりません"` | 指定 ID が存在しない（NotFoundError） |
+| バリデーションエラーメッセージ | その他不正入力（BadRequestError） |
+
+---
+
+## ユーザー管理
+
+### `updateUserAction`
+
+**ファイル:** `src/app/(dashboard)/admin/users/actions.ts`
+
+**引数**（`role` と `isActive` はいずれかが必須）
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `id` | `string` | YES | ユーザー ID |
+| `data.role` | `"ADMIN" \| "MEMBER"` | いずれか必須 | — |
+| `data.isActive` | `boolean` | いずれか必須 | — |
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"自分自身のロールは変更できません"` | 自分自身の操作（ForbiddenError） |
+| `"ユーザーが見つかりません"` | 指定 id が存在しない（NotFoundError） |
+| バリデーションエラーメッセージ | role・isActive が不正値（BadRequestError） |
+
+---
+
+### `deleteUserAction`
+
+**ファイル:** `src/app/(dashboard)/admin/users/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `id` | `string` | YES | ユーザー ID |
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"自分自身は削除できません"` | 自分自身の操作（ForbiddenError） |
+| `"ユーザーが見つかりません"` | 指定 id が存在しない（NotFoundError） |
+| `"評価データまたはアサインデータが存在するため削除できません"` | 紐づきデータあり（ConflictError） |
+
+---
+
+## 評価設定
+
+### `upsertEvaluationSettingAction`
+
+**ファイル:** `src/app/(dashboard)/admin/users/[id]/evaluation-settings/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `userId` | `string` | YES | ユーザー ID |
+| `fiscalYear` | `number` | YES | 1900〜9999 の整数 |
+| `data.selfEvaluationEnabled` | `boolean` | YES | — |
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"fiscalYear は 1900〜9999 の整数で指定してください"` | fiscalYear が範囲外または非整数 |
+| `"selfEvaluationEnabled は boolean で指定してください"` | selfEvaluationEnabled が不正値 |
+| `"ユーザーが見つかりません"` | 指定 userId が存在しない（NotFoundError） |
 
 ---
 
 ## 評価者アサイン
 
-### GET /api/evaluation-assignments
-アサイン一覧（admin のみ）
+### `createEvaluationAssignmentAction`
 
-**Query**: `?fiscalYear=2025`
+**ファイル:** `src/app/(dashboard)/admin/evaluation-assignments/actions.ts`
 
-**Response**
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "fiscalYear": 2025,
-      "evaluatee": { "id": "uuid", "name": "山田 太郎" },
-      "evaluator": { "id": "uuid", "name": "鈴木 一郎" }
-    }
-  ]
-}
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `data.fiscalYear` | `number` | YES | 1900〜9999 の整数 |
+| `data.evaluateeId` | `string` | YES | ユーザー ID |
+| `data.evaluatorId` | `string` | YES | ユーザー ID |
+
+**戻り値**
+
+```ts
+{ error?: string }
 ```
 
-### POST /api/evaluation-assignments
-アサイン登録（admin のみ）
+**エラー**
 
-**Request**
-```json
-{
-  "fiscalYear": 2025,
-  "evaluateeId": "uuid",
-  "evaluatorId": "uuid"
-}
-```
-
-**Response**: `201 Created`
-```json
-{ "data": { "id": "uuid", "fiscalYear": 2025, "evaluateeId": "uuid", "evaluatorId": "uuid" } }
-```
-
-### DELETE /api/evaluation-assignments/:id
-アサイン削除（admin のみ）
-
-**Response**: `204 No Content`
+| error | 原因 |
+|-------|------|
+| `"fiscalYear は 1900〜9999 の整数で指定してください"` | fiscalYear が範囲外または非整数（BadRequestError） |
+| `"evaluateeId は必須です"` | evaluateeId が空（BadRequestError） |
+| `"evaluatorId は必須です"` | evaluatorId が空（BadRequestError） |
+| `"同一年度・被評価者・評価者の組み合わせがすでに存在します"` | 重複（ConflictError） |
 
 ---
 
-## 評価
+### `deleteEvaluationAssignmentAction`
 
-### GET /api/members/:id/evaluations/:year
-指定年度の評価一覧
+**ファイル:** `src/app/(dashboard)/admin/evaluation-assignments/actions.ts`
 
-**Response**
-```json
-{
-  "data": [
-    {
-      "eval_item_id": 1,
-      "item_name": "会社員としての基本姿勢",
-      "self_score": "ryo",
-      "self_reason": "日報を毎日記録し...",
-      "manager_score": "ryo",
-      "manager_reason": "採用業務を一次メンバーで対応可能になるよう..."
-    }
-  ]
-}
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `id` | `string` | YES | アサイン ID |
+
+**戻り値**
+
+```ts
+{ error?: string }
 ```
 
-**権限**
-- 本人（`id == 自分`）
-- アサインされた評価者（`evaluation_assignments` に `evaluateeId == :id` かつ `evaluatorId == 自分` のレコードがある）
-- admin
+**エラー**
 
-### PUT /api/members/:id/evaluations/:year/:uid
-採点入力・更新
-
-**Request（本人の場合）**
-```json
-{
-  "self_score": "ryo",
-  "self_reason": "日報を毎日記録し..."
-}
-```
-
-**Request（評価者の場合）**
-```json
-{
-  "manager_score": "yu",
-  "manager_reason": "採用委員長として..."
-}
-```
-
-**権限**
-- `self_score / self_reason`：本人のみ
-- `manager_score / manager_reason`：アサインされた評価者または admin
-
-**Response**: `200 OK`
-```json
-{
-  "data": {
-    "eval_item_id": 1,
-    "self_score": "ryo",
-    "self_reason": "...",
-    "manager_score": "yu",
-    "manager_reason": "..."
-  }
-}
-```
+| error | 原因 |
+|-------|------|
+| `"アサインが見つかりません"` | 指定 id が存在しない（NotFoundError） |
 
 ---
 
-## 自己評価要否設定
+## 自己評価
 
-### GET /api/members/:id/evaluation-settings
-ユーザーの自己評価要否設定一覧取得
+### `upsertSelfEvaluationAction`
 
-**Response**
-```json
-{
-  "data": [
-    { "fiscalYear": 2026, "selfEvaluationEnabled": false },
-    { "fiscalYear": 2025, "selfEvaluationEnabled": true }
-  ]
-}
+**ファイル:** `src/app/(dashboard)/evaluations/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `fiscalYear` | `number` | YES | 1900〜9999 の整数 |
+| `evalItemId` | `number` | YES | 1 以上の整数 |
+| `data.selfScore` | `Score \| null` | NO | `"none" \| "ka" \| "ryo" \| "yu"` |
+| `data.selfReason` | `string \| null` | NO | — |
+
+**戻り値**
+
+```ts
+{ error?: string }
 ```
 
-**権限**: admin および本人のみ
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"fiscalYear は 1900〜9999 の整数で指定してください"` | fiscalYear が範囲外または非整数 |
+| `"evalItemId は正の整数で指定してください"` | evalItemId が不正値 |
+| `"この年度は自己評価が不要に設定されています"` | 自己評価設定が無効 |
+| バリデーションエラーメッセージ | その他不正入力（BadRequestError） |
 
 ---
 
-### PUT /api/members/:id/evaluation-settings/:year
-年度ごとの自己評価要否を更新
+## 評価者評価
 
-**Request**
-```json
-{ "selfEvaluationEnabled": false }
+### `upsertManagerEvaluationAction`
+
+**ファイル:** `src/app/(dashboard)/members/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `evaluateeId` | `string` | YES | ユーザー ID |
+| `fiscalYear` | `number` | YES | 1900〜9999 の整数 |
+| `evalItemId` | `number` | YES | 1 以上の整数 |
+| `data.managerScore` | `Score \| null` | NO | `"none" \| "ka" \| "ryo" \| "yu"` |
+| `data.managerReason` | `string \| null` | NO | — |
+
+**戻り値**
+
+```ts
+{ error?: string }
 ```
 
-**Response**: `200 OK`
-```json
-{ "data": { "fiscalYear": 2026, "selfEvaluationEnabled": false } }
-```
+**エラー**
 
-**権限**: admin のみ
+| error | 原因 |
+|-------|------|
+| `"fiscalYear は 1900〜9999 の整数で指定してください"` | fiscalYear が範囲外または非整数 |
+| `"evalItemId は正の整数で指定してください"` | evalItemId が不正値 |
+| `"評価者としてアサインされていません"` | 評価者アサインが存在しない（ADMIN 以外） |
+| バリデーションエラーメッセージ | その他不正入力（BadRequestError / ForbiddenError） |
 
 ---
 
-## 年度管理（admin）
+## 残存 API Routes
 
-### GET /api/admin/fiscal-years
-年度一覧取得（admin のみ）
+現時点で維持・提供する API Routes はありません。
 
-**Response**
-```json
-{
-  "data": [
-    {
-      "year": 2026,
-      "name": "2026年度",
-      "startDate": "2026-04-01T00:00:00.000Z",
-      "endDate": "2027-03-31T00:00:00.000Z",
-      "isCurrent": true
-    },
-    {
-      "year": 2025,
-      "name": "2025年度",
-      "startDate": "2025-04-01T00:00:00.000Z",
-      "endDate": "2026-03-31T00:00:00.000Z",
-      "isCurrent": false
-    }
-  ]
-}
-```
+コード上に残存しているルートはすべて削除対象（#182）です：
 
-### POST /api/admin/fiscal-years
-年度追加（admin のみ）。直近年度の評価項目紐付けを自動コピー。
-
-**Request**
-```json
-{
-  "year": 2027,
-  "name": "2027年度",
-  "startDate": "2027-04-01",
-  "endDate": "2028-03-31"
-}
-```
-
-**Response**: `201 Created`
-```json
-{
-  "data": {
-    "year": 2027,
-    "name": "2027年度",
-    "startDate": "2027-04-01T00:00:00.000Z",
-    "endDate": "2028-03-31T00:00:00.000Z",
-    "isCurrent": false
-  }
-}
-```
-
-### PATCH /api/admin/fiscal-years/:year
-年度編集（admin のみ）。`name`・`startDate`・`endDate`・`isCurrent` を更新可。
-`isCurrent: true` を設定すると他の年度の `isCurrent` は自動的に `false` になる。
-
-**Request**
-```json
-{
-  "isCurrent": true
-}
-```
-
-**Response**: `200 OK`
-```json
-{
-  "data": {
-    "year": 2026,
-    "name": "2026年度",
-    "startDate": "2026-04-01T00:00:00.000Z",
-    "endDate": "2027-03-31T00:00:00.000Z",
-    "isCurrent": true
-  }
-}
-```
-
-### DELETE /api/admin/fiscal-years/:year
-年度削除（admin のみ）
-
-- `evaluations`・`evaluation_assignments`・`evaluation_settings`・`fiscal_year_items` に紐づくデータがある場合は `409 Conflict`
-
-**Response**: `204 No Content`
-
----
-
-### GET /api/admin/fiscal-years/:year/items
-年度に紐づく評価項目一覧（admin のみ）
-
-**Response**
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "targetId": 1,
-      "categoryId": 1,
-      "no": 1,
-      "name": "会社員としての基本姿勢"
-    }
-  ]
-}
-```
-
-### POST /api/admin/fiscal-years/:year/items
-年度に評価項目を追加（admin のみ）
-
-**Request**
-```json
-{ "evaluationItemId": 1 }
-```
-
-**Response**: `201 Created`
-```json
-{ "data": { "fiscalYear": 2026, "evaluationItemId": 1 } }
-```
-
-### DELETE /api/admin/fiscal-years/:year/items/:itemId
-年度から評価項目を削除（admin のみ）
-
-**Response**: `204 No Content`
-
----
-
-## ユーザー管理（admin）
-
-### GET /api/admin/users
-ユーザー一覧取得（admin のみ）
-
-**Response**
-```json
-{
-  "data": [
-    { "id": "uuid", "name": "山田太郎", "email": "yamada@example.com", "role": "member", "division": "開発部", "joinedAt": null, "createdAt": "2026-01-01T00:00:00.000Z", "isActive": true }
-  ]
-}
-```
-
-### PATCH /api/admin/users/:id
-ロール変更・有効/無効化（admin のみ）。`role` と `isActive` はどちらか一方、または同時に指定可。
-
-**Request（ロール変更）**
-```json
-{ "role": "admin" }
-```
-
-**Request（無効化）**
-```json
-{ "isActive": false }
-```
-
-**Response**: `200 OK`
-```json
-{ "data": { "id": "uuid", "name": "山田太郎", "email": "yamada@example.com", "role": "member", "isActive": false } }
-```
-
-### DELETE /api/admin/users/:id
-ユーザー削除（admin のみ）
-
-- 評価データ・アサインデータが存在する場合は `409 Conflict`
-- 自分自身は削除不可（`403 Forbidden`）
-
-**Response**: `204 No Content`
+| パス | 状態 |
+|---|---|
+| `GET/POST /api/auth/[...nextauth]` | NextAuth スタブ（404 応答）— 削除対象 |
+| `GET /api/members/:id/evaluation-settings` | 呼び出し元なし — 削除対象 |
+| `PUT /api/members/:id/evaluation-settings/:year` | 呼び出し元なし — 削除対象 |
 
 ---
 

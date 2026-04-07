@@ -10,6 +10,7 @@ export default async function AdminUsersPage() {
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
   const users = await prisma.user.findMany({
+    orderBy: { name: "asc" },
     select: {
       id: true,
       name: true,
@@ -19,8 +20,15 @@ export default async function AdminUsersPage() {
       joinedAt: true,
       createdAt: true,
       isActive: true,
+      _count: {
+        select: {
+          evaluateeAssignments: true,
+          evaluatorAssignments: true,
+          evaluations: true,
+          evaluationSettings: true,
+        },
+      },
     },
-    orderBy: { name: "asc" },
   });
 
   return (
@@ -80,6 +88,7 @@ export default async function AdminUsersPage() {
                     currentRole={user.role}
                     isActive={user.isActive}
                     isSelf={user.id === session.user.id}
+                    isDeletable={Object.values(user._count).every((count) => count === 0)}
                   />
                 </td>
               </tr>
