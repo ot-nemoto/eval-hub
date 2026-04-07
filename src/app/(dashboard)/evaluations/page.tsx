@@ -64,7 +64,7 @@ export default async function EvaluationsPage() {
         <h2 className="text-xl font-bold text-gray-900">自己評価</h2>
         <p className="text-sm text-gray-500">{fiscalYear}年度</p>
       </div>
-      <EvaluationTabs items={itemsWithEval} userId={userId} fiscalYear={fiscalYear} />
+      <EvaluationTabs items={itemsWithEval} fiscalYear={fiscalYear} />
     </div>
   );
 }
