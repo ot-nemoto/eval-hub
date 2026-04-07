@@ -139,4 +139,13 @@ describe("deleteUser", () => {
 
     await expect(deleteUser("user-1", "current-user")).rejects.toThrow(ConflictError);
   });
+
+  it("評価設定データが存在する場合は ConflictError をスロー", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never);
+    vi.mocked(prisma.evaluationAssignment.count).mockResolvedValue(0);
+    vi.mocked(prisma.evaluation.count).mockResolvedValue(0);
+    vi.mocked(prisma.evaluationSetting.count).mockResolvedValue(1);
+
+    await expect(deleteUser("user-1", "current-user")).rejects.toThrow(ConflictError);
+  });
 });
