@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EvaluationSettingToggle } from "@/components/admin/EvaluationSettingToggle";
 import { getSession } from "@/lib/auth";
+import { getEvaluationSettings } from "@/lib/evaluation-settings";
 import { prisma } from "@/lib/prisma";
 
 export default async function UserEvaluationSettingsPage({
@@ -24,9 +25,7 @@ export default async function UserEvaluationSettingsPage({
   const currentYear = new Date().getFullYear();
   const years = [currentYear - 1, currentYear, currentYear + 1];
 
-  const settings = await prisma.evaluationSetting.findMany({
-    where: { userId: id },
-  });
+  const settings = await getEvaluationSettings(id);
   const settingMap = Object.fromEntries(
     settings.map((s) => [s.fiscalYear, s.selfEvaluationEnabled]),
   );
