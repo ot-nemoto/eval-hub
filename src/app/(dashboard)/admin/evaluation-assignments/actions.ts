@@ -17,7 +17,7 @@ export async function createEvaluationAssignmentAction(data: {
 }): Promise<{ error?: string }> {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") return { error: "権限がありません" };
+  if (session.user.role !== "ADMIN") redirect("/evaluations");
 
   try {
     await createEvaluationAssignment(data);
@@ -35,7 +35,7 @@ export async function deleteEvaluationAssignmentAction(
 ): Promise<{ error?: string }> {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") return { error: "権限がありません" };
+  if (session.user.role !== "ADMIN") redirect("/evaluations");
 
   try {
     await deleteEvaluationAssignment(id);
