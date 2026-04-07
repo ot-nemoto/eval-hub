@@ -34,6 +34,9 @@ export async function updateUser(
   if (data.role !== undefined && data.role !== "ADMIN" && data.role !== "MEMBER")
     throw new BadRequestError("role は 'ADMIN' または 'MEMBER' で指定してください");
 
+  if (data.isActive !== undefined && typeof data.isActive !== "boolean")
+    throw new BadRequestError("isActive は true または false で指定してください");
+
   const target = await prisma.user.findUnique({ where: { id } });
   if (!target) throw new NotFoundError("ユーザーが見つかりません");
 

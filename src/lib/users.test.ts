@@ -74,6 +74,12 @@ describe("updateUser", () => {
     ).rejects.toThrow(BadRequestError);
   });
 
+  it("isActive が boolean 以外の場合は BadRequestError をスロー", async () => {
+    await expect(
+      updateUser("user-1", { isActive: "false" as unknown as boolean }, "current-user"),
+    ).rejects.toThrow(BadRequestError);
+  });
+
   it("存在しない id の場合は NotFoundError をスロー", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
