@@ -73,7 +73,7 @@
 │   │   │       ※ career/・roles/・records/ は v1.1 以降に追加予定（現状は未作成）
 │   │   ├── api/
 │   │   │   ├── auth/                   ← Clerk 認証コールバック（外部連携）
-│   │   │   └── members/[id]/evaluation-settings/  ← 自己評価要否設定取得・更新（外部連携用）
+│   │   │   └── members/[id]/evaluation-settings/  ← 削除対象（#182）
 │   │   └── layout.tsx
 │   ├── auth.ts
 │   ├── components/
@@ -147,9 +147,9 @@ datasource db {
 - 外部連携・認証コールバック用途のみ残す
 - 残存エンドポイント：
   - `GET/POST /api/auth/[...nextauth]`（Clerk 認証コールバック）
-  - `GET /api/members/:id/evaluation-settings`（自己評価要否設定取得）
-  - `PUT /api/members/:id/evaluation-settings/:year`（自己評価要否設定更新）
 - レスポンスは `{ data, error, meta }` の統一フォーマット（`src/lib/api-response.ts`）
+
+> `GET/PUT /api/members/:id/evaluation-settings` は呼び出し元がなく削除対象（#182）。
 
 ### 評価ロジック
 - 自己採点・評価者採点は同一テーブル（`evaluations`）の別カラムに保存
