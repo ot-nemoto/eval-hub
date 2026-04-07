@@ -9,9 +9,10 @@ type Props = {
   currentRole: "ADMIN" | "MEMBER";
   isActive: boolean;
   isSelf: boolean;
+  isDeletable: boolean;
 };
 
-export function UserActions({ userId, currentRole, isActive, isSelf }: Props) {
+export function UserActions({ userId, currentRole, isActive, isSelf, isDeletable }: Props) {
   const [loading, setLoading] = useState(false);
 
   async function handleRoleChange() {
@@ -88,8 +89,9 @@ export function UserActions({ userId, currentRole, isActive, isSelf }: Props) {
       <button
         type="button"
         onClick={handleDelete}
-        disabled={loading}
-        className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+        disabled={loading || !isDeletable}
+        title={!isDeletable ? "評価データまたはアサインデータが存在するため削除できません" : undefined}
+        className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         削除
       </button>
