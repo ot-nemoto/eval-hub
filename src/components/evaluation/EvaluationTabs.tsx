@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { upsertSelfEvaluationAction } from "@/app/(dashboard)/evaluations/actions";
 import { Button } from "@/components/ui/button";
 
 type Score = "none" | "ka" | "ryo" | "yu";
@@ -27,11 +28,10 @@ type Item = {
 
 type Props = {
   items: Item[];
-  userId: string;
   fiscalYear: number;
 };
 
-export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
+export default function EvaluationTabs({ items, fiscalYear }: Props) {
   const categories = [...new Set(items.map((i) => i.category))];
   const [activeCategory, setActiveCategory] = useState(categories[0] ?? "");
 
@@ -52,18 +52,17 @@ export default function EvaluationTabs({ items, userId, fiscalYear }: Props) {
     setSaving((s) => ({ ...s, [uid]: true }));
     setErrors((e) => ({ ...e, [uid]: "" }));
     try {
-      const res = await fetch(`/api/members/${userId}/evaluations/${fiscalYear}/${uid}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          self_score: scores[uid] ?? "none",
-          self_reason: reasons[uid] ?? "",
-        }),
+      const result = await upsertSelfEvaluationAction(fiscalYear, Number(uid), {
+        selfScore: scores[uid] ?? "none",
+        selfReason: reasons[uid] ?? "",
       });
-      if (!res.ok) throw new Error();
-      setSaved((s) => ({ ...s, [uid]: true }));
-      clearTimeout(savedTimers.current[uid]);
-      savedTimers.current[uid] = setTimeout(() => setSaved((s) => ({ ...s, [uid]: false })), 2000);
+      if (result.error) {
+        setErrors((e) => ({ ...e, [uid]: result.error! }));
+      } else {
+        setSaved((s) => ({ ...s, [uid]: true }));
+        clearTimeout(savedTimers.current[uid]);
+        savedTimers.current[uid] = setTimeout(() => setSaved((s) => ({ ...s, [uid]: false })), 2000);
+      }
     } catch {
       setErrors((e) => ({ ...e, [uid]: "保存に失敗しました" }));
     } finally {
