@@ -16,9 +16,9 @@ type FiscalYear = {
   isCurrent: boolean;
 };
 
-type Props = { fiscalYear: FiscalYear };
+type Props = { fiscalYear: FiscalYear; isDeletable: boolean };
 
-export function FiscalYearActions({ fiscalYear }: Props) {
+export function FiscalYearActions({ fiscalYear, isDeletable }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -147,8 +147,9 @@ export function FiscalYearActions({ fiscalYear }: Props) {
       <button
         type="button"
         onClick={handleDelete}
-        disabled={loading}
-        className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+        disabled={loading || !isDeletable}
+        title={!isDeletable ? "紐づくデータが存在するため削除できません" : undefined}
+        className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         削除
       </button>

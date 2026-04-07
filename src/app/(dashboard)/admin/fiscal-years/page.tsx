@@ -11,7 +11,21 @@ export default async function FiscalYearsPage() {
 
   const fiscalYears = await prisma.fiscalYear.findMany({
     orderBy: { year: "desc" },
-    select: { year: true, name: true, startDate: true, endDate: true, isCurrent: true },
+    select: {
+      year: true,
+      name: true,
+      startDate: true,
+      endDate: true,
+      isCurrent: true,
+      _count: {
+        select: {
+          fiscalYearItems: true,
+          evaluationSettings: true,
+          evaluationAssignments: true,
+          evaluations: true,
+        },
+      },
+    },
   });
 
   return (
@@ -65,7 +79,15 @@ export default async function FiscalYearsPage() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <FiscalYearActions fiscalYear={fy} />
+                    <FiscalYearActions
+                      fiscalYear={fy}
+                      isDeletable={
+                        fy._count.fiscalYearItems === 0 &&
+                        fy._count.evaluationSettings === 0 &&
+                        fy._count.evaluationAssignments === 0 &&
+                        fy._count.evaluations === 0
+                      }
+                    />
                   </td>
                 </tr>
               ))
