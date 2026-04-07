@@ -18,7 +18,7 @@ const mockEvaluation = {
   evalItemId: 1,
   fiscalYear: 2024,
   evaluateeId: "user-1",
-  selfScore: 3,
+  selfScore: "ryo",
   selfReason: "理由",
   managerScore: null,
   managerReason: null,
@@ -43,7 +43,7 @@ describe("getEvaluations", () => {
       {
         eval_item_id: 1,
         item_name: "評価項目A",
-        self_score: 3,
+        self_score: "ryo",
         self_reason: "理由",
         manager_score: null,
         manager_reason: null,
@@ -87,7 +87,7 @@ describe("upsertEvaluation", () => {
     );
     expect(result).toEqual({
       eval_item_id: 1,
-      self_score: 3,
+      self_score: "ryo",
       self_reason: "理由",
       manager_score: null,
       manager_reason: null,
