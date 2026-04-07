@@ -1,7 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+import { upsertEvaluationSettingAction } from "@/app/(dashboard)/admin/users/[id]/evaluation-settings/actions";
 
 type Props = {
   userId: string;
@@ -10,23 +11,15 @@ type Props = {
 };
 
 export function EvaluationSettingToggle({ userId, fiscalYear, enabled }: Props) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function handleToggle() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/members/${userId}/evaluation-settings/${fiscalYear}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ selfEvaluationEnabled: !enabled }),
+      const result = await upsertEvaluationSettingAction(userId, fiscalYear, {
+        selfEvaluationEnabled: !enabled,
       });
-      if (res.ok) {
-        router.refresh();
-      } else {
-        const json = await res.json().catch(() => ({}));
-        alert(json.error?.message ?? "更新に失敗しました");
-      }
+      if (result.error) alert(result.error);
     } catch {
       alert("通信エラーが発生しました");
     } finally {

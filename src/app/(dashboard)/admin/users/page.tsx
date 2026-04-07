@@ -2,26 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { UserActions } from "@/components/admin/UserActions";
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getUsers } from "@/lib/users";
 
 export default async function AdminUsersPage() {
   const session = await getSession();
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
-  const users = await prisma.user.findMany({
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      division: true,
-      joinedAt: true,
-      createdAt: true,
-      isActive: true,
-    },
-    orderBy: { name: "asc" },
-  });
+  const users = await getUsers();
 
   return (
     <div>

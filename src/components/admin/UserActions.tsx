@@ -1,7 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+import { deleteUserAction, updateUserAction } from "@/app/(dashboard)/admin/users/actions";
 
 type Props = {
   userId: string;
@@ -11,7 +12,6 @@ type Props = {
 };
 
 export function UserActions({ userId, currentRole, isActive, isSelf }: Props) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function handleRoleChange() {
@@ -21,17 +21,8 @@ export function UserActions({ userId, currentRole, isActive, isSelf }: Props) {
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: newRole }),
-      });
-      if (res.ok) {
-        router.refresh();
-      } else {
-        const json = await res.json().catch(() => ({}));
-        alert(json.error?.message ?? "ロールの変更に失敗しました");
-      }
+      const result = await updateUserAction(userId, { role: newRole });
+      if (result.error) alert(result.error);
     } catch {
       alert("通信エラーが発生しました");
     } finally {
@@ -45,17 +36,8 @@ export function UserActions({ userId, currentRole, isActive, isSelf }: Props) {
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: !isActive }),
-      });
-      if (res.ok) {
-        router.refresh();
-      } else {
-        const json = await res.json().catch(() => ({}));
-        alert(json.error?.message ?? `${label}に失敗しました`);
-      }
+      const result = await updateUserAction(userId, { isActive: !isActive });
+      if (result.error) alert(result.error);
     } catch {
       alert("通信エラーが発生しました");
     } finally {
@@ -68,13 +50,8 @@ export function UserActions({ userId, currentRole, isActive, isSelf }: Props) {
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
-      if (res.status === 204) {
-        router.refresh();
-      } else {
-        const json = await res.json().catch(() => ({}));
-        alert(json.error?.message ?? "削除に失敗しました");
-      }
+      const result = await deleteUserAction(userId);
+      if (result.error) alert(result.error);
     } catch {
       alert("通信エラーが発生しました");
     } finally {
