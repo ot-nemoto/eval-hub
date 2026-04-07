@@ -121,7 +121,7 @@ describe("upsertEvaluation", () => {
   it("managerScore・managerReason を更新できる", async () => {
     vi.mocked(prisma.evaluation.upsert).mockResolvedValue({
       ...mockEvaluation,
-      managerScore: 4,
+      managerScore: "yu",
       managerReason: "評価コメント",
     } as never);
 
@@ -129,10 +129,10 @@ describe("upsertEvaluation", () => {
       fiscalYear: 2024,
       evaluateeId: "user-1",
       evalItemId: 1,
-      managerScore: 4,
+      managerScore: "yu",
       managerReason: "評価コメント",
     });
 
-    expect(result).toMatchObject({ manager_score: 4, manager_reason: "評価コメント" });
+    expect(result).toMatchObject({ manager_score: "yu", manager_reason: "評価コメント" });
   });
 });
