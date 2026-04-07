@@ -13,12 +13,12 @@ export async function getEvaluations(evaluateeId: string, fiscalYear: number) {
   });
 
   return evaluations.map((e) => ({
-    eval_item_id: e.evalItemId,
-    item_name: e.evaluationItem.name,
-    self_score: e.selfScore,
-    self_reason: e.selfReason,
-    manager_score: e.managerScore,
-    manager_reason: e.managerReason,
+    evalItemId: e.evalItemId,
+    itemName: e.evaluationItem.name,
+    selfScore: e.selfScore,
+    selfReason: e.selfReason,
+    managerScore: e.managerScore,
+    managerReason: e.managerReason,
   }));
 }
 
@@ -47,10 +47,10 @@ export async function upsertEvaluation(data: {
   });
 
   return {
-    eval_item_id: evaluation.evalItemId,
-    self_score: evaluation.selfScore,
-    self_reason: evaluation.selfReason,
-    manager_score: evaluation.managerScore,
-    manager_reason: evaluation.managerReason,
+    evalItemId: evaluation.evalItemId,
+    selfScore: evaluation.selfScore,
+    selfReason: evaluation.selfReason,
+    managerScore: evaluation.managerScore,
+    managerReason: evaluation.managerReason,
   };
 }

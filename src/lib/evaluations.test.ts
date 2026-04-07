@@ -41,12 +41,12 @@ describe("getEvaluations", () => {
     );
     expect(result).toEqual([
       {
-        eval_item_id: 1,
-        item_name: "評価項目A",
-        self_score: "ryo",
-        self_reason: "理由",
-        manager_score: null,
-        manager_reason: null,
+        evalItemId: 1,
+        itemName: "評価項目A",
+        selfScore: "ryo",
+        selfReason: "理由",
+        managerScore: null,
+        managerReason: null,
       },
     ]);
   });
@@ -86,11 +86,11 @@ describe("upsertEvaluation", () => {
       }),
     );
     expect(result).toEqual({
-      eval_item_id: 1,
-      self_score: "ryo",
-      self_reason: "理由",
-      manager_score: null,
-      manager_reason: null,
+      evalItemId: 1,
+      selfScore: "ryo",
+      selfReason: "理由",
+      managerScore: null,
+      managerReason: null,
     });
   });
 
@@ -133,6 +133,6 @@ describe("upsertEvaluation", () => {
       managerReason: "評価コメント",
     });
 
-    expect(result).toMatchObject({ manager_score: "yu", manager_reason: "評価コメント" });
+    expect(result).toMatchObject({ managerScore: "yu", managerReason: "評価コメント" });
   });
 });
