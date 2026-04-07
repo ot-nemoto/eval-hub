@@ -2,14 +2,34 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { UserActions } from "@/components/admin/UserActions";
 import { getSession } from "@/lib/auth";
-import { getUsers } from "@/lib/users";
+import { prisma } from "@/lib/prisma";
 
 export default async function AdminUsersPage() {
   const session = await getSession();
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
-  const users = await getUsers();
+  const users = await prisma.user.findMany({
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      division: true,
+      joinedAt: true,
+      createdAt: true,
+      isActive: true,
+      _count: {
+        select: {
+          evaluateeAssignments: true,
+          evaluatorAssignments: true,
+          evaluations: true,
+          evaluationSettings: true,
+        },
+      },
+    },
+  });
 
   return (
     <div>
@@ -68,6 +88,7 @@ export default async function AdminUsersPage() {
                     currentRole={user.role}
                     isActive={user.isActive}
                     isSelf={user.id === session.user.id}
+                    isDeletable={Object.values(user._count).every((count) => count === 0)}
                   />
                 </td>
               </tr>
