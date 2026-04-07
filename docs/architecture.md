@@ -72,7 +72,7 @@
 │   │   │           └── actions.ts      ← アサイン管理 Server Actions（UI は T62 で実装予定）
 │   │   │       ※ career/・roles/・records/ は v1.1 以降に追加予定（現状は未作成）
 │   │   ├── api/
-│   │   │   ├── auth/                   ← Clerk 認証コールバック（外部連携）
+│   │   │   ├── auth/[...nextauth]/     ← NextAuth スタブ（404 応答・削除対象）
 │   │   │   └── members/[id]/evaluation-settings/  ← 削除対象（#182）
 │   │   └── layout.tsx
 │   ├── auth.ts
