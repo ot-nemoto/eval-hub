@@ -144,12 +144,10 @@ datasource db {
 - lib 層のカスタムエラー（`BadRequestError` / `NotFoundError` 等）は catch して `{ error: message }` を返す。それ以外は再 throw する
 
 ### API Routes（残存）
-- 外部連携・認証コールバック用途のみ残す
-- 残存エンドポイント：
-  - `GET/POST /api/auth/[...nextauth]`（Clerk 認証コールバック）
-- レスポンスは `{ data, error, meta }` の統一フォーマット（`src/lib/api-response.ts`）
-
-> `GET/PUT /api/members/:id/evaluation-settings` は呼び出し元がなく削除対象（#182）。
+- 現時点で維持する API Routes はなし
+- 残存しているルートはすべて削除対象：
+  - `GET/POST /api/auth/[...nextauth]`：NextAuth スタブ（404 応答）— 削除対象（#182）
+  - `GET/PUT /api/members/:id/evaluation-settings`：呼び出し元なし — 削除対象（#182）
 
 ### 評価ロジック
 - 自己採点・評価者採点は同一テーブル（`evaluations`）の別カラムに保存
