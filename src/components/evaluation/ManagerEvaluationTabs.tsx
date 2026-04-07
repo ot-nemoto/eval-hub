@@ -1,9 +1,9 @@
 "use client";
 
+import type { Score } from "@prisma/client";
 import { useEffect, useRef, useState } from "react";
+import { upsertManagerEvaluationAction } from "@/app/(dashboard)/members/actions";
 import { Button } from "@/components/ui/button";
-
-type Score = "none" | "ka" | "ryo" | "yu";
 
 const SCORE_LABELS: Record<Score, string> = {
   none: "なし",
@@ -61,18 +61,17 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
     setSaving((s) => ({ ...s, [uid]: true }));
     setErrors((e) => ({ ...e, [uid]: "" }));
     try {
-      const res = await fetch(`/api/members/${evaluateeId}/evaluations/${fiscalYear}/${uid}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          manager_score: scores[uid] ?? "none",
-          manager_reason: reasons[uid] ?? "",
-        }),
+      const result = await upsertManagerEvaluationAction(evaluateeId, fiscalYear, Number(uid), {
+        managerScore: scores[uid] ?? "none",
+        managerReason: reasons[uid] ?? "",
       });
-      if (!res.ok) throw new Error();
-      setSaved((s) => ({ ...s, [uid]: true }));
-      clearTimeout(savedTimers.current[uid]);
-      savedTimers.current[uid] = setTimeout(() => setSaved((s) => ({ ...s, [uid]: false })), 2000);
+      if (result.error) {
+        setErrors((e) => ({ ...e, [uid]: result.error! }));
+      } else {
+        setSaved((s) => ({ ...s, [uid]: true }));
+        clearTimeout(savedTimers.current[uid]);
+        savedTimers.current[uid] = setTimeout(() => setSaved((s) => ({ ...s, [uid]: false })), 2000);
+      }
     } catch {
       setErrors((e) => ({ ...e, [uid]: "保存に失敗しました" }));
     } finally {
