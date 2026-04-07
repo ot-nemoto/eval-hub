@@ -1,6 +1,6 @@
 "use client";
 
-import { Score } from "@prisma/client";
+import type { Score } from "@prisma/client";
 import { useEffect, useRef, useState } from "react";
 import { upsertManagerEvaluationAction } from "@/app/(dashboard)/members/actions";
 import { Button } from "@/components/ui/button";
