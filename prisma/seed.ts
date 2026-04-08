@@ -282,7 +282,9 @@ async function main() {
   // target 内で連番の no を付与
   const categoriesData: { target: string; name: string; no: number }[] = [];
   for (const [target, names] of categoriesByTarget) {
-    names.forEach((name, i) => categoriesData.push({ target, name, no: i + 1 }));
+    for (let i = 0; i < names.length; i++) {
+      categoriesData.push({ target, name: names[i], no: i + 1 });
+    }
   }
 
   await prisma.category.createMany({
