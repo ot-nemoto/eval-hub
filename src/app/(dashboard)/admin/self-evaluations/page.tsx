@@ -30,7 +30,10 @@ export default async function AdminSelfEvaluationsPage({
 
   const parsedYear = yearParam !== undefined ? Number(yearParam) : null;
   const selectedYear =
-    parsedYear !== null && Number.isInteger(parsedYear)
+    parsedYear !== null &&
+    Number.isInteger(parsedYear) &&
+    parsedYear >= 1900 &&
+    parsedYear <= 9999
       ? parsedYear
       : (currentFiscalYear?.year ?? null);
 
