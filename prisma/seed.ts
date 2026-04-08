@@ -57,8 +57,24 @@ async function cleanupUser(email: string): Promise<void> {
 
 async function main() {
   // =========================================================================
-  // 0. 旧 seed ユーザーのクリーンアップ（旧メールアドレスのユーザーを DB・Clerk から削除）
-  //    ※ 可変データは後の全削除ステップで除去されるため、ユーザー削除のみ行う
+  // 0. 全データをクリーンアップ（FK 順に削除）
+  //      マスタデータも含めて全削除し、seed JSON から完全に再構築する
+  //      ユーザー・年度マスタ（fiscal_years）は保持する
+  //      ※ 旧ユーザー削除（ステップ 0-2）より先に実行することで、
+  //        FK 制約によるユーザー削除失敗を防ぐ
+  // =========================================================================
+  await prisma.evaluation.deleteMany({});
+  await prisma.fiscalYearItem.deleteMany({});
+  await prisma.evaluationAssignment.deleteMany({});
+  await prisma.evaluationSetting.deleteMany({});
+  await prisma.evaluationItem.deleteMany({});
+  await prisma.category.deleteMany({});
+  await prisma.target.deleteMany({});
+  console.log("all data cleared (evaluations / fiscal_year_items / assignments / settings / items / categories / targets)");
+
+  // =========================================================================
+  // 0-2. 旧 seed ユーザーのクリーンアップ（旧メールアドレスのユーザーを DB・Clerk から削除）
+  //      ステップ 0 の全削除後に実行するため、FK 制約なしで安全に削除できる
   // =========================================================================
   const oldEmails = [
     // 旧ユーザー（ドカベンキャラクター）
@@ -73,20 +89,6 @@ async function main() {
     "sato@example.com",
   ];
   for (const email of oldEmails) await cleanupUser(email);
-
-  // =========================================================================
-  // 0-2. 全データをクリーンアップ（FK 順に削除）
-  //      マスタデータも含めて全削除し、seed JSON から完全に再構築する
-  //      ユーザー・年度マスタ（fiscal_years）は保持する
-  // =========================================================================
-  await prisma.evaluation.deleteMany({});
-  await prisma.fiscalYearItem.deleteMany({});
-  await prisma.evaluationAssignment.deleteMany({});
-  await prisma.evaluationSetting.deleteMany({});
-  await prisma.evaluationItem.deleteMany({});
-  await prisma.category.deleteMany({});
-  await prisma.target.deleteMany({});
-  console.log("all data cleared (evaluations / fiscal_year_items / assignments / settings / items / categories / targets)");
 
   // =========================================================================
   // 1. ユーザー
