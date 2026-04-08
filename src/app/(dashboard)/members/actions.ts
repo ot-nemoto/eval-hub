@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { Score } from "@prisma/client";
+import type { Score } from "@prisma/client";
 import { getSession } from "@/lib/auth";
 import { BadRequestError, ForbiddenError } from "@/lib/errors";
 import { upsertEvaluation } from "@/lib/evaluations";

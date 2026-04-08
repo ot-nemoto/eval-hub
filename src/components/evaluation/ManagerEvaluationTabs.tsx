@@ -66,7 +66,7 @@ export default function ManagerEvaluationTabs({ items, evaluateeId, fiscalYear }
         managerReason: reasons[uid] ?? "",
       });
       if (result.error) {
-        setErrors((e) => ({ ...e, [uid]: result.error! }));
+        setErrors((e) => ({ ...e, [uid]: result.error ?? "保存に失敗しました" }));
       } else {
         setSaved((s) => ({ ...s, [uid]: true }));
         clearTimeout(savedTimers.current[uid]);

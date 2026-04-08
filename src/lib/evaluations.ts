@@ -1,4 +1,4 @@
-import { Score } from "@prisma/client";
+import type { Score } from "@prisma/client";
 import { BadRequestError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 

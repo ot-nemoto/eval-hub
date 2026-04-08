@@ -13,6 +13,7 @@ export default async function EvaluationsPage() {
 
   const [items, evaluations, setting] = await Promise.all([
     prisma.evaluationItem.findMany({
+      where: { fiscalYearItems: { some: { fiscalYear: fiscalYear } } },
       orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
       include: { target: true, category: true },
     }),

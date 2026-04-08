@@ -48,34 +48,33 @@ async function deleteClerkUser(email: string): Promise<void> {
 async function cleanupUser(email: string): Promise<void> {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) return;
-  await prisma.evaluationAssignment.deleteMany({
-    where: { OR: [{ evaluateeId: user.id }, { evaluatorId: user.id }] },
-  });
-  await prisma.evaluation.deleteMany({ where: { evaluateeId: user.id } });
-  await prisma.evaluationSetting.deleteMany({ where: { userId: user.id } });
   await prisma.user.delete({ where: { email } });
   await deleteClerkUser(email);
   console.log(`  deleted: ${email}`);
-}
-
-// ─── 年度マスタ ────────────────────────────────────────────────────────────────
-
-async function seedFiscalYearItems(allItemIds: number[]) {
-  const years = [2025, 2026, 2027];
-  for (const year of years) {
-    await prisma.fiscalYearItem.createMany({
-      data: allItemIds.map((id) => ({ fiscalYear: year, evaluationItemId: id })),
-      skipDuplicates: true,
-    });
-  }
-  console.log(`fiscal_year_items: upserted for ${years.join(", ")}`);
 }
 
 // ─── メイン ────────────────────────────────────────────────────────────────────
 
 async function main() {
   // =========================================================================
-  // 0. 旧 seed ユーザーのクリーンアップ（旧メールアドレスのユーザーを DB・Clerk から削除）
+  // 0. 全データをクリーンアップ（FK 順に削除）
+  //      マスタデータも含めて全削除し、seed JSON から完全に再構築する
+  //      ユーザー・年度マスタ（fiscal_years）は保持する
+  //      ※ 旧ユーザー削除（ステップ 0-2）より先に実行することで、
+  //        FK 制約によるユーザー削除失敗を防ぐ
+  // =========================================================================
+  await prisma.evaluation.deleteMany({});
+  await prisma.fiscalYearItem.deleteMany({});
+  await prisma.evaluationAssignment.deleteMany({});
+  await prisma.evaluationSetting.deleteMany({});
+  await prisma.evaluationItem.deleteMany({});
+  await prisma.category.deleteMany({});
+  await prisma.target.deleteMany({});
+  console.log("all data cleared (evaluations / fiscal_year_items / assignments / settings / items / categories / targets)");
+
+  // =========================================================================
+  // 0-2. 旧 seed ユーザーのクリーンアップ（旧メールアドレスのユーザーを DB・Clerk から削除）
+  //      ステップ 0 の全削除後に実行するため、FK 制約なしで安全に削除できる
   // =========================================================================
   const oldEmails = [
     // 旧ユーザー（ドカベンキャラクター）
@@ -90,30 +89,6 @@ async function main() {
     "sato@example.com",
   ];
   for (const email of oldEmails) await cleanupUser(email);
-
-  // =========================================================================
-  // 0-2. 現 seed ユーザーの可変データを初期化
-  //      E2E テストで追加されたデータを毎回クリーンな状態に戻す
-  //      （ユーザー自体は削除しない。Clerk ユーザーも保持する）
-  // =========================================================================
-  const seedEmails = [
-    "bonjiri@example.com",
-    "tsukune@example.com",
-    "tebasaki@example.com",
-    "nankotsu@example.com",
-    "sunagimo@example.com",
-    "torikawa@example.com",
-  ];
-  for (const email of seedEmails) {
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) continue;
-    await prisma.evaluation.deleteMany({ where: { evaluateeId: user.id } });
-    await prisma.evaluationAssignment.deleteMany({
-      where: { OR: [{ evaluateeId: user.id }, { evaluatorId: user.id }] },
-    });
-    await prisma.evaluationSetting.deleteMany({ where: { userId: user.id } });
-  }
-  console.log("seed users: evaluations / assignments / settings cleared");
 
   // =========================================================================
   // 1. ユーザー
@@ -165,7 +140,7 @@ async function main() {
   console.log(`users: ${usersData.length} upserted`);
 
   // =========================================================================
-  // 2. 年度マスタ（fiscal_years のみ、fiscal_year_items は後で登録）
+  // 2. 年度マスタ（fiscal_years）
   // =========================================================================
   const fiscalYearsBase = [
     {
@@ -221,7 +196,7 @@ async function main() {
   //  sunagimo    │ false │ false │ false  ← デフォルトのため登録不要
   //  torikawa    │ false │ false │ false  ← デフォルトのため登録不要
   // =========================================================================
-  const settingsData: { email: string; fiscalYear: number; selfEvaluationEnabled: boolean }[] = [
+  const settingsData = [
     { email: "tsukune@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
     { email: "tebasaki@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
     { email: "tebasaki@example.com", fiscalYear: 2026, selfEvaluationEnabled: true },
@@ -230,22 +205,17 @@ async function main() {
     { email: "nankotsu@example.com", fiscalYear: 2026, selfEvaluationEnabled: true },
     { email: "nankotsu@example.com", fiscalYear: 2027, selfEvaluationEnabled: true },
   ];
-
-  for (const s of settingsData) {
-    await prisma.evaluationSetting.upsert({
-      where: { userId_fiscalYear: { userId: u[s.email].id, fiscalYear: s.fiscalYear } },
-      update: { selfEvaluationEnabled: s.selfEvaluationEnabled },
-      create: {
-        userId: u[s.email].id,
-        fiscalYear: s.fiscalYear,
-        selfEvaluationEnabled: s.selfEvaluationEnabled,
-      },
-    });
-  }
-  console.log(`evaluation_settings: ${settingsData.length} upserted`);
+  await prisma.evaluationSetting.createMany({
+    data: settingsData.map((s) => ({
+      userId: u[s.email].id,
+      fiscalYear: s.fiscalYear,
+      selfEvaluationEnabled: s.selfEvaluationEnabled,
+    })),
+  });
+  console.log(`evaluation_settings: ${settingsData.length} created`);
 
   // =========================================================================
-  // 3. 評価者アサイン（evaluation_assignments）
+  // 4. 評価者アサイン（evaluation_assignments）
   //
   //  年度  │ 被評価者  │ 評価者（上長）
   //  ──────┼───────────┼────────────────
@@ -270,28 +240,17 @@ async function main() {
     { fiscalYear: 2026, evaluatee: "nankotsu@example.com", evaluator: "tsukune@example.com" },
     { fiscalYear: 2026, evaluatee: "nankotsu@example.com", evaluator: "tebasaki@example.com" },
   ];
-
-  for (const a of assignmentsData) {
-    await prisma.evaluationAssignment.upsert({
-      where: {
-        fiscalYear_evaluateeId_evaluatorId: {
-          fiscalYear: a.fiscalYear,
-          evaluateeId: u[a.evaluatee].id,
-          evaluatorId: u[a.evaluator].id,
-        },
-      },
-      update: {},
-      create: {
-        fiscalYear: a.fiscalYear,
-        evaluateeId: u[a.evaluatee].id,
-        evaluatorId: u[a.evaluator].id,
-      },
-    });
-  }
-  console.log(`evaluation_assignments: ${assignmentsData.length} upserted`);
+  await prisma.evaluationAssignment.createMany({
+    data: assignmentsData.map((a) => ({
+      fiscalYear: a.fiscalYear,
+      evaluateeId: u[a.evaluatee].id,
+      evaluatorId: u[a.evaluator].id,
+    })),
+  });
+  console.log(`evaluation_assignments: ${assignmentsData.length} created`);
 
   // =========================================================================
-  // 4. 評価項目マスタ（evaluation_items）
+  // 5. 大分類マスタ（targets）
   // =========================================================================
   const targetsData = [
     ...new Map(
@@ -299,80 +258,107 @@ async function main() {
     ).values(),
   ].sort((a, b) => a.no - b.no);
 
-  for (const t of targetsData) {
-    await prisma.target.upsert({
-      where: { no: t.no },
-      update: { name: t.name },
-      create: { name: t.name, no: t.no },
-    });
-  }
-  console.log(`targets: ${targetsData.length} upserted`);
+  await prisma.target.createMany({ data: targetsData });
+  console.log(`targets: ${targetsData.length} created`);
 
   // =========================================================================
   // 6. 中分類マスタ（categories）
+  //    seed JSON では (target, category_no) が重複するケースがあるため、
+  //    category_name を一意識別子とし、target 内で連番の no を自動付与する
   // =========================================================================
   const allTargets = await prisma.target.findMany();
   const targetByName = Object.fromEntries(allTargets.map((t) => [t.name, t]));
 
-  const categoriesData = [
-    ...new Map(
-      evaluationItemsData.map((d) => [
-        `${d.target}|${d.category}`,
-        { target: d.target, name: d.category, no: d.category_no ?? 0 },
-      ]),
-    ).values(),
-  ].sort((a, b) => a.no - b.no);
-
-  for (const c of categoriesData) {
-    const target = targetByName[c.target];
-    await prisma.category.upsert({
-      where: { targetId_no: { targetId: target.id, no: c.no } },
-      update: { name: c.name },
-      create: { targetId: target.id, name: c.name, no: c.no },
-    });
+  // target ごとに category_name の出現順で一意リストを構築
+  const seenCategoryKeys = new Set<string>();
+  const categoriesByTarget = new Map<string, string[]>();
+  for (const d of evaluationItemsData) {
+    const key = `${d.target}|${d.category}`;
+    if (!seenCategoryKeys.has(key)) {
+      seenCategoryKeys.add(key);
+      if (!categoriesByTarget.has(d.target)) categoriesByTarget.set(d.target, []);
+      categoriesByTarget.get(d.target)?.push(d.category);
+    }
   }
-  console.log(`categories: ${categoriesData.length} upserted`);
+
+  // target 内で連番の no を付与
+  const categoriesData: { target: string; name: string; no: number }[] = [];
+  for (const [target, names] of categoriesByTarget) {
+    for (let i = 0; i < names.length; i++) {
+      categoriesData.push({ target, name: names[i], no: i + 1 });
+    }
+  }
+
+  await prisma.category.createMany({
+    data: categoriesData.map((c) => ({
+      targetId: targetByName[c.target].id,
+      name: c.name,
+      no: c.no,
+    })),
+  });
+  console.log(`categories: ${categoriesData.length} created`);
 
   // =========================================================================
   // 7. 評価項目マスタ（evaluation_items）
+  //    category は target|category_name で引く
   // =========================================================================
   const allCategories = await prisma.category.findMany({ include: { target: true } });
-  const categoryKey = (targetName: string, categoryName: string) => `${targetName}|${categoryName}`;
   const categoryByKey = Object.fromEntries(
-    allCategories.map((c) => [categoryKey(c.target.name, c.name), c]),
+    allCategories.map((c) => [`${c.target.name}|${c.name}`, c]),
   );
 
-  for (const item of evaluationItemsData) {
-    const target = targetByName[item.target];
-    const category = categoryByKey[categoryKey(item.target, item.category)];
-    await prisma.evaluationItem.upsert({
-      where: { categoryId_no: { categoryId: category.id, no: item.item_no } },
-      update: {
-        targetId: target.id,
-        name: item.name,
-        description: item.description ?? null,
-        evalCriteria: item.eval_criteria ?? null,
-      },
-      create: {
-        targetId: target.id,
-        categoryId: category.id,
-        no: item.item_no,
-        name: item.name,
-        description: item.description ?? null,
-        evalCriteria: item.eval_criteria ?? null,
-      },
-    });
-  }
-  console.log(`evaluation_items: ${evaluationItemsData.length} upserted`);
+  // name が空のプレースホルダー行と (target, category, item_no) の重複を除外する
+  const seenItemKeys = new Set<string>();
+  const deduplicatedItems = evaluationItemsData.filter((item) => {
+    if (!item.name || item.name.trim() === "") return false; // 空 name を除外
+    const key = `${item.target}|${item.category}|${item.item_no}`;
+    if (seenItemKeys.has(key)) return false;
+    seenItemKeys.add(key);
+    return true;
+  });
+
+  await prisma.evaluationItem.createMany({
+    data: deduplicatedItems.map((item) => ({
+      targetId: targetByName[item.target].id,
+      categoryId: categoryByKey[`${item.target}|${item.category}`].id,
+      no: item.item_no,
+      name: item.name,
+      description: item.description ?? null,
+      evalCriteria: item.eval_criteria ?? null,
+    })),
+  });
+  console.log(`evaluation_items: ${deduplicatedItems.length} created (${evaluationItemsData.length - deduplicatedItems.length} duplicates skipped)`);
 
   // =========================================================================
   // 8. fiscal_year_items（年度と評価項目の紐付け）
+  //    2026（現在年度）: Recruit カテゴリは「採用広告」1件のみ（T78 フィルタリング動作確認用）
+  //    → 評価画面で Recruit が1件しか表示されなければフィルタが正常に機能している
   // =========================================================================
   const allItems = await prisma.evaluationItem.findMany({
-    select: { id: true },
+    select: { id: true, name: true },
     orderBy: { id: "asc" },
   });
-  await seedFiscalYearItems(allItems.map((i) => i.id));
+
+  // Recruit カテゴリのうち「採用広告」以外を 2026 から除外
+  const recruitExcluded = new Set(
+    allItems
+      .filter((item) => ["採用計画の作成実施", "紹介会社運用", "入社試験", "応募者フォロー"].includes(item.name))
+      .map((item) => item.id),
+  );
+  const items2026 = allItems.filter((item) => !recruitExcluded.has(item.id));
+
+  await prisma.fiscalYearItem.createMany({
+    data: [
+      ...allItems.flatMap((item) => [
+        { fiscalYear: 2025, evaluationItemId: item.id },
+        { fiscalYear: 2027, evaluationItemId: item.id },
+      ]),
+      ...items2026.map((item) => ({ fiscalYear: 2026, evaluationItemId: item.id })),
+    ],
+  });
+  console.log(
+    `fiscal_year_items: created (2025/2027: ${allItems.length}件, 2026: ${items2026.length}件 ※Recruitの4件除外)`,
+  );
 
   // =========================================================================
   // 9. 評価データ（evaluations）
@@ -390,41 +376,33 @@ async function main() {
   }
   const seedItems = allItems.slice(0, 3);
 
-  const evaluationsData: {
-    fiscalYear: number;
-    evaluateeEmail: string;
-    itemId: number;
-    selfScore: "ka" | "ryo" | "yu" | null;
-    selfReason: string | null;
-    managerScore: "ka" | "ryo" | "yu" | null;
-    managerReason: string | null;
-  }[] = [
+  const evaluationsData = [
     // tebasaki: 自己採点 + 評価者採点あり
     {
       fiscalYear: 2026,
       evaluateeEmail: "tebasaki@example.com",
       itemId: seedItems[0].id,
-      selfScore: "ryo",
+      selfScore: "ryo" as const,
       selfReason: "積極的に取り組みました",
-      managerScore: "yu",
+      managerScore: "yu" as const,
       managerReason: "非常に優秀な取り組みでした",
     },
     {
       fiscalYear: 2026,
       evaluateeEmail: "tebasaki@example.com",
       itemId: seedItems[1].id,
-      selfScore: "ka",
+      selfScore: "ka" as const,
       selfReason: "改善の余地があります",
-      managerScore: "ryo",
+      managerScore: "ryo" as const,
       managerReason: "着実に成長しています",
     },
     {
       fiscalYear: 2026,
       evaluateeEmail: "tebasaki@example.com",
       itemId: seedItems[2].id,
-      selfScore: "yu",
+      selfScore: "yu" as const,
       selfReason: "目標を超えて達成できました",
-      managerScore: "yu",
+      managerScore: "yu" as const,
       managerReason: "期待以上の成果でした",
     },
     // nankotsu: 自己採点のみ（評価者採点なし）
@@ -432,7 +410,7 @@ async function main() {
       fiscalYear: 2026,
       evaluateeEmail: "nankotsu@example.com",
       itemId: seedItems[0].id,
-      selfScore: "ka",
+      selfScore: "ka" as const,
       selfReason: "基本的なことはできました",
       managerScore: null,
       managerReason: null,
@@ -441,7 +419,7 @@ async function main() {
       fiscalYear: 2026,
       evaluateeEmail: "nankotsu@example.com",
       itemId: seedItems[1].id,
-      selfScore: "ryo",
+      selfScore: "ryo" as const,
       selfReason: "しっかり対応できました",
       managerScore: null,
       managerReason: null,
@@ -450,40 +428,25 @@ async function main() {
       fiscalYear: 2026,
       evaluateeEmail: "nankotsu@example.com",
       itemId: seedItems[2].id,
-      selfScore: "ryo",
+      selfScore: "ryo" as const,
       selfReason: "チームに貢献できました",
       managerScore: null,
       managerReason: null,
     },
   ];
 
-  for (const e of evaluationsData) {
-    await prisma.evaluation.upsert({
-      where: {
-        fiscalYear_evaluateeId_evalItemId: {
-          fiscalYear: e.fiscalYear,
-          evaluateeId: u[e.evaluateeEmail].id,
-          evalItemId: e.itemId,
-        },
-      },
-      update: {
-        selfScore: e.selfScore,
-        selfReason: e.selfReason,
-        managerScore: e.managerScore,
-        managerReason: e.managerReason,
-      },
-      create: {
-        fiscalYear: e.fiscalYear,
-        evaluateeId: u[e.evaluateeEmail].id,
-        evalItemId: e.itemId,
-        selfScore: e.selfScore,
-        selfReason: e.selfReason,
-        managerScore: e.managerScore,
-        managerReason: e.managerReason,
-      },
-    });
-  }
-  console.log(`evaluations: ${evaluationsData.length} upserted`);
+  await prisma.evaluation.createMany({
+    data: evaluationsData.map((e) => ({
+      fiscalYear: e.fiscalYear,
+      evaluateeId: u[e.evaluateeEmail].id,
+      evalItemId: e.itemId,
+      selfScore: e.selfScore,
+      selfReason: e.selfReason,
+      managerScore: e.managerScore,
+      managerReason: e.managerReason,
+    })),
+  });
+  console.log(`evaluations: ${evaluationsData.length} created`);
 }
 
 main()
