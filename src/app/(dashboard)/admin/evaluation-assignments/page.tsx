@@ -23,9 +23,11 @@ export default async function EvaluationAssignmentsPage({
   const currentFiscalYear =
     fiscalYears.find((fy) => fy.isCurrent) ?? fiscalYears[0] ?? null;
 
-  const selectedYear = yearParam
-    ? Number(yearParam)
-    : (currentFiscalYear?.year ?? null);
+  const parsedYear = yearParam !== undefined ? Number(yearParam) : null;
+  const selectedYear =
+    parsedYear !== null && Number.isInteger(parsedYear)
+      ? parsedYear
+      : (currentFiscalYear?.year ?? null);
 
   const [assignments, activeUsers] = await Promise.all([
     selectedYear !== null ? getEvaluationAssignments({ fiscalYear: selectedYear }) : [],
