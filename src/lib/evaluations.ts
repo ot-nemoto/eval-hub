@@ -2,6 +2,45 @@ import type { Score } from "@prisma/client";
 import { BadRequestError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 
+export async function getAllSelfEvaluations(
+  fiscalYear: number,
+  filter?: { userId?: string },
+) {
+  if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
+    throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
+
+  const rows = await prisma.evaluation.findMany({
+    where: {
+      fiscalYear,
+      ...(filter?.userId ? { evaluateeId: filter.userId } : {}),
+    },
+    include: {
+      evaluatee: { select: { id: true, name: true } },
+      evaluationItem: {
+        select: {
+          no: true,
+          name: true,
+          target: { select: { no: true } },
+          category: { select: { no: true } },
+        },
+      },
+    },
+    orderBy: [{ evaluatee: { name: "asc" } }, { evalItemId: "asc" }],
+  });
+
+  return rows.map((r) => ({
+    id: r.id,
+    evaluatee: r.evaluatee,
+    item: {
+      uid: `${r.evaluationItem.target.no}-${r.evaluationItem.category.no}-${r.evaluationItem.no}`,
+      name: r.evaluationItem.name,
+    },
+    selfScore: r.selfScore,
+    selfReason: r.selfReason,
+    updatedAt: r.updatedAt,
+  }));
+}
+
 export async function getEvaluations(evaluateeId: string, fiscalYear: number) {
   if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
     throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
