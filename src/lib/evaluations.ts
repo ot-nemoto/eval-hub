@@ -25,7 +25,12 @@ export async function getAllSelfEvaluations(
         },
       },
     },
-    orderBy: [{ evaluatee: { name: "asc" } }, { evalItemId: "asc" }],
+    orderBy: [
+      { evaluatee: { name: "asc" } },
+      { evaluationItem: { target: { no: "asc" } } },
+      { evaluationItem: { category: { no: "asc" } } },
+      { evaluationItem: { no: "asc" } },
+    ],
   });
 
   return rows.map((r) => ({
