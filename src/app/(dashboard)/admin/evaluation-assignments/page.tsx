@@ -29,26 +29,23 @@ export default async function EvaluationAssignmentsPage({
       ? parsedYear
       : (currentFiscalYear?.year ?? null);
 
-  const [assignments, activeUsers] = await Promise.all([
+  const [assignments, activeUsers, evaluateeIdsWithEvals] = await Promise.all([
     selectedYear !== null ? getEvaluationAssignments({ fiscalYear: selectedYear }) : [],
     prisma.user.findMany({
       where: { isActive: true },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
-  ]);
-
-  // 評価データが存在する evaluateeId を取得（削除時警告に使用）
-  const evaluateeIdsWithEvals =
     selectedYear !== null
-      ? await prisma.evaluation
+      ? prisma.evaluation
           .findMany({
             where: { fiscalYear: selectedYear },
             select: { evaluateeId: true },
             distinct: ["evaluateeId"],
           })
           .then((rows) => new Set(rows.map((r) => r.evaluateeId)))
-      : new Set<string>();
+      : new Set<string>(),
+  ]);
 
   return (
     <div>
