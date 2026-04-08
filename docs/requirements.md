@@ -111,6 +111,7 @@
 | 管理：年度管理 | `/admin/fiscal-years` | 年度の追加・編集・削除・現在年度設定 | admin |
 | 管理：ユーザー一覧 | `/admin/users` | ユーザー一覧・有効化/無効化・削除 | admin |
 | 管理：自己評価要否設定 | `/admin/users/[id]/evaluation-settings` | ユーザーごとの年度別自己評価要否設定 | admin |
+| 管理：評価者アサイン管理 | `/admin/evaluation-assignments` | 年度ごとの評価者アサイン登録・削除 | admin |
 
 ---
 

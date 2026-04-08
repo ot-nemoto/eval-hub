@@ -10,6 +10,7 @@ const memberLinks = [
 
 const adminLinks = [
   { href: "/admin/users", label: "ユーザー管理" },
+  { href: "/admin/evaluation-assignments", label: "アサイン管理" },
   { href: "/admin/targets", label: "マスタ管理" },
   { href: "/admin/evaluation-items", label: "評価項目管理" },
   { href: "/admin/fiscal-years", label: "年度管理" },

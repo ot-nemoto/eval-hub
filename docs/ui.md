@@ -18,6 +18,7 @@
 | 管理：年度管理 | `/admin/fiscal-years` | ヘッダーあり | admin のみ |
 | 管理：ユーザー一覧 | `/admin/users` | ヘッダーあり | admin のみ |
 | 管理：自己評価要否設定 | `/admin/users/[id]/evaluation-settings` | ヘッダーあり | admin のみ |
+| 管理：評価者アサイン管理 | `/admin/evaluation-assignments` | ヘッダーあり | admin のみ |
 
 ### 画面遷移
 
