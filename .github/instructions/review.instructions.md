@@ -29,10 +29,10 @@ applyTo: "**"
 
 ## 権限制御
 
-- `member`（自己評価）: `evaluatee_id == 自分` のレコードの `self_score / self_reason` のみ更新可
-- `member`（評価者）: `evaluation_assignments` に `evaluator_id == 自分` のレコードがある被評価者の `manager_score / manager_reason` のみ更新可
-- `admin`: すべてのデータ操作可
-- `manager` ロールは廃止済み。評価権限は `evaluation_assignments` で動的に管理する
+- `MEMBER`（自己評価）: `evaluateeId == 自分` のレコードの `selfScore / selfReason` のみ更新可
+- `MEMBER`（評価者）: `evaluationAssignments` に `evaluatorId == 自分` のレコードがある被評価者の `managerScore / managerReason` のみ更新可
+- `ADMIN`: すべてのデータ操作可
+- `manager` ロールは廃止済み。評価権限は `evaluationAssignments` で動的に管理する
 
 ## コーディングルール
 
