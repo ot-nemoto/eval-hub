@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type FiscalYear = { year: number; name: string };
 
@@ -12,9 +12,12 @@ type Props = {
 
 export function AdminYearSelector({ basePath, fiscalYears, selectedYear }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    router.push(`${basePath}?year=${e.target.value}`);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("year", e.target.value);
+    router.push(`${basePath}?${params.toString()}`);
   }
 
   return (
