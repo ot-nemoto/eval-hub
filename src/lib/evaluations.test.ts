@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BadRequestError } from "./errors";
-import { getEvaluations, upsertEvaluation } from "./evaluations";
+import { getAllSelfEvaluations, getEvaluations, upsertEvaluation } from "./evaluations";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -24,6 +24,84 @@ const mockEvaluation = {
   managerReason: null,
   evaluationItem: { name: "評価項目A" },
 };
+
+const mockSelfEvaluationRow = {
+  id: "eval-1",
+  evaluatee: { id: "user-1", name: "テストユーザー" },
+  evaluationItem: {
+    no: 1,
+    name: "評価項目A",
+    target: { no: 1 },
+    category: { no: 1 },
+  },
+  selfScore: "ryo",
+  selfReason: "理由",
+  updatedAt: new Date("2026-01-01"),
+};
+
+describe("getAllSelfEvaluations", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("正常系: findMany が正しい where/include/orderBy で呼ばれ、整形された結果を返す", async () => {
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue([mockSelfEvaluationRow] as never);
+
+    const result = await getAllSelfEvaluations(2026);
+
+    expect(prisma.evaluation.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { fiscalYear: 2026 },
+        orderBy: [
+          { evaluatee: { name: "asc" } },
+          { evaluationItem: { target: { no: "asc" } } },
+          { evaluationItem: { category: { no: "asc" } } },
+          { evaluationItem: { no: "asc" } },
+        ],
+      }),
+    );
+    expect(result).toEqual([
+      {
+        id: "eval-1",
+        evaluatee: { id: "user-1", name: "テストユーザー" },
+        item: { uid: "1-1-1", name: "評価項目A" },
+        selfScore: "ryo",
+        selfReason: "理由",
+        updatedAt: new Date("2026-01-01"),
+      },
+    ]);
+  });
+
+  it("userId フィルタあり: evaluateeId が where に含まれる", async () => {
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue([] as never);
+
+    await getAllSelfEvaluations(2026, { userId: "user-1" });
+
+    expect(prisma.evaluation.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { fiscalYear: 2026, evaluateeId: "user-1" },
+      }),
+    );
+  });
+
+  it("userId フィルタなし: evaluateeId が where に含まれない", async () => {
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue([] as never);
+
+    await getAllSelfEvaluations(2026, {});
+
+    expect(prisma.evaluation.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { fiscalYear: 2026 },
+      }),
+    );
+  });
+
+  it("fiscalYear が範囲外の場合は BadRequestError をスロー", async () => {
+    await expect(getAllSelfEvaluations(1800)).rejects.toThrow(BadRequestError);
+  });
+
+  it("fiscalYear が整数でない場合は BadRequestError をスロー", async () => {
+    await expect(getAllSelfEvaluations(2026.5)).rejects.toThrow(BadRequestError);
+  });
+});
 
 describe("getEvaluations", () => {
   beforeEach(() => vi.clearAllMocks());
