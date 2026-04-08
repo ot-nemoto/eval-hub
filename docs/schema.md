@@ -149,6 +149,7 @@ erDiagram
 | self_reason | TEXT | | 自己採点理由 |
 | manager_score | ENUM | | `none` / `ka` / `ryo` / `yu`（評価者側がまとめた1つ） |
 | manager_reason | TEXT | | 評価者側採点理由 |
+| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 最終更新日時（Prisma @updatedAt） |
 | UNIQUE | (fiscal_year, evaluatee_id, eval_item_id) | | 年度×被評価者×項目で1レコード |
 
 - 自己評価（`self_score / self_reason`）は本人が入力
