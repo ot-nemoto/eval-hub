@@ -275,7 +275,7 @@ async function main() {
     if (!seenCategoryKeys.has(key)) {
       seenCategoryKeys.add(key);
       if (!categoriesByTarget.has(d.target)) categoriesByTarget.set(d.target, []);
-      categoriesByTarget.get(d.target)!.push(d.category);
+      categoriesByTarget.get(d.target)?.push(d.category);
     }
   }
 
