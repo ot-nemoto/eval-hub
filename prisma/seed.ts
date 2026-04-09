@@ -364,11 +364,12 @@ async function main() {
   // 9. 評価データ（evaluations）
   //    「採点欄は表示されるが編集不可」シナリオの表示確認用に事前データを投入する
   //
-  //  tebasaki（2026年度）: 先頭3件に self_score を設定、bonjiri が manager_comment を登録
+  //  tebasaki（2026年度）: 先頭3件に self_score を設定、評価者コメントは後続セクションで登録
   //    → 自己評価画面で評価者コメント欄が表示されることを確認できる
+  //    → 評価者画面（bonjiri/tsukune）で最終スコア・コメント操作を確認できる
   //  nankotsu（2026年度）: 4件目に self_score = null（未入力表示確認用）、先頭3件に self_score のみ設定
-  //    → 評価者画面で自己採点欄が表示・編集不可であることを確認できる
   //    → 全ユーザー自己評価一覧で「未入力」表示を確認できる
+  //    → 評価者画面（tebasaki）で MEMBER 評価者としての操作を確認できる
   // =========================================================================
   if (allItems.length < 4) {
     throw new Error(
@@ -444,10 +445,20 @@ async function main() {
   console.log(`evaluations: ${evaluationsData.length} created`);
 
   // =========================================================================
-  // 10. 評価者コメント（manager_comments）
-  //    tebasaki の先頭3件に bonjiri（ADMIN）のコメントを登録
-  //    item[0] には tsukune もコメントを登録（複数評価者コメントの確認用）
+  // 10. 評価者コメント（manager_comments）+ 最終スコア（manager_score）
+  //
+  //  【tebasaki の評価】評価者: bonjiri（ADMIN・アサインなし）/ tsukune（ADMIN・アサイン済み）
+  //    item[0]: bonjiri + tsukune の2人がコメント（複数評価者コメントの確認用）
+  //    item[1,2]: bonjiri のみ
+  //    item[0]: managerScore = "yu"（最終スコア設定済みの確認用）
+  //
+  //  【nankotsu の評価】評価者: tsukune（ADMIN・アサイン済み）/ tebasaki（MEMBER・アサイン済み）
+  //    item[0]: tsukune のみコメント
+  //    → tebasaki（MEMBER評価者）でログインし「他者コメントは閲覧のみ」を確認できる
+  //    item[0]: managerScore = "ryo"（最終スコア設定済みの確認用）
   // =========================================================================
+
+  // tebasaki の評価 MAP
   const tebasakiEvals = await prisma.evaluation.findMany({
     where: {
       fiscalYear: 2026,
@@ -458,37 +469,62 @@ async function main() {
   const tebasakiEvalMap = Object.fromEntries(
     tebasakiEvals.map((e) => [e.evalItemId, e.id]),
   );
+
+  // nankotsu の評価 MAP
+  const nankotsuEvals = await prisma.evaluation.findMany({
+    where: {
+      fiscalYear: 2026,
+      evaluateeId: u["nankotsu@example.com"].id,
+      evalItemId: { in: [seedItems[0].id] },
+    },
+  });
+  const nankotsuEvalMap = Object.fromEntries(
+    nankotsuEvals.map((e) => [e.evalItemId, e.id]),
+  );
+
   const managerCommentsData = [
-    // item[0]: bonjiri + tsukune の2人がコメント（複数評価者ケース）
+    // tebasaki item[0]: bonjiri + tsukune の2人がコメント（複数評価者ケース）
     {
       evaluationId: tebasakiEvalMap[seedItems[0].id],
       evaluatorId: u["bonjiri@example.com"].id,
-      score: "yu" as const,
       reason: "非常に優秀な取り組みでした",
     },
     {
       evaluationId: tebasakiEvalMap[seedItems[0].id],
       evaluatorId: u["tsukune@example.com"].id,
-      score: "ryo" as const,
       reason: "よく頑張っています。さらなる成長を期待しています",
     },
-    // item[1]: bonjiri のみ
+    // tebasaki item[1,2]: bonjiri のみ
     {
       evaluationId: tebasakiEvalMap[seedItems[1].id],
       evaluatorId: u["bonjiri@example.com"].id,
-      score: "ryo" as const,
       reason: "着実に成長しています",
     },
-    // item[2]: bonjiri のみ
     {
       evaluationId: tebasakiEvalMap[seedItems[2].id],
       evaluatorId: u["bonjiri@example.com"].id,
-      score: "yu" as const,
       reason: "期待以上の成果でした",
+    },
+    // nankotsu item[0]: tsukune のみ（tebasaki が「他者コメント閲覧のみ」を確認するため）
+    {
+      evaluationId: nankotsuEvalMap[seedItems[0].id],
+      evaluatorId: u["tsukune@example.com"].id,
+      reason: "基礎的な部分はしっかりできています",
     },
   ];
   await prisma.managerComment.createMany({ data: managerCommentsData });
   console.log(`manager_comments: ${managerCommentsData.length} created`);
+
+  // 最終スコア設定
+  await prisma.evaluation.update({
+    where: { id: tebasakiEvalMap[seedItems[0].id] },
+    data: { managerScore: "yu" },
+  });
+  await prisma.evaluation.update({
+    where: { id: nankotsuEvalMap[seedItems[0].id] },
+    data: { managerScore: "ryo" },
+  });
+  console.log("evaluations: managerScore updated for tebasaki item[0] and nankotsu item[0]");
 }
 
 main()

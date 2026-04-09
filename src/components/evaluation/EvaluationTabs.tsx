@@ -16,7 +16,6 @@ type ManagerComment = {
   id: string;
   evaluatorId: string;
   evaluatorName: string;
-  score: Score;
   reason: string | null;
   createdAt: Date;
 };
@@ -172,9 +171,6 @@ export default function EvaluationTabs({ items, fiscalYear }: Props) {
                   <div key={cm.id} className="rounded-md bg-gray-50 p-3">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-gray-700">{cm.evaluatorName}</span>
-                      <span className="rounded-md border bg-white px-2 py-0.5 text-xs font-medium text-gray-700">
-                        {SCORE_LABELS[cm.score]}
-                      </span>
                       <span className="text-xs text-gray-400" suppressHydrationWarning>
                         {new Date(cm.createdAt).toLocaleString("ja-JP")}
                       </span>

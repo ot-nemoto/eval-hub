@@ -8,6 +8,7 @@ import {
   getEvaluations,
   updateManagerComment,
   upsertEvaluation,
+  upsertManagerScore,
 } from "./evaluations";
 
 vi.mock("@/lib/prisma", () => ({
@@ -33,6 +34,7 @@ const mockEvaluation = {
   evaluateeId: "user-1",
   selfScore: "ryo",
   selfReason: "理由",
+  managerScore: null,
   evaluationItem: { name: "評価項目A" },
   managerComments: [],
 };
@@ -126,7 +128,6 @@ describe("getEvaluations", () => {
           id: "comment-1",
           evaluatorId: "manager-1",
           evaluator: { name: "上長A" },
-          score: "yu",
           reason: "よくできました",
           createdAt: new Date("2026-01-02"),
         },
@@ -149,12 +150,12 @@ describe("getEvaluations", () => {
         itemName: "評価項目A",
         selfScore: "ryo",
         selfReason: "理由",
+        managerScore: null,
         managerComments: [
           {
             id: "comment-1",
             evaluatorId: "manager-1",
             evaluatorName: "上長A",
-            score: "yu",
             reason: "よくできました",
             createdAt: new Date("2026-01-02"),
           },
@@ -163,12 +164,13 @@ describe("getEvaluations", () => {
     ]);
   });
 
-  it("コメントなしの場合は managerComments が空配列", async () => {
+  it("コメントなしの場合は managerComments が空配列・managerScore は null", async () => {
     vi.mocked(prisma.evaluation.findMany).mockResolvedValue([mockEvaluation] as never);
 
     const result = await getEvaluations("user-1", 2024);
 
     expect(result[0].managerComments).toEqual([]);
+    expect(result[0].managerScore).toBeNull();
   });
 
   it("fiscalYear が範囲外の場合は BadRequestError をスロー", async () => {
@@ -237,6 +239,53 @@ describe("upsertEvaluation", () => {
   });
 });
 
+describe("upsertManagerScore", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("evaluation を upsert して managerScore を更新する", async () => {
+    vi.mocked(prisma.evaluation.upsert).mockResolvedValue({
+      ...mockEvaluation,
+      managerScore: "yu",
+    } as never);
+
+    const result = await upsertManagerScore("user-1", 2024, 1, "yu");
+
+    expect(prisma.evaluation.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          fiscalYear_evaluateeId_evalItemId: {
+            fiscalYear: 2024,
+            evaluateeId: "user-1",
+            evalItemId: 1,
+          },
+        },
+        create: expect.objectContaining({ managerScore: "yu" }),
+        update: { managerScore: "yu" },
+      }),
+    );
+    expect(result).toEqual({ evalItemId: 1, managerScore: "yu" });
+  });
+
+  it("managerScore に null を渡すとクリアできる", async () => {
+    vi.mocked(prisma.evaluation.upsert).mockResolvedValue({
+      ...mockEvaluation,
+      managerScore: null,
+    } as never);
+
+    const result = await upsertManagerScore("user-1", 2024, 1, null);
+
+    expect(result.managerScore).toBeNull();
+  });
+
+  it("fiscalYear が範囲外の場合は BadRequestError をスロー", async () => {
+    await expect(upsertManagerScore("user-1", 1800, 1, "yu")).rejects.toThrow(BadRequestError);
+  });
+
+  it("evalItemId が正の整数でない場合は BadRequestError をスロー", async () => {
+    await expect(upsertManagerScore("user-1", 2024, 0, "yu")).rejects.toThrow(BadRequestError);
+  });
+});
+
 describe("addManagerComment", () => {
   beforeEach(() => vi.clearAllMocks());
 
@@ -246,7 +295,7 @@ describe("addManagerComment", () => {
       id: "comment-1",
       evaluationId: "eval-1",
       evaluatorId: "manager-1",
-      score: "yu",
+      score: null,
       reason: "よくできました",
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -254,7 +303,6 @@ describe("addManagerComment", () => {
     vi.mocked(prisma.managerComment.create).mockResolvedValue(mockComment as never);
 
     const result = await addManagerComment("user-1", 2024, 1, "manager-1", {
-      score: "yu",
       reason: "よくできました",
     });
 
@@ -273,7 +321,6 @@ describe("addManagerComment", () => {
       data: {
         evaluationId: "eval-1",
         evaluatorId: "manager-1",
-        score: "yu",
         reason: "よくできました",
       },
     });
@@ -282,13 +329,13 @@ describe("addManagerComment", () => {
 
   it("fiscalYear が範囲外の場合は BadRequestError をスロー", async () => {
     await expect(
-      addManagerComment("user-1", 1800, 1, "manager-1", { score: "yu", reason: null }),
+      addManagerComment("user-1", 1800, 1, "manager-1", { reason: null }),
     ).rejects.toThrow(BadRequestError);
   });
 
   it("evalItemId が正の整数でない場合は BadRequestError をスロー", async () => {
     await expect(
-      addManagerComment("user-1", 2024, 0, "manager-1", { score: "yu", reason: null }),
+      addManagerComment("user-1", 2024, 0, "manager-1", { reason: null }),
     ).rejects.toThrow(BadRequestError);
   });
 });
@@ -301,18 +348,18 @@ describe("updateManagerComment", () => {
       id: "comment-1",
       evaluationId: "eval-1",
       evaluatorId: "manager-1",
-      score: "ryo",
+      score: null,
       reason: "修正後",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
     vi.mocked(prisma.managerComment.update).mockResolvedValue(mockUpdated as never);
 
-    const result = await updateManagerComment("comment-1", { score: "ryo", reason: "修正後" });
+    const result = await updateManagerComment("comment-1", { reason: "修正後" });
 
     expect(prisma.managerComment.update).toHaveBeenCalledWith({
       where: { id: "comment-1" },
-      data: { score: "ryo", reason: "修正後" },
+      data: { reason: "修正後" },
     });
     expect(result).toEqual(mockUpdated);
   });

@@ -59,6 +59,7 @@ export default async function MemberEvaluationsPage({ params }: Props) {
       target: item.target.name,
       selfScore: (ev?.selfScore ?? null) as "none" | "ka" | "ryo" | "yu" | null,
       selfReason: ev?.selfReason ?? null,
+      managerScore: (ev?.managerScore ?? null) as "none" | "ka" | "ryo" | "yu" | null,
       evaluationId: ev?.evaluationId ?? null,
       managerComments: ev?.managerComments ?? [],
     };
