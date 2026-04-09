@@ -101,11 +101,22 @@ CREATE TABLE "evaluations" (
     "eval_item_id" INTEGER NOT NULL,
     "self_score" "Score",
     "self_reason" TEXT,
-    "manager_score" "Score",
-    "manager_reason" TEXT,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "evaluations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "manager_comments" (
+    "id" TEXT NOT NULL,
+    "evaluation_id" TEXT NOT NULL,
+    "evaluator_id" TEXT NOT NULL,
+    "score" "Score" NOT NULL,
+    "reason" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "manager_comments_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -170,3 +181,9 @@ ALTER TABLE "evaluations" ADD CONSTRAINT "evaluations_eval_item_id_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "evaluations" ADD CONSTRAINT "evaluations_fiscal_year_fkey" FOREIGN KEY ("fiscal_year") REFERENCES "fiscal_years"("year") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "manager_comments" ADD CONSTRAINT "manager_comments_evaluation_id_fkey" FOREIGN KEY ("evaluation_id") REFERENCES "evaluations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "manager_comments" ADD CONSTRAINT "manager_comments_evaluator_id_fkey" FOREIGN KEY ("evaluator_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
