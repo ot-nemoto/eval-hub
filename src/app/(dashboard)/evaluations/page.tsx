@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import EvaluationTabs from "@/components/evaluation/EvaluationTabs";
 import { getSession } from "@/lib/auth";
 import { getCurrentFiscalYear } from "@/lib/fiscal-year";
+import { getEvaluations } from "@/lib/evaluations";
 import { prisma } from "@/lib/prisma";
 
 export default async function EvaluationsPage() {
@@ -17,9 +18,7 @@ export default async function EvaluationsPage() {
       orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
       include: { target: true, category: true },
     }),
-    prisma.evaluation.findMany({
-      where: { evaluateeId: userId, fiscalYear: fiscalYear },
-    }),
+    getEvaluations(userId, fiscalYear),
     prisma.evaluationSetting.findUnique({
       where: { userId_fiscalYear: { userId: userId, fiscalYear: fiscalYear } },
     }),
@@ -54,8 +53,7 @@ export default async function EvaluationsPage() {
       target: item.target.name,
       selfScore: ev?.selfScore ?? null,
       selfReason: ev?.selfReason ?? null,
-      managerScore: ev?.managerScore ?? null,
-      managerReason: ev?.managerReason ?? null,
+      managerComments: ev?.managerComments ?? [],
     };
   });
 

@@ -12,6 +12,15 @@ const SCORE_LABELS: Record<Score, string> = {
   yu: "優",
 };
 
+type ManagerComment = {
+  id: string;
+  evaluatorId: string;
+  evaluatorName: string;
+  score: Score;
+  reason: string | null;
+  createdAt: Date;
+};
+
 type Item = {
   uid: string;
   name: string;
@@ -21,8 +30,7 @@ type Item = {
   target: string;
   selfScore: Score | null;
   selfReason: string | null;
-  managerScore: Score | null;
-  managerReason: string | null;
+  managerComments: ManagerComment[];
 };
 
 type Props = {
@@ -156,20 +164,26 @@ export default function EvaluationTabs({ items, fiscalYear }: Props) {
               </div>
             </div>
 
-            {/* 評価者採点（読み取り専用） */}
-            {item.managerScore !== null && (
-              <div className="mt-4 rounded-md bg-gray-50 p-3">
-                <p className="mb-1 text-xs font-medium text-gray-500">評価者採点（参考）</p>
-                <div className="flex items-center gap-3">
-                  <span className="rounded-md border bg-white px-2 py-1 text-sm font-medium text-gray-700">
-                    {SCORE_LABELS[item.managerScore]}
-                  </span>
-                  {item.managerReason && (
-                    <span className="min-w-0 break-words text-sm text-gray-600">
-                      {item.managerReason}
-                    </span>
-                  )}
-                </div>
+            {/* 評価者コメント（読み取り専用） */}
+            {item.managerComments.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <p className="text-xs font-medium text-gray-500">評価者コメント（参考）</p>
+                {item.managerComments.map((cm) => (
+                  <div key={cm.id} className="rounded-md bg-gray-50 p-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-700">{cm.evaluatorName}</span>
+                      <span className="rounded-md border bg-white px-2 py-0.5 text-xs font-medium text-gray-700">
+                        {SCORE_LABELS[cm.score]}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {new Date(cm.createdAt).toLocaleString("ja-JP")}
+                      </span>
+                    </div>
+                    {cm.reason && (
+                      <p className="mt-1 break-words text-sm text-gray-600">{cm.reason}</p>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
