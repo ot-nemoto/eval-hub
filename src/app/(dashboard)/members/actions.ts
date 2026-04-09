@@ -6,14 +6,14 @@ import { redirect } from "next/navigation";
 import type { Score } from "@prisma/client";
 import { getSession } from "@/lib/auth";
 import { BadRequestError, ForbiddenError } from "@/lib/errors";
-import { upsertEvaluation } from "@/lib/evaluations";
+import { addManagerComment, deleteManagerComment, updateManagerComment } from "@/lib/evaluations";
 import { prisma } from "@/lib/prisma";
 
-export async function upsertManagerEvaluationAction(
+export async function addManagerCommentAction(
   evaluateeId: string,
   fiscalYear: number,
   evalItemId: number,
-  data: { managerScore?: Score | null; managerReason?: string | null },
+  data: { score: Score; reason: string | null },
 ): Promise<{ error?: string }> {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -39,13 +39,58 @@ export async function upsertManagerEvaluationAction(
   }
 
   try {
-    await upsertEvaluation({
-      fiscalYear,
-      evaluateeId,
-      evalItemId,
-      managerScore: data.managerScore,
-      managerReason: data.managerReason,
-    });
+    await addManagerComment(evaluateeId, fiscalYear, evalItemId, session.user.id, data);
+  } catch (e) {
+    if (e instanceof BadRequestError || e instanceof ForbiddenError) return { error: e.message };
+    throw e;
+  }
+
+  revalidatePath(`/members/${evaluateeId}/evaluations`);
+  return {};
+}
+
+export async function updateManagerCommentAction(
+  commentId: string,
+  evaluateeId: string,
+  data: { score?: Score; reason?: string | null },
+): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const isAdmin = session.user.role === "ADMIN";
+  if (!isAdmin) {
+    const comment = await prisma.managerComment.findUnique({ where: { id: commentId } });
+    if (!comment) return { error: "コメントが見つかりません" };
+    if (comment.evaluatorId !== session.user.id) return { error: "自分のコメントのみ編集できます" };
+  }
+
+  try {
+    await updateManagerComment(commentId, data);
+  } catch (e) {
+    if (e instanceof BadRequestError || e instanceof ForbiddenError) return { error: e.message };
+    throw e;
+  }
+
+  revalidatePath(`/members/${evaluateeId}/evaluations`);
+  return {};
+}
+
+export async function deleteManagerCommentAction(
+  commentId: string,
+  evaluateeId: string,
+): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const isAdmin = session.user.role === "ADMIN";
+  if (!isAdmin) {
+    const comment = await prisma.managerComment.findUnique({ where: { id: commentId } });
+    if (!comment) return { error: "コメントが見つかりません" };
+    if (comment.evaluatorId !== session.user.id) return { error: "自分のコメントのみ削除できます" };
+  }
+
+  try {
+    await deleteManagerComment(commentId);
   } catch (e) {
     if (e instanceof BadRequestError || e instanceof ForbiddenError) return { error: e.message };
     throw e;
