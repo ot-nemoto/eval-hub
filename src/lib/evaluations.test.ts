@@ -42,7 +42,7 @@ const mockSelfEvaluationRow = {
 describe("getAllSelfEvaluations", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("正常系: findMany が正しい where/include/orderBy で呼ばれ、整形された結果を返す", async () => {
+  it("正常系: findMany が正しい where/orderBy で呼ばれ、整形された結果を返す", async () => {
     vi.mocked(prisma.evaluation.findMany).mockResolvedValue([mockSelfEvaluationRow] as never);
 
     const result = await getAllSelfEvaluations(2026);
