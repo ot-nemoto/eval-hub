@@ -366,15 +366,16 @@ async function main() {
   //
   //  tebasaki（2026年度）: 先頭3件に self_score + manager_score を設定
   //    → 自己評価画面で評価者採点欄が表示・編集不可であることを確認できる
-  //  nankotsu（2026年度）: 先頭3件に self_score のみ設定
+  //  nankotsu（2026年度）: 4件目に self_score = null（未入力表示確認用）、先頭3件に self_score のみ設定
   //    → 評価者画面で自己採点欄が表示・編集不可であることを確認できる
+  //    → 全ユーザー自己評価一覧で「未入力」表示を確認できる
   // =========================================================================
-  if (allItems.length < 3) {
+  if (allItems.length < 4) {
     throw new Error(
-      `評価データの投入に必要な評価項目が不足しています（取得件数: ${allItems.length}、必要数: 3）`,
+      `評価データの投入に必要な評価項目が不足しています（取得件数: ${allItems.length}、必要数: 4）`,
     );
   }
-  const seedItems = allItems.slice(0, 3);
+  const seedItems = allItems.slice(0, 4);
 
   const evaluationsData = [
     // tebasaki: 自己採点 + 評価者採点あり
@@ -404,6 +405,16 @@ async function main() {
       selfReason: "目標を超えて達成できました",
       managerScore: "yu" as const,
       managerReason: "期待以上の成果でした",
+    },
+    // nankotsu: 自己採点未入力（未入力表示確認用）
+    {
+      fiscalYear: 2026,
+      evaluateeEmail: "nankotsu@example.com",
+      itemId: seedItems[3].id,
+      selfScore: null,
+      selfReason: null,
+      managerScore: null,
+      managerReason: null,
     },
     // nankotsu: 自己採点のみ（評価者採点なし）
     {
