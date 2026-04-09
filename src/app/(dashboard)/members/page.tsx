@@ -15,19 +15,35 @@ export default async function MembersPage() {
 
   type Member = { id: string; name: string; division: string | null };
   let members: Member[] = [];
+  let assignedEvaluateeIds = new Set<string>();
 
   if (isAdmin) {
     members = await prisma.user.findMany({
       select: { id: true, name: true, division: true },
       orderBy: { name: "asc" },
     });
+    assignedEvaluateeIds = new Set(members.map((m) => m.id));
   } else {
     const assignments = await prisma.evaluationAssignment.findMany({
-      where: { evaluatorId: userId, fiscalYear: fiscalYear },
-      include: { evaluatee: { select: { id: true, name: true, division: true } } },
-      orderBy: { evaluatee: { name: "asc" } },
+      where: { fiscalYear },
+      select: {
+        evaluatorId: true,
+        evaluateeId: true,
+        evaluatee: { select: { id: true, name: true, division: true } },
+        evaluator: { select: { id: true, name: true, division: true } },
+      },
     });
-    members = assignments.map((a) => a.evaluatee);
+
+    const userMap = new Map<string, Member>();
+    for (const a of assignments) {
+      userMap.set(a.evaluateeId, a.evaluatee);
+      userMap.set(a.evaluatorId, a.evaluator);
+    }
+    members = [...userMap.values()].sort((a, b) => a.name.localeCompare(b.name, "ja"));
+
+    assignedEvaluateeIds = new Set(
+      assignments.filter((a) => a.evaluatorId === userId).map((a) => a.evaluateeId),
+    );
   }
 
   return (
@@ -38,7 +54,7 @@ export default async function MembersPage() {
       </div>
 
       {members.length === 0 ? (
-        <p className="text-gray-500">担当する被評価者がいません。</p>
+        <p className="text-gray-500">表示できる社員がいません。</p>
       ) : (
         <div className="overflow-hidden rounded-lg border bg-white">
           <table className="w-full text-sm">
@@ -55,12 +71,14 @@ export default async function MembersPage() {
                   <td className="px-4 py-3 font-medium text-gray-900">{member.name}</td>
                   <td className="px-4 py-3 text-gray-500">{member.division ?? "—"}</td>
                   <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/members/${member.id}/evaluations`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      評価入力 →
-                    </Link>
+                    {assignedEvaluateeIds.has(member.id) && (
+                      <Link
+                        href={`/members/${member.id}/evaluations`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        評価入力 →
+                      </Link>
+                    )}
                   </td>
                 </tr>
               ))}
