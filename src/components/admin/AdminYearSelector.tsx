@@ -16,8 +16,14 @@ export function AdminYearSelector({ basePath, fiscalYears, selectedYear }: Props
 
   function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("year", e.target.value);
-    router.push(`${basePath}?${params.toString()}`);
+    const value = e.target.value;
+    if (value === "") {
+      params.delete("year");
+    } else {
+      params.set("year", value);
+    }
+    const query = params.toString();
+    router.push(query ? `${basePath}?${query}` : basePath);
   }
 
   return (
