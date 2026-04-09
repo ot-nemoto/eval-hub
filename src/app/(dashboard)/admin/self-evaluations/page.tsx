@@ -115,9 +115,7 @@ export default async function AdminSelfEvaluationsPage({
                     {r.selfReason ?? <span className="text-gray-400">—</span>}
                   </td>
                   <td className="px-4 py-3 text-gray-500">
-                    {r.updatedAt
-                      ? r.updatedAt.toLocaleString("ja-JP")
-                      : <span className="text-gray-400">—</span>}
+                    {r.updatedAt.toLocaleString("ja-JP")}
                   </td>
                 </tr>
               ))

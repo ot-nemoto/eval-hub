@@ -42,14 +42,14 @@ const mockSelfEvaluationRow = {
 describe("getAllSelfEvaluations", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("正常系: findMany が正しい where/include/orderBy で呼ばれ、整形された結果を返す", async () => {
+  it("正常系: findMany が正しい where/orderBy で呼ばれ、整形された結果を返す", async () => {
     vi.mocked(prisma.evaluation.findMany).mockResolvedValue([mockSelfEvaluationRow] as never);
 
     const result = await getAllSelfEvaluations(2026);
 
     expect(prisma.evaluation.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { fiscalYear: 2026 },
+        where: { fiscalYear: 2026, evaluatee: { isActive: true } },
         orderBy: [
           { evaluatee: { name: "asc" } },
           { evaluationItem: { target: { no: "asc" } } },
@@ -77,7 +77,7 @@ describe("getAllSelfEvaluations", () => {
 
     expect(prisma.evaluation.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { fiscalYear: 2026, evaluateeId: "user-1" },
+        where: { fiscalYear: 2026, evaluatee: { isActive: true }, evaluateeId: "user-1" },
       }),
     );
   });
@@ -89,7 +89,7 @@ describe("getAllSelfEvaluations", () => {
 
     expect(prisma.evaluation.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { fiscalYear: 2026 },
+        where: { fiscalYear: 2026, evaluatee: { isActive: true } },
       }),
     );
   });
