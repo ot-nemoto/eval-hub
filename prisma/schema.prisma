@@ -145,9 +145,10 @@ model Evaluation {
   fiscalYear  Int      @map("fiscal_year")
   evaluateeId String   @map("evaluatee_id")
   evalItemId  Int      @map("eval_item_id")
-  selfScore   Score?   @map("self_score")
-  selfReason  String?  @map("self_reason") @db.Text
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  selfScore    Score?   @map("self_score")
+  selfReason   String?  @map("self_reason") @db.Text
+  managerScore Score?   @map("manager_score")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   evaluatee       User             @relation(fields: [evaluateeId], references: [id])
   evaluationItem  EvaluationItem   @relation(fields: [evalItemId], references: [id])
@@ -162,7 +163,7 @@ model ManagerComment {
   id           String   @id @default(uuid())
   evaluationId String   @map("evaluation_id")
   evaluatorId  String   @map("evaluator_id")
-  score        Score
+  score        Score?
   reason       String?  @db.Text
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")

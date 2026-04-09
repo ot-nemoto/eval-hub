@@ -101,6 +101,7 @@ CREATE TABLE "evaluations" (
     "eval_item_id" INTEGER NOT NULL,
     "self_score" "Score",
     "self_reason" TEXT,
+    "manager_score" "Score",
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "evaluations_pkey" PRIMARY KEY ("id")
@@ -111,7 +112,7 @@ CREATE TABLE "manager_comments" (
     "id" TEXT NOT NULL,
     "evaluation_id" TEXT NOT NULL,
     "evaluator_id" TEXT NOT NULL,
-    "score" "Score" NOT NULL,
+    "score" "Score",
     "reason" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,

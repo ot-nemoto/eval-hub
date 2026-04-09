@@ -1,4 +1,4 @@
-> 最終更新: 2026-04-09 (T38: manager_comments テーブル追加、evaluations から manager_score/manager_reason を削除)
+> 最終更新: 2026-04-09 (T162: evaluations.manager_score 復活、manager_comments.score を nullable に変更)
 
 # schema.md — DB スキーマ定義
 
@@ -157,10 +157,12 @@ erDiagram
 | eval_item_id | INTEGER | FK → evaluation_items.id | 評価項目 |
 | self_score | ENUM | | `none` / `ka` / `ryo` / `yu` |
 | self_reason | TEXT | | 自己採点理由 |
+| manager_score | ENUM | | 最終評価スコア（アサイン済み評価者・admin が上書き可、nullable） |
 | updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 最終更新日時（Prisma @updatedAt） |
 | UNIQUE | (fiscal_year, evaluatee_id, eval_item_id) | | 年度×被評価者×項目で1レコード |
 
 - 自己評価（`self_score / self_reason`）は本人が入力
+- `manager_score` は評価項目ごとに1つの最終スコア（複数評価者で共有・誰でも上書き可）
 - 評価者コメントは `manager_comments` テーブルで別管理（評価者ごとに個別登録）
 
 ---
@@ -172,7 +174,7 @@ erDiagram
 | id | TEXT | PK, DEFAULT uuid() | UUID 値を TEXT で保存 |
 | evaluation_id | TEXT | FK → evaluations.id, CASCADE DELETE | 評価レコード |
 | evaluator_id | TEXT | FK → users.id | コメントを書いた評価者 |
-| score | ENUM | NOT NULL | `none` / `ka` / `ryo` / `yu` |
+| score | ENUM | | `none` / `ka` / `ryo` / `yu`（nullable: スコアなしコメントを許容） |
 | reason | TEXT | | コメント・採点理由 |
 | created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
 | updated_at | TIMESTAMP | NOT NULL | 最終更新日時（Prisma @updatedAt） |

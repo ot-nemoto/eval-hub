@@ -6,6 +6,7 @@ import {
   addManagerCommentAction,
   deleteManagerCommentAction,
   updateManagerCommentAction,
+  upsertManagerScoreAction,
 } from "@/app/(dashboard)/members/actions";
 import { Button } from "@/components/ui/button";
 
@@ -20,7 +21,6 @@ type ManagerComment = {
   id: string;
   evaluatorId: string;
   evaluatorName: string;
-  score: Score;
   reason: string | null;
   createdAt: Date;
 };
@@ -34,6 +34,7 @@ type Item = {
   target: string;
   selfScore: Score | null;
   selfReason: string | null;
+  managerScore: Score | null;
   evaluationId: string | null;
   managerComments: ManagerComment[];
 };
@@ -56,36 +57,71 @@ export default function ManagerEvaluationTabs({
   const categories = [...new Set(items.map((i) => i.category))];
   const [activeCategory, setActiveCategory] = useState(categories[0] ?? "");
 
+  // 最終スコア state（uid → Score | null）
+  const [finalScores, setFinalScores] = useState<Record<string, Score | null>>(
+    Object.fromEntries(items.map((i) => [i.uid, i.managerScore])),
+  );
+  const [savingScore, setSavingScore] = useState<Record<string, boolean>>({});
+  const [savedScore, setSavedScore] = useState<Record<string, boolean>>({});
+  const [scoreErrors, setScoreErrors] = useState<Record<string, string>>({});
+  const savedScoreTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  // コメント state
   const [comments, setComments] = useState<Record<string, ManagerComment[]>>(
     Object.fromEntries(items.map((i) => [i.uid, i.managerComments])),
   );
   const [adding, setAdding] = useState<Record<string, boolean>>({});
-  const [newScore, setNewScore] = useState<Record<string, Score>>({});
   const [newReason, setNewReason] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<Record<string, boolean>>({});
-  const [editScore, setEditScore] = useState<Record<string, Score>>({});
   const [editReason, setEditReason] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const savedTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
-    const timers = savedTimers.current;
+    const scoreTimers = savedScoreTimers.current;
+    const commentTimers = savedTimers.current;
     return () => {
-      for (const id of Object.values(timers)) clearTimeout(id);
+      for (const id of Object.values(scoreTimers)) clearTimeout(id);
+      for (const id of Object.values(commentTimers)) clearTimeout(id);
     };
   }, []);
 
   const activeItems = items.filter((i) => i.category === activeCategory);
 
+  async function handleSaveFinalScore(uid: string) {
+    setSavingScore((s) => ({ ...s, [uid]: true }));
+    setScoreErrors((e) => ({ ...e, [uid]: "" }));
+    try {
+      const result = await upsertManagerScoreAction(
+        evaluateeId,
+        fiscalYear,
+        Number(uid),
+        finalScores[uid] ?? null,
+      );
+      if (result.error) {
+        setScoreErrors((e) => ({ ...e, [uid]: result.error ?? "保存に失敗しました" }));
+      } else {
+        setSavedScore((s) => ({ ...s, [uid]: true }));
+        clearTimeout(savedScoreTimers.current[uid]);
+        savedScoreTimers.current[uid] = setTimeout(
+          () => setSavedScore((s) => ({ ...s, [uid]: false })),
+          2000,
+        );
+      }
+    } catch {
+      setScoreErrors((e) => ({ ...e, [uid]: "保存に失敗しました" }));
+    } finally {
+      setSavingScore((s) => ({ ...s, [uid]: false }));
+    }
+  }
+
   async function handleAddComment(uid: string) {
-    const score = newScore[uid] ?? "none";
     const reason = newReason[uid] ?? "";
     setSaving((s) => ({ ...s, [`add-${uid}`]: true }));
     setErrors((e) => ({ ...e, [`add-${uid}`]: "" }));
     try {
       const result = await addManagerCommentAction(evaluateeId, fiscalYear, Number(uid), {
-        score,
         reason: reason || null,
       });
       if (result.error) {
@@ -93,7 +129,6 @@ export default function ManagerEvaluationTabs({
       } else if (result.comment) {
         setComments((c) => ({ ...c, [uid]: [...(c[uid] ?? []), result.comment!] }));
         setAdding((a) => ({ ...a, [uid]: false }));
-        setNewScore((s) => ({ ...s, [uid]: "none" }));
         setNewReason((r) => ({ ...r, [uid]: "" }));
       }
     } catch {
@@ -108,7 +143,6 @@ export default function ManagerEvaluationTabs({
     setErrors((e) => ({ ...e, [commentId]: "" }));
     try {
       const result = await updateManagerCommentAction(commentId, evaluateeId, {
-        score: editScore[commentId],
         reason: editReason[commentId] ?? null,
       });
       if (result.error) {
@@ -198,6 +232,45 @@ export default function ManagerEvaluationTabs({
                 </div>
               </div>
 
+              {/* 最終評価スコア */}
+              <div className="mb-4 space-y-2">
+                <p className="text-sm font-medium text-gray-700">最終評価スコア</p>
+                <div role="radiogroup" aria-label="最終評価スコア" className="flex flex-wrap gap-2">
+                  {(["none", "ka", "ryo", "yu"] as Score[]).map((score) => (
+                    // biome-ignore lint/a11y/useSemanticElements: カスタムラジオボタン実装（スタイル制御のため button を使用）
+                    <button
+                      key={score}
+                      type="button"
+                      role="radio"
+                      aria-checked={finalScores[item.uid] === score}
+                      onClick={() => setFinalScores((s) => ({ ...s, [item.uid]: score }))}
+                      className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                        finalScores[item.uid] === score
+                          ? "bg-blue-600 text-white"
+                          : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      {SCORE_LABELS[score]}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button
+                    size="sm"
+                    onClick={() => handleSaveFinalScore(item.uid)}
+                    disabled={savingScore[item.uid]}
+                  >
+                    {savingScore[item.uid] ? "保存中..." : "スコアを保存"}
+                  </Button>
+                  {savedScore[item.uid] && (
+                    <span className="text-sm text-green-600">保存しました</span>
+                  )}
+                  {scoreErrors[item.uid] && (
+                    <span className="text-sm text-red-600">{scoreErrors[item.uid]}</span>
+                  )}
+                </div>
+              </div>
+
               {/* 評価者コメント一覧 */}
               <div className="mb-3 space-y-3">
                 <p className="text-sm font-medium text-gray-700">評価者コメント</p>
@@ -212,9 +285,6 @@ export default function ManagerEvaluationTabs({
                       <div className="mb-1 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-medium text-gray-700">{cm.evaluatorName}</span>
-                          <span className="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-gray-700 border">
-                            {SCORE_LABELS[cm.score]}
-                          </span>
                           <span className="text-xs text-gray-400" suppressHydrationWarning>
                             {new Date(cm.createdAt).toLocaleString("ja-JP")}
                           </span>
@@ -226,7 +296,6 @@ export default function ManagerEvaluationTabs({
                               variant="outline"
                               onClick={() => {
                                 setEditing((ed) => ({ ...ed, [cm.id]: true }));
-                                setEditScore((s) => ({ ...s, [cm.id]: cm.score }));
                                 setEditReason((r) => ({ ...r, [cm.id]: cm.reason ?? "" }));
                               }}
                             >
@@ -248,25 +317,6 @@ export default function ManagerEvaluationTabs({
                       )}
                       {isEditing ? (
                         <div className="mt-2 space-y-2">
-                          <div role="radiogroup" aria-label="スコア" className="flex gap-2">
-                            {(["none", "ka", "ryo", "yu"] as Score[]).map((score) => (
-                              // biome-ignore lint/a11y/useSemanticElements: カスタムラジオボタン実装（スタイル制御のため button を使用）
-                              <button
-                                key={score}
-                                type="button"
-                                role="radio"
-                                aria-checked={editScore[cm.id] === score}
-                                onClick={() => setEditScore((s) => ({ ...s, [cm.id]: score }))}
-                                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                                  editScore[cm.id] === score
-                                    ? "bg-blue-600 text-white"
-                                    : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                }`}
-                              >
-                                {SCORE_LABELS[score]}
-                              </button>
-                            ))}
-                          </div>
                           <textarea
                             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                             rows={3}
@@ -309,25 +359,6 @@ export default function ManagerEvaluationTabs({
               {adding[item.uid] ? (
                 <div className="space-y-2 rounded-md border border-blue-200 bg-blue-50 p-3">
                   <p className="text-sm font-medium text-gray-700">コメントを追加</p>
-                  <div role="radiogroup" aria-label="スコア" className="flex gap-2">
-                    {(["none", "ka", "ryo", "yu"] as Score[]).map((score) => (
-                      // biome-ignore lint/a11y/useSemanticElements: カスタムラジオボタン実装（スタイル制御のため button を使用）
-                      <button
-                        key={score}
-                        type="button"
-                        role="radio"
-                        aria-checked={(newScore[item.uid] ?? "none") === score}
-                        onClick={() => setNewScore((s) => ({ ...s, [item.uid]: score }))}
-                        className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                          (newScore[item.uid] ?? "none") === score
-                            ? "bg-blue-600 text-white"
-                            : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                        }`}
-                      >
-                        {SCORE_LABELS[score]}
-                      </button>
-                    ))}
-                  </div>
                   <textarea
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     rows={3}
