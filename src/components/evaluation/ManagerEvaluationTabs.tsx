@@ -253,6 +253,17 @@ export default function ManagerEvaluationTabs({
                       {SCORE_LABELS[score]}
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => setFinalScores((s) => ({ ...s, [item.uid]: null }))}
+                    className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                      finalScores[item.uid] === null
+                        ? "bg-gray-500 text-white"
+                        : "border border-gray-300 text-gray-400 hover:bg-gray-50"
+                    }`}
+                  >
+                    クリア
+                  </button>
                 </div>
                 <div className="flex items-center gap-3">
                   <Button
