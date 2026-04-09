@@ -19,6 +19,7 @@
 | 管理：ユーザー一覧 | `/admin/users` | ヘッダーあり | admin のみ |
 | 管理：自己評価要否設定 | `/admin/users/[id]/evaluation-settings` | ヘッダーあり | admin のみ |
 | 管理：評価者アサイン管理 | `/admin/evaluation-assignments` | ヘッダーあり | admin のみ |
+| 管理：全ユーザー自己評価一覧 | `/admin/self-evaluations` | ヘッダーあり | admin のみ |
 
 ### 画面遷移
 
@@ -154,6 +155,21 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 
 指定ユーザーの年度別自己評価要否（`self_evaluation_enabled`）をトグルで切り替える。
 
+### 管理：全ユーザー自己評価一覧（`/admin/self-evaluations`）
+
+全ユーザーの自己評価入力内容を年度・ユーザーで絞り込んで一覧表示する。
+
+| 表示項目 | 説明 |
+|---------|------|
+| 社員名 | 被評価者の氏名 |
+| UID | 評価項目の一意識別子（例: `1-1-1`） |
+| 評価項目 | 評価項目名称 |
+| 自己採点 | なし / 可 / 良 / 優（未入力は「未入力」と表示） |
+| 自己採点理由 | 本人が入力したコメント（長い場合は truncate） |
+| 最終更新日時 | レコードの `updated_at`（未設定は `—`） |
+
+フィルター：年度セレクトボックス（`AdminYearSelector`）・ユーザーセレクトボックス（`AdminUserFilter`）をヘッダー下に並べて表示。デフォルトは現在年度・全ユーザー。
+
 ---
 
 ## 各画面の表示状態
@@ -223,6 +239,13 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 | Empty | 年度が 0 件 | 「設定可能な年度がありません。」（`text-gray-500`） |
 | Error | API エラー | エラーメッセージ（`text-red-600`） |
 
+### 管理：全ユーザー自己評価一覧（`/admin/self-evaluations`）
+
+| 状態 | 条件 | 表示 |
+|------|------|------|
+| Empty（年度未選択） | 年度が 1 件も登録されていない | 「年度を選択してください。」（テーブル内中央） |
+| Empty（データなし） | フィルター条件に一致するレコードが 0 件 | 「評価データがありません。」（テーブル内中央、`text-gray-500`） |
+
 ---
 
 ## レイアウト構成
@@ -282,6 +305,8 @@ src/app/layout.tsx（RootLayout）
 | `FiscalYearActions` | Client Component | 年度の編集・削除・現在年度設定ボタン |
 | `UserActions` | Client Component | ユーザーのロール変更・有効化/無効化・削除ボタン |
 | `EvaluationSettingToggle` | Client Component | 自己評価要否のトグルスイッチ |
+| `AdminYearSelector` | Client Component | 年度絞り込みセレクトボックス。`year` クエリパラメータを更新して遷移 |
+| `AdminUserFilter` | Client Component | ユーザー絞り込みセレクトボックス。`userId` クエリパラメータを更新して遷移 |
 
 ---
 
