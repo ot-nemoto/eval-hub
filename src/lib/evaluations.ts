@@ -53,17 +53,30 @@ export async function getEvaluations(evaluateeId: string, fiscalYear: number) {
 
   const evaluations = await prisma.evaluation.findMany({
     where: { fiscalYear, evaluateeId },
-    include: { evaluationItem: { select: { name: true } } },
+    include: {
+      evaluationItem: { select: { name: true } },
+      managerComments: {
+        include: { evaluator: { select: { name: true } } },
+        orderBy: { createdAt: "asc" },
+      },
+    },
     orderBy: { evalItemId: "asc" },
   });
 
   return evaluations.map((e) => ({
     evalItemId: e.evalItemId,
+    evaluationId: e.id,
     itemName: e.evaluationItem.name,
     selfScore: e.selfScore,
     selfReason: e.selfReason,
-    managerScore: e.managerScore,
-    managerReason: e.managerReason,
+    managerComments: e.managerComments.map((c) => ({
+      id: c.id,
+      evaluatorId: c.evaluatorId,
+      evaluatorName: c.evaluator.name,
+      score: c.score,
+      reason: c.reason,
+      createdAt: c.createdAt,
+    })),
   }));
 }
 
@@ -73,8 +86,6 @@ export async function upsertEvaluation(data: {
   evalItemId: number;
   selfScore?: Score | null;
   selfReason?: string | null;
-  managerScore?: Score | null;
-  managerReason?: string | null;
 }) {
   if (!Number.isInteger(data.fiscalYear) || data.fiscalYear < 1900 || data.fiscalYear > 9999)
     throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
@@ -95,7 +106,50 @@ export async function upsertEvaluation(data: {
     evalItemId: evaluation.evalItemId,
     selfScore: evaluation.selfScore,
     selfReason: evaluation.selfReason,
-    managerScore: evaluation.managerScore,
-    managerReason: evaluation.managerReason,
   };
+}
+
+export async function addManagerComment(
+  evaluateeId: string,
+  fiscalYear: number,
+  evalItemId: number,
+  evaluatorId: string,
+  data: { score: Score; reason: string | null },
+) {
+  if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
+    throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
+  if (!Number.isInteger(evalItemId) || evalItemId < 1)
+    throw new BadRequestError("evalItemId は正の整数で指定してください");
+
+  // evaluation が存在しなければ作成する
+  const evaluation = await prisma.evaluation.upsert({
+    where: {
+      fiscalYear_evaluateeId_evalItemId: { fiscalYear, evaluateeId, evalItemId },
+    },
+    create: { fiscalYear, evaluateeId, evalItemId },
+    update: {},
+  });
+
+  return prisma.managerComment.create({
+    data: {
+      evaluationId: evaluation.id,
+      evaluatorId,
+      score: data.score,
+      reason: data.reason,
+    },
+  });
+}
+
+export async function updateManagerComment(
+  commentId: string,
+  data: { score?: Score; reason?: string | null },
+) {
+  return prisma.managerComment.update({
+    where: { id: commentId },
+    data,
+  });
+}
+
+export async function deleteManagerComment(commentId: string) {
+  await prisma.managerComment.delete({ where: { id: commentId } });
 }

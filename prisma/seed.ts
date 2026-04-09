@@ -364,8 +364,8 @@ async function main() {
   // 9. 評価データ（evaluations）
   //    「採点欄は表示されるが編集不可」シナリオの表示確認用に事前データを投入する
   //
-  //  tebasaki（2026年度）: 先頭3件に self_score + manager_score を設定
-  //    → 自己評価画面で評価者採点欄が表示・編集不可であることを確認できる
+  //  tebasaki（2026年度）: 先頭3件に self_score を設定、bonjiri が manager_comment を登録
+  //    → 自己評価画面で評価者コメント欄が表示されることを確認できる
   //  nankotsu（2026年度）: 4件目に self_score = null（未入力表示確認用）、先頭3件に self_score のみ設定
   //    → 評価者画面で自己採点欄が表示・編集不可であることを確認できる
   //    → 全ユーザー自己評価一覧で「未入力」表示を確認できる
@@ -378,15 +378,13 @@ async function main() {
   const seedItems = allItems.slice(0, 4);
 
   const evaluationsData = [
-    // tebasaki: 自己採点 + 評価者採点あり
+    // tebasaki: 自己採点あり（評価者コメントは後で登録）
     {
       fiscalYear: 2026,
       evaluateeEmail: "tebasaki@example.com",
       itemId: seedItems[0].id,
       selfScore: "ryo" as const,
       selfReason: "積極的に取り組みました",
-      managerScore: "yu" as const,
-      managerReason: "非常に優秀な取り組みでした",
     },
     {
       fiscalYear: 2026,
@@ -394,8 +392,6 @@ async function main() {
       itemId: seedItems[1].id,
       selfScore: "ka" as const,
       selfReason: "改善の余地があります",
-      managerScore: "ryo" as const,
-      managerReason: "着実に成長しています",
     },
     {
       fiscalYear: 2026,
@@ -403,8 +399,6 @@ async function main() {
       itemId: seedItems[2].id,
       selfScore: "yu" as const,
       selfReason: "目標を超えて達成できました",
-      managerScore: "yu" as const,
-      managerReason: "期待以上の成果でした",
     },
     // nankotsu: 自己採点未入力（未入力表示確認用）
     {
@@ -413,8 +407,6 @@ async function main() {
       itemId: seedItems[3].id,
       selfScore: null,
       selfReason: null,
-      managerScore: null,
-      managerReason: null,
     },
     // nankotsu: 自己採点のみ（評価者採点なし）
     {
@@ -423,8 +415,6 @@ async function main() {
       itemId: seedItems[0].id,
       selfScore: "ka" as const,
       selfReason: "基本的なことはできました",
-      managerScore: null,
-      managerReason: null,
     },
     {
       fiscalYear: 2026,
@@ -432,8 +422,6 @@ async function main() {
       itemId: seedItems[1].id,
       selfScore: "ryo" as const,
       selfReason: "しっかり対応できました",
-      managerScore: null,
-      managerReason: null,
     },
     {
       fiscalYear: 2026,
@@ -441,8 +429,6 @@ async function main() {
       itemId: seedItems[2].id,
       selfScore: "ryo" as const,
       selfReason: "チームに貢献できました",
-      managerScore: null,
-      managerReason: null,
     },
   ];
 
@@ -453,11 +439,56 @@ async function main() {
       evalItemId: e.itemId,
       selfScore: e.selfScore,
       selfReason: e.selfReason,
-      managerScore: e.managerScore,
-      managerReason: e.managerReason,
     })),
   });
   console.log(`evaluations: ${evaluationsData.length} created`);
+
+  // =========================================================================
+  // 10. 評価者コメント（manager_comments）
+  //    tebasaki の先頭3件に bonjiri（ADMIN）のコメントを登録
+  //    item[0] には tsukune もコメントを登録（複数評価者コメントの確認用）
+  // =========================================================================
+  const tebasakiEvals = await prisma.evaluation.findMany({
+    where: {
+      fiscalYear: 2026,
+      evaluateeId: u["tebasaki@example.com"].id,
+      evalItemId: { in: [seedItems[0].id, seedItems[1].id, seedItems[2].id] },
+    },
+  });
+  const tebasakiEvalMap = Object.fromEntries(
+    tebasakiEvals.map((e) => [e.evalItemId, e.id]),
+  );
+  const managerCommentsData = [
+    // item[0]: bonjiri + tsukune の2人がコメント（複数評価者ケース）
+    {
+      evaluationId: tebasakiEvalMap[seedItems[0].id],
+      evaluatorId: u["bonjiri@example.com"].id,
+      score: "yu" as const,
+      reason: "非常に優秀な取り組みでした",
+    },
+    {
+      evaluationId: tebasakiEvalMap[seedItems[0].id],
+      evaluatorId: u["tsukune@example.com"].id,
+      score: "ryo" as const,
+      reason: "よく頑張っています。さらなる成長を期待しています",
+    },
+    // item[1]: bonjiri のみ
+    {
+      evaluationId: tebasakiEvalMap[seedItems[1].id],
+      evaluatorId: u["bonjiri@example.com"].id,
+      score: "ryo" as const,
+      reason: "着実に成長しています",
+    },
+    // item[2]: bonjiri のみ
+    {
+      evaluationId: tebasakiEvalMap[seedItems[2].id],
+      evaluatorId: u["bonjiri@example.com"].id,
+      score: "yu" as const,
+      reason: "期待以上の成果でした",
+    },
+  ];
+  await prisma.managerComment.createMany({ data: managerCommentsData });
+  console.log(`manager_comments: ${managerCommentsData.length} created`);
 }
 
 main()

@@ -289,7 +289,7 @@ src/app/layout.tsx（RootLayout）
 | コンポーネント | 種別 | 用途 |
 |--------------|------|------|
 | `EvaluationTabs` | Client Component | 自己評価入力。中分類タブ・採点ボタン・理由テキストエリア・個別保存 |
-| `ManagerEvaluationTabs` | Client Component | 評価者評価入力。構成は EvaluationTabs と同様 |
+| `ManagerEvaluationTabs` | Client Component | 評価者コメント入力。中分類タブ・自己評価表示・コメントスレッド（投稿者名・スコア・理由・日時）・追加フォーム・自コメントの編集/削除 |
 
 ### ページ内コンポーネント（`src/components/admin/`）
 
