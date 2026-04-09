@@ -49,7 +49,7 @@ describe("getAllSelfEvaluations", () => {
 
     expect(prisma.evaluation.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { fiscalYear: 2026 },
+        where: { fiscalYear: 2026, evaluatee: { isActive: true } },
         orderBy: [
           { evaluatee: { name: "asc" } },
           { evaluationItem: { target: { no: "asc" } } },
@@ -77,7 +77,7 @@ describe("getAllSelfEvaluations", () => {
 
     expect(prisma.evaluation.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { fiscalYear: 2026, evaluateeId: "user-1" },
+        where: { fiscalYear: 2026, evaluatee: { isActive: true }, evaluateeId: "user-1" },
       }),
     );
   });
@@ -89,7 +89,7 @@ describe("getAllSelfEvaluations", () => {
 
     expect(prisma.evaluation.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { fiscalYear: 2026 },
+        where: { fiscalYear: 2026, evaluatee: { isActive: true } },
       }),
     );
   });

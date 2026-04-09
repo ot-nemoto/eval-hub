@@ -12,6 +12,7 @@ export async function getAllSelfEvaluations(
   const rows = await prisma.evaluation.findMany({
     where: {
       fiscalYear,
+      evaluatee: { isActive: true },
       ...(filter?.userId ? { evaluateeId: filter.userId } : {}),
     },
     include: {
