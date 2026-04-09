@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import ManagerEvaluationTabs from "@/components/evaluation/ManagerEvaluationTabs";
 import { getSession } from "@/lib/auth";
 import { getCurrentFiscalYear } from "@/lib/fiscal-year";
