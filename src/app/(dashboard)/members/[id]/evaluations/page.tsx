@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import ManagerEvaluationTabs from "@/components/evaluation/ManagerEvaluationTabs";
 import { getSession } from "@/lib/auth";
 import { getCurrentFiscalYear } from "@/lib/fiscal-year";
+import { getEvaluations } from "@/lib/evaluations";
 import { prisma } from "@/lib/prisma";
 
 type Props = { params: Promise<{ id: string }> };
@@ -42,9 +43,7 @@ export default async function MemberEvaluationsPage({ params }: Props) {
       orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
       include: { target: true, category: true },
     }),
-    prisma.evaluation.findMany({
-      where: { evaluateeId: evaluateeId, fiscalYear: fiscalYear },
-    }),
+    getEvaluations(evaluateeId, fiscalYear),
   ]);
 
   const evalMap = Object.fromEntries(evaluations.map((e) => [e.evalItemId, e]));
@@ -60,8 +59,8 @@ export default async function MemberEvaluationsPage({ params }: Props) {
       target: item.target.name,
       selfScore: (ev?.selfScore ?? null) as "none" | "ka" | "ryo" | "yu" | null,
       selfReason: ev?.selfReason ?? null,
-      managerScore: (ev?.managerScore ?? null) as "none" | "ka" | "ryo" | "yu" | null,
-      managerReason: ev?.managerReason ?? null,
+      evaluationId: ev?.evaluationId ?? null,
+      managerComments: ev?.managerComments ?? [],
     };
   });
 
@@ -75,6 +74,8 @@ export default async function MemberEvaluationsPage({ params }: Props) {
         items={itemsWithEval}
         evaluateeId={evaluateeId}
         fiscalYear={fiscalYear}
+        currentUserId={session.user.id}
+        isAdmin={isAdmin}
       />
     </div>
   );

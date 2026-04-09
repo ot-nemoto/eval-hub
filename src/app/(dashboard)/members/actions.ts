@@ -9,12 +9,21 @@ import { BadRequestError, ForbiddenError } from "@/lib/errors";
 import { addManagerComment, deleteManagerComment, updateManagerComment } from "@/lib/evaluations";
 import { prisma } from "@/lib/prisma";
 
+type ManagerCommentPayload = {
+  id: string;
+  evaluatorId: string;
+  evaluatorName: string;
+  score: Score;
+  reason: string | null;
+  createdAt: Date;
+};
+
 export async function addManagerCommentAction(
   evaluateeId: string,
   fiscalYear: number,
   evalItemId: number,
   data: { score: Score; reason: string | null },
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; comment?: ManagerCommentPayload }> {
   const session = await getSession();
   if (!session) redirect("/login");
 
@@ -38,41 +47,68 @@ export async function addManagerCommentAction(
       return { error: "評価者としてアサインされていません" };
   }
 
+  let created: Awaited<ReturnType<typeof addManagerComment>>;
   try {
-    await addManagerComment(evaluateeId, fiscalYear, evalItemId, session.user.id, data);
+    created = await addManagerComment(evaluateeId, fiscalYear, evalItemId, session.user.id, data);
   } catch (e) {
     if (e instanceof BadRequestError || e instanceof ForbiddenError) return { error: e.message };
     throw e;
   }
 
+  const evaluator = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { name: true },
+  });
+
   revalidatePath(`/members/${evaluateeId}/evaluations`);
-  return {};
+  return {
+    comment: {
+      id: created.id,
+      evaluatorId: created.evaluatorId,
+      evaluatorName: evaluator?.name ?? "",
+      score: created.score,
+      reason: created.reason,
+      createdAt: created.createdAt,
+    },
+  };
 }
 
 export async function updateManagerCommentAction(
   commentId: string,
   evaluateeId: string,
   data: { score?: Score; reason?: string | null },
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; comment?: ManagerCommentPayload }> {
   const session = await getSession();
   if (!session) redirect("/login");
 
   const isAdmin = session.user.role === "ADMIN";
-  if (!isAdmin) {
-    const comment = await prisma.managerComment.findUnique({ where: { id: commentId } });
-    if (!comment) return { error: "コメントが見つかりません" };
-    if (comment.evaluatorId !== session.user.id) return { error: "自分のコメントのみ編集できます" };
-  }
+  const existing = await prisma.managerComment.findUnique({
+    where: { id: commentId },
+    include: { evaluator: { select: { name: true } } },
+  });
+  if (!existing) return { error: "コメントが見つかりません" };
+  if (!isAdmin && existing.evaluatorId !== session.user.id)
+    return { error: "自分のコメントのみ編集できます" };
 
+  let updated: Awaited<ReturnType<typeof updateManagerComment>>;
   try {
-    await updateManagerComment(commentId, data);
+    updated = await updateManagerComment(commentId, data);
   } catch (e) {
     if (e instanceof BadRequestError || e instanceof ForbiddenError) return { error: e.message };
     throw e;
   }
 
   revalidatePath(`/members/${evaluateeId}/evaluations`);
-  return {};
+  return {
+    comment: {
+      id: updated.id,
+      evaluatorId: updated.evaluatorId,
+      evaluatorName: existing.evaluator.name,
+      score: updated.score,
+      reason: updated.reason,
+      createdAt: updated.createdAt,
+    },
+  };
 }
 
 export async function deleteManagerCommentAction(
