@@ -22,6 +22,7 @@ export function FiscalYearSelector({ years, currentYear }: Props) {
           setFiscalYearAction(year);
         }
       }}
+      aria-label="評価年度"
       className="rounded border border-gray-300 bg-white px-2 py-1 text-sm text-gray-700"
     >
       {years.map((fy) => (
