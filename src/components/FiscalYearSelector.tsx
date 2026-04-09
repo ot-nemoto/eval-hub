@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { setFiscalYearAction } from "@/app/(dashboard)/actions";
 
 type Props = {
@@ -7,14 +8,19 @@ type Props = {
 };
 
 export function FiscalYearSelector({ years, currentYear }: Props) {
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+
   if (years.length === 0) return null;
 
   return (
     <select
-      value={currentYear ?? ""}
+      value={selectedYear ?? ""}
       onChange={(e) => {
         const year = parseInt(e.target.value, 10);
-        if (!isNaN(year)) setFiscalYearAction(year);
+        if (!isNaN(year)) {
+          setSelectedYear(year);
+          setFiscalYearAction(year);
+        }
       }}
       className="rounded border border-gray-300 bg-white px-2 py-1 text-sm text-gray-700"
     >
