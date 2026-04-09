@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import ManagerEvaluationTabs from "@/components/evaluation/ManagerEvaluationTabs";
 import { getSession } from "@/lib/auth";
 import { getCurrentFiscalYear } from "@/lib/fiscal-year";
@@ -17,7 +17,14 @@ export default async function MemberEvaluationsPage({ params }: Props) {
   const fiscalYear = await getCurrentFiscalYear();
   if (!fiscalYear) notFound();
 
-  // 権限確認: admin または当該年度にアサインされた評価者のみアクセス可
+  // 対象ユーザーが当該年度の被評価者として存在するか確認
+  const isEvaluatee = await prisma.evaluationAssignment.findFirst({
+    where: { fiscalYear, evaluateeId },
+  });
+  if (!isEvaluatee) notFound();
+
+  // 評価者アサインの確認（なければ読み取り専用）
+  let isAssigned = isAdmin;
   if (!isAdmin) {
     const assignment = await prisma.evaluationAssignment.findUnique({
       where: {
@@ -28,8 +35,9 @@ export default async function MemberEvaluationsPage({ params }: Props) {
         },
       },
     });
-    if (!assignment) redirect("/members");
+    isAssigned = !!assignment;
   }
+  const readOnly = !isAssigned;
 
   const evaluatee = await prisma.user.findUnique({
     where: { id: evaluateeId },
@@ -68,7 +76,9 @@ export default async function MemberEvaluationsPage({ params }: Props) {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900">{evaluatee.name} の評価入力</h2>
+        <h2 className="text-xl font-bold text-gray-900">
+          {evaluatee.name} の{readOnly ? "評価閲覧" : "評価入力"}
+        </h2>
         <p className="text-sm text-gray-500">{fiscalYear}年度</p>
       </div>
       <ManagerEvaluationTabs
@@ -77,6 +87,7 @@ export default async function MemberEvaluationsPage({ params }: Props) {
         fiscalYear={fiscalYear}
         currentUserId={session.user.id}
         isAdmin={isAdmin}
+        readOnly={readOnly}
       />
     </div>
   );

@@ -14,37 +14,29 @@ export default async function MembersPage() {
   if (!fiscalYear) redirect("/evaluations");
 
   type Member = { id: string; name: string; division: string | null };
-  let members: Member[] = [];
-  let assignedEvaluateeIds = new Set<string>();
 
-  if (isAdmin) {
-    members = await prisma.user.findMany({
-      select: { id: true, name: true, division: true },
-      orderBy: { name: "asc" },
-    });
-    assignedEvaluateeIds = new Set(members.map((m) => m.id));
-  } else {
-    const assignments = await prisma.evaluationAssignment.findMany({
-      where: { fiscalYear },
-      select: {
-        evaluatorId: true,
-        evaluateeId: true,
-        evaluatee: { select: { id: true, name: true, division: true } },
-        evaluator: { select: { id: true, name: true, division: true } },
-      },
-    });
+  // ADMIN・MEMBER 共通: 対象年度の被評価者のみ表示
+  const assignments = await prisma.evaluationAssignment.findMany({
+    where: { fiscalYear },
+    select: {
+      evaluatorId: true,
+      evaluateeId: true,
+      evaluatee: { select: { id: true, name: true, division: true } },
+    },
+  });
 
-    const userMap = new Map<string, Member>();
-    for (const a of assignments) {
-      userMap.set(a.evaluateeId, a.evaluatee);
-      userMap.set(a.evaluatorId, a.evaluator);
-    }
-    members = [...userMap.values()].sort((a, b) => a.name.localeCompare(b.name, "ja"));
-
-    assignedEvaluateeIds = new Set(
-      assignments.filter((a) => a.evaluatorId === userId).map((a) => a.evaluateeId),
-    );
+  const evaluateeMap = new Map<string, Member>();
+  for (const a of assignments) {
+    evaluateeMap.set(a.evaluateeId, a.evaluatee);
   }
+  const members = [...evaluateeMap.values()].sort((a, b) => a.name.localeCompare(b.name, "ja"));
+
+  // 現在ユーザーが評価者としてアサインされている被評価者 ID
+  const assignedEvaluateeIds = new Set(
+    isAdmin
+      ? [...evaluateeMap.keys()] // admin は全被評価者を評価可能
+      : assignments.filter((a) => a.evaluatorId === userId).map((a) => a.evaluateeId),
+  );
 
   return (
     <div>
@@ -71,12 +63,16 @@ export default async function MembersPage() {
                   <td className="px-4 py-3 font-medium text-gray-900">{member.name}</td>
                   <td className="px-4 py-3 text-gray-500">{member.division ?? "—"}</td>
                   <td className="px-4 py-3 text-right">
-                    {assignedEvaluateeIds.has(member.id) && (
+                    {member.id === userId ? (
+                      <Link href="/evaluations" className="text-blue-600 hover:underline">
+                        自己評価 →
+                      </Link>
+                    ) : (
                       <Link
                         href={`/members/${member.id}/evaluations`}
                         className="text-blue-600 hover:underline"
                       >
-                        評価入力 →
+                        {assignedEvaluateeIds.has(member.id) ? "評価入力 →" : "閲覧 →"}
                       </Link>
                     )}
                   </td>
