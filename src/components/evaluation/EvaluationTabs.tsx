@@ -175,7 +175,7 @@ export default function EvaluationTabs({ items, fiscalYear }: Props) {
                       <span className="rounded-md border bg-white px-2 py-0.5 text-xs font-medium text-gray-700">
                         {SCORE_LABELS[cm.score]}
                       </span>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-gray-400" suppressHydrationWarning>
                         {new Date(cm.createdAt).toLocaleString("ja-JP")}
                       </span>
                     </div>

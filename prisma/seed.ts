@@ -446,6 +446,7 @@ async function main() {
   // =========================================================================
   // 10. 評価者コメント（manager_comments）
   //    tebasaki の先頭3件に bonjiri（ADMIN）のコメントを登録
+  //    item[0] には tsukune もコメントを登録（複数評価者コメントの確認用）
   // =========================================================================
   const tebasakiEvals = await prisma.evaluation.findMany({
     where: {
@@ -458,6 +459,7 @@ async function main() {
     tebasakiEvals.map((e) => [e.evalItemId, e.id]),
   );
   const managerCommentsData = [
+    // item[0]: bonjiri + tsukune の2人がコメント（複数評価者ケース）
     {
       evaluationId: tebasakiEvalMap[seedItems[0].id],
       evaluatorId: u["bonjiri@example.com"].id,
@@ -465,11 +467,19 @@ async function main() {
       reason: "非常に優秀な取り組みでした",
     },
     {
+      evaluationId: tebasakiEvalMap[seedItems[0].id],
+      evaluatorId: u["tsukune@example.com"].id,
+      score: "ryo" as const,
+      reason: "よく頑張っています。さらなる成長を期待しています",
+    },
+    // item[1]: bonjiri のみ
+    {
       evaluationId: tebasakiEvalMap[seedItems[1].id],
       evaluatorId: u["bonjiri@example.com"].id,
       score: "ryo" as const,
       reason: "着実に成長しています",
     },
+    // item[2]: bonjiri のみ
     {
       evaluationId: tebasakiEvalMap[seedItems[2].id],
       evaluatorId: u["bonjiri@example.com"].id,

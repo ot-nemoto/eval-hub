@@ -215,7 +215,7 @@ export default function ManagerEvaluationTabs({
                           <span className="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-gray-700 border">
                             {SCORE_LABELS[cm.score]}
                           </span>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-gray-400" suppressHydrationWarning>
                             {new Date(cm.createdAt).toLocaleString("ja-JP")}
                           </span>
                         </div>
