@@ -45,6 +45,7 @@ type Props = {
   fiscalYear: number;
   currentUserId: string;
   isAdmin: boolean;
+  readOnly?: boolean;
 };
 
 export default function ManagerEvaluationTabs({
@@ -53,6 +54,7 @@ export default function ManagerEvaluationTabs({
   fiscalYear,
   currentUserId,
   isAdmin,
+  readOnly = false,
 }: Props) {
   const categories = [...new Set(items.map((i) => i.category))];
   const [activeCategory, setActiveCategory] = useState(categories[0] ?? "");
@@ -235,51 +237,59 @@ export default function ManagerEvaluationTabs({
               {/* 最終評価スコア */}
               <div className="mb-4 space-y-2">
                 <p className="text-sm font-medium text-gray-700">最終評価スコア</p>
-                <div role="radiogroup" aria-label="最終評価スコア" className="flex flex-wrap gap-2">
-                  {(["none", "ka", "ryo", "yu"] as Score[]).map((score) => (
-                    // biome-ignore lint/a11y/useSemanticElements: カスタムラジオボタン実装（スタイル制御のため button を使用）
-                    <button
-                      key={score}
-                      type="button"
-                      role="radio"
-                      aria-checked={finalScores[item.uid] === score}
-                      onClick={() => setFinalScores((s) => ({ ...s, [item.uid]: score }))}
-                      className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                        finalScores[item.uid] === score
-                          ? "bg-blue-600 text-white"
-                          : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      {SCORE_LABELS[score]}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setFinalScores((s) => ({ ...s, [item.uid]: null }))}
-                    className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                      finalScores[item.uid] === null
-                        ? "bg-gray-500 text-white"
-                        : "border border-gray-300 text-gray-400 hover:bg-gray-50"
-                    }`}
-                  >
-                    クリア
-                  </button>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Button
-                    size="sm"
-                    onClick={() => handleSaveFinalScore(item.uid)}
-                    disabled={savingScore[item.uid]}
-                  >
-                    {savingScore[item.uid] ? "保存中..." : "スコアを保存"}
-                  </Button>
-                  {savedScore[item.uid] && (
-                    <span className="text-sm text-green-600">保存しました</span>
-                  )}
-                  {scoreErrors[item.uid] && (
-                    <span className="text-sm text-red-600">{scoreErrors[item.uid]}</span>
-                  )}
-                </div>
+                {readOnly ? (
+                  <span className="inline-block rounded-md border bg-white px-3 py-1.5 text-sm font-medium text-gray-700">
+                    {finalScores[item.uid] != null ? SCORE_LABELS[finalScores[item.uid]!] : "未設定"}
+                  </span>
+                ) : (
+                  <>
+                    <div role="radiogroup" aria-label="最終評価スコア" className="flex flex-wrap gap-2">
+                      {(["none", "ka", "ryo", "yu"] as Score[]).map((score) => (
+                        // biome-ignore lint/a11y/useSemanticElements: カスタムラジオボタン実装（スタイル制御のため button を使用）
+                        <button
+                          key={score}
+                          type="button"
+                          role="radio"
+                          aria-checked={finalScores[item.uid] === score}
+                          onClick={() => setFinalScores((s) => ({ ...s, [item.uid]: score }))}
+                          className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                            finalScores[item.uid] === score
+                              ? "bg-blue-600 text-white"
+                              : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          {SCORE_LABELS[score]}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setFinalScores((s) => ({ ...s, [item.uid]: null }))}
+                        className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                          finalScores[item.uid] === null
+                            ? "bg-gray-500 text-white"
+                            : "border border-gray-300 text-gray-400 hover:bg-gray-50"
+                        }`}
+                      >
+                        クリア
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        size="sm"
+                        onClick={() => handleSaveFinalScore(item.uid)}
+                        disabled={savingScore[item.uid]}
+                      >
+                        {savingScore[item.uid] ? "保存中..." : "スコアを保存"}
+                      </Button>
+                      {savedScore[item.uid] && (
+                        <span className="text-sm text-green-600">保存しました</span>
+                      )}
+                      {scoreErrors[item.uid] && (
+                        <span className="text-sm text-red-600">{scoreErrors[item.uid]}</span>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* 評価者コメント一覧 */}
@@ -300,7 +310,7 @@ export default function ManagerEvaluationTabs({
                             {new Date(cm.createdAt).toLocaleString("ja-JP")}
                           </span>
                         </div>
-                        {canEdit && !isEditing && (
+                        {!readOnly && canEdit && !isEditing && (
                           <div className="flex gap-1">
                             <Button
                               size="sm"
@@ -366,8 +376,8 @@ export default function ManagerEvaluationTabs({
                 })}
               </div>
 
-              {/* コメント追加フォーム */}
-              {adding[item.uid] ? (
+              {/* コメント追加フォーム（readOnly 時は非表示） */}
+              {!readOnly && adding[item.uid] ? (
                 <div className="space-y-2 rounded-md border border-blue-200 bg-blue-50 p-3">
                   <p className="text-sm font-medium text-gray-700">コメントを追加</p>
                   <textarea
@@ -400,13 +410,15 @@ export default function ManagerEvaluationTabs({
                   </div>
                 </div>
               ) : (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setAdding((a) => ({ ...a, [item.uid]: true }))}
-                >
-                  コメントを追加
-                </Button>
+                !readOnly && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setAdding((a) => ({ ...a, [item.uid]: true }))}
+                  >
+                    コメントを追加
+                  </Button>
+                )
               )}
             </div>
           );

@@ -14,21 +14,29 @@ export default async function MembersPage() {
   if (!fiscalYear) redirect("/evaluations");
 
   type Member = { id: string; name: string; division: string | null };
-  let members: Member[] = [];
 
-  if (isAdmin) {
-    members = await prisma.user.findMany({
-      select: { id: true, name: true, division: true },
-      orderBy: { name: "asc" },
-    });
-  } else {
-    const assignments = await prisma.evaluationAssignment.findMany({
-      where: { evaluatorId: userId, fiscalYear: fiscalYear },
-      include: { evaluatee: { select: { id: true, name: true, division: true } } },
-      orderBy: { evaluatee: { name: "asc" } },
-    });
-    members = assignments.map((a) => a.evaluatee);
+  // ADMIN・MEMBER 共通: 対象年度の被評価者のみ表示
+  const assignments = await prisma.evaluationAssignment.findMany({
+    where: { fiscalYear },
+    select: {
+      evaluatorId: true,
+      evaluateeId: true,
+      evaluatee: { select: { id: true, name: true, division: true } },
+    },
+  });
+
+  const evaluateeMap = new Map<string, Member>();
+  for (const a of assignments) {
+    evaluateeMap.set(a.evaluateeId, a.evaluatee);
   }
+  const members = [...evaluateeMap.values()].sort((a, b) => a.name.localeCompare(b.name, "ja"));
+
+  // 現在ユーザーが評価者としてアサインされている被評価者 ID
+  const assignedEvaluateeIds = new Set(
+    isAdmin
+      ? [...evaluateeMap.keys()] // admin は全被評価者を評価可能
+      : assignments.filter((a) => a.evaluatorId === userId).map((a) => a.evaluateeId),
+  );
 
   return (
     <div>
@@ -38,7 +46,7 @@ export default async function MembersPage() {
       </div>
 
       {members.length === 0 ? (
-        <p className="text-gray-500">担当する被評価者がいません。</p>
+        <p className="text-gray-500">表示できる社員がいません。</p>
       ) : (
         <div className="overflow-hidden rounded-lg border bg-white">
           <table className="w-full text-sm">
@@ -55,12 +63,18 @@ export default async function MembersPage() {
                   <td className="px-4 py-3 font-medium text-gray-900">{member.name}</td>
                   <td className="px-4 py-3 text-gray-500">{member.division ?? "—"}</td>
                   <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/members/${member.id}/evaluations`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      評価入力 →
-                    </Link>
+                    {member.id === userId ? (
+                      <Link href="/evaluations" className="text-blue-600 hover:underline">
+                        自己評価 →
+                      </Link>
+                    ) : (
+                      <Link
+                        href={`/members/${member.id}/evaluations`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {assignedEvaluateeIds.has(member.id) ? "評価入力 →" : "閲覧 →"}
+                      </Link>
+                    )}
                   </td>
                 </tr>
               ))}
