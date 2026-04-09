@@ -191,8 +191,8 @@ async function main() {
   //  ────────────┼───────┼───────┼──────
   //  bonjiri     │ false │ false │ false  ← デフォルトのため登録不要
   //  tsukune     │ true  │ false │ false  ← 2025 のみ登録
-  //  tebasaki    │ true  │ true  │ true
-  //  nankotsu    │ true  │ true  │ true
+  //  tebasaki    │ true  │ true  │ false  ← 2027 はアサインなし・自己評価なし（空年度確認用）
+  //  nankotsu    │ true  │ true  │ false  ← 同上
   //  sunagimo    │ false │ false │ false  ← デフォルトのため登録不要
   //  torikawa    │ false │ false │ false  ← デフォルトのため登録不要
   // =========================================================================
@@ -200,10 +200,8 @@ async function main() {
     { email: "tsukune@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
     { email: "tebasaki@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
     { email: "tebasaki@example.com", fiscalYear: 2026, selfEvaluationEnabled: true },
-    { email: "tebasaki@example.com", fiscalYear: 2027, selfEvaluationEnabled: true },
     { email: "nankotsu@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
     { email: "nankotsu@example.com", fiscalYear: 2026, selfEvaluationEnabled: true },
-    { email: "nankotsu@example.com", fiscalYear: 2027, selfEvaluationEnabled: true },
   ];
   await prisma.evaluationSetting.createMany({
     data: settingsData.map((s) => ({
@@ -331,21 +329,23 @@ async function main() {
 
   // =========================================================================
   // 8. fiscal_year_items（年度と評価項目の紐付け）
-  //    2026（現在年度）: Recruit カテゴリは「採用広告」1件のみ（T78 フィルタリング動作確認用）
-  //    → 評価画面で Recruit が1件しか表示されなければフィルタが正常に機能している
+  //    2026（現在年度）: 採用カテゴリ2件＋改善カテゴリ1件を除外（フィルタリング動作確認用）
+  //    → 採用: オンボーディングのみ表示（1件）、改善: 課題発見・改善実施のみ表示（2件）
   // =========================================================================
   const allItems = await prisma.evaluationItem.findMany({
     select: { id: true, name: true },
     orderBy: { id: "asc" },
   });
 
-  // Recruit カテゴリのうち「採用広告」以外を 2026 から除外
-  const recruitExcluded = new Set(
+  // 2026 から除外する項目（フィルタリング動作確認用）
+  //   採用カテゴリ: 採用計画・面接実施を除外（オンボーディングは残す → 1件のみ表示）
+  //   改善カテゴリ: 効果測定を除外（課題発見・改善実施は残す → 2件のみ表示）
+  const adoptionExcluded = new Set(
     allItems
-      .filter((item) => ["採用計画の作成実施", "紹介会社運用", "入社試験", "応募者フォロー"].includes(item.name))
+      .filter((item) => ["採用計画", "面接実施", "効果測定"].includes(item.name))
       .map((item) => item.id),
   );
-  const items2026 = allItems.filter((item) => !recruitExcluded.has(item.id));
+  const items2026 = allItems.filter((item) => !adoptionExcluded.has(item.id));
 
   await prisma.fiscalYearItem.createMany({
     data: [
@@ -357,7 +357,7 @@ async function main() {
     ],
   });
   console.log(
-    `fiscal_year_items: created (2025/2027: ${allItems.length}件, 2026: ${items2026.length}件 ※Recruitの4件除外)`,
+    `fiscal_year_items: created (2025/2027: ${allItems.length}件, 2026: ${items2026.length}件 ※採用2件・効果測定1件除外)`,
   );
 
   // =========================================================================
