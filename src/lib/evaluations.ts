@@ -70,7 +70,7 @@ export async function getAllManagerEvaluations(
         },
       },
       managerComments: {
-        include: { evaluator: { select: { name: true } } },
+        select: { reason: true, evaluator: { select: { name: true } } },
         orderBy: { createdAt: "desc" },
         take: 1,
       },
