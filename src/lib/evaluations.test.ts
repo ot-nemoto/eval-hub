@@ -4,6 +4,7 @@ import { BadRequestError } from "./errors";
 import {
   addManagerComment,
   deleteManagerComment,
+  getAllManagerEvaluations,
   getAllSelfEvaluations,
   getEvaluationProgress,
   getEvaluations,
@@ -464,5 +465,86 @@ describe("getEvaluationProgress", () => {
 
   it("fiscalYear が整数でない場合は BadRequestError をスロー", async () => {
     await expect(getEvaluationProgress(2024.5)).rejects.toThrow(BadRequestError);
+  });
+});
+
+const mockManagerEvalRow = {
+  id: "eval-1",
+  evaluatee: { id: "user-1", name: "テストユーザー" },
+  evaluationItem: {
+    no: 1,
+    name: "評価項目A",
+    target: { no: 1 },
+    category: { no: 1 },
+  },
+  managerScore: "ryo",
+  managerComments: [
+    {
+      reason: "よく頑張りました",
+      evaluator: { name: "上長A" },
+    },
+  ],
+  updatedAt: new Date("2026-01-01"),
+};
+
+describe("getAllManagerEvaluations", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("正常系: findMany が正しい where/orderBy で呼ばれ、整形された結果を返す", async () => {
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue([mockManagerEvalRow] as never);
+
+    const result = await getAllManagerEvaluations(2026);
+
+    expect(prisma.evaluation.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { fiscalYear: 2026, evaluatee: { isActive: true } },
+        orderBy: [
+          { evaluatee: { name: "asc" } },
+          { evaluationItem: { target: { no: "asc" } } },
+          { evaluationItem: { category: { no: "asc" } } },
+          { evaluationItem: { no: "asc" } },
+        ],
+      }),
+    );
+    expect(result).toEqual([
+      {
+        id: "eval-1",
+        evaluatee: { id: "user-1", name: "テストユーザー" },
+        item: { uid: "1-1-1", name: "評価項目A" },
+        managerScore: "ryo",
+        latestComment: { reason: "よく頑張りました", evaluatorName: "上長A" },
+        updatedAt: new Date("2026-01-01"),
+      },
+    ]);
+  });
+
+  it("コメントなしの場合は latestComment が null になる", async () => {
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue([
+      { ...mockManagerEvalRow, managerComments: [] },
+    ] as never);
+
+    const result = await getAllManagerEvaluations(2026);
+
+    expect(result[0].latestComment).toBeNull();
+  });
+
+  it("userId フィルタあり: evaluateeId が where に含まれる", async () => {
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue([] as never);
+
+    await getAllManagerEvaluations(2026, { userId: "user-1" });
+
+    expect(prisma.evaluation.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { fiscalYear: 2026, evaluatee: { isActive: true }, evaluateeId: "user-1" },
+      }),
+    );
+  });
+
+  it("fiscalYear が範囲外の場合は BadRequestError をスロー", async () => {
+    await expect(getAllManagerEvaluations(1800)).rejects.toThrow(BadRequestError);
+  });
+
+  it("fiscalYear が整数でない場合は BadRequestError をスロー", async () => {
+    await expect(getAllManagerEvaluations(2026.5)).rejects.toThrow(BadRequestError);
   });
 });
