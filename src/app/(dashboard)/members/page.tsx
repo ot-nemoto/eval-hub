@@ -29,7 +29,15 @@ export default async function MembersPage() {
   for (const a of assignments) {
     evaluateeMap.set(a.evaluateeId, a.evaluatee);
   }
-  const members = [...evaluateeMap.values()].sort((a, b) => a.name.localeCompare(b.name, "ja"));
+
+  // 対象年度に評価者または被評価者として関与している場合のみ一覧を表示
+  const hasAccess =
+    isAdmin ||
+    assignments.some((a) => a.evaluatorId === userId || a.evaluateeId === userId);
+
+  const members = hasAccess
+    ? [...evaluateeMap.values()].sort((a, b) => a.name.localeCompare(b.name, "ja"))
+    : [];
 
   // 現在ユーザーが評価者としてアサインされている被評価者 ID
   const assignedEvaluateeIds = new Set(
