@@ -5,6 +5,7 @@ import {
   addManagerComment,
   deleteManagerComment,
   getAllSelfEvaluations,
+  getEvaluationProgress,
   getEvaluations,
   updateManagerComment,
   upsertEvaluation,
@@ -16,6 +17,12 @@ vi.mock("@/lib/prisma", () => ({
     evaluation: {
       findMany: vi.fn(),
       upsert: vi.fn(),
+    },
+    evaluationAssignment: {
+      findMany: vi.fn(),
+    },
+    fiscalYearItem: {
+      count: vi.fn(),
     },
     managerComment: {
       create: vi.fn(),
@@ -376,5 +383,76 @@ describe("deleteManagerComment", () => {
     expect(prisma.managerComment.delete).toHaveBeenCalledWith({
       where: { id: "comment-1" },
     });
+  });
+});
+
+describe("getEvaluationProgress", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("正常系: 被評価者ごとの進捗を集計して返す", async () => {
+    const now = new Date("2026-04-01T10:00:00Z");
+    const older = new Date("2026-03-01T10:00:00Z");
+
+    vi.mocked(prisma.evaluationAssignment.findMany).mockResolvedValue([
+      { evaluateeId: "user-1", evaluatee: { name: "田中" } },
+      { evaluateeId: "user-2", evaluatee: { name: "鈴木" } },
+    ] as never);
+    vi.mocked(prisma.fiscalYearItem.count).mockResolvedValue(3);
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue([
+      { evaluateeId: "user-1", selfScore: "ryo", managerScore: "yu", updatedAt: now },
+      { evaluateeId: "user-1", selfScore: "ka", managerScore: null, updatedAt: older },
+      { evaluateeId: "user-1", selfScore: null, managerScore: null, updatedAt: older },
+      { evaluateeId: "user-2", selfScore: null, managerScore: null, updatedAt: older },
+    ] as never);
+
+    const result = await getEvaluationProgress(2026);
+
+    expect(result).toEqual([
+      {
+        evaluateeId: "user-1",
+        name: "田中",
+        totalItems: 3,
+        selfScored: 2,
+        managerScored: 1,
+        lastUpdatedAt: now,
+      },
+      {
+        evaluateeId: "user-2",
+        name: "鈴木",
+        totalItems: 3,
+        selfScored: 0,
+        managerScored: 0,
+        lastUpdatedAt: older,
+      },
+    ]);
+  });
+
+  it("評価レコードがない被評価者は lastUpdatedAt が null になる", async () => {
+    vi.mocked(prisma.evaluationAssignment.findMany).mockResolvedValue([
+      { evaluateeId: "user-1", evaluatee: { name: "田中" } },
+    ] as never);
+    vi.mocked(prisma.fiscalYearItem.count).mockResolvedValue(5);
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue([] as never);
+
+    const result = await getEvaluationProgress(2026);
+
+    expect(result).toEqual([
+      {
+        evaluateeId: "user-1",
+        name: "田中",
+        totalItems: 5,
+        selfScored: 0,
+        managerScored: 0,
+        lastUpdatedAt: null,
+      },
+    ]);
+  });
+
+  it("fiscalYear が範囲外の場合は BadRequestError をスロー", async () => {
+    await expect(getEvaluationProgress(1800)).rejects.toThrow(BadRequestError);
+  });
+
+  it("fiscalYear が整数でない場合は BadRequestError をスロー", async () => {
+    await expect(getEvaluationProgress(2024.5)).rejects.toThrow(BadRequestError);
   });
 });

@@ -377,6 +377,8 @@ async function main() {
   //  nankotsu（2026年度）: 4件目に self_score = null（未入力表示確認用）、先頭3件に self_score のみ設定
   //    → 全ユーザー自己評価一覧で「未入力」表示を確認できる
   //    → 評価者画面（tebasaki）で MEMBER 評価者としての操作を確認できる
+  //  tsukune（2025年度）: 全評価項目に self_score を設定（進捗 100% 緑色表示の確認用）
+  //    → 進捗ダッシュボードで 2025年度を表示し、100% が緑色表示されることを確認できる
   // =========================================================================
   if (allItems.length < 4) {
     throw new Error(
@@ -449,7 +451,18 @@ async function main() {
       selfReason: e.selfReason,
     })),
   });
-  console.log(`evaluations: ${evaluationsData.length} created`);
+
+  // tsukune（2025年度）: 全評価項目に self_score を設定（進捗 100% 緑色表示の確認用）
+  await prisma.evaluation.createMany({
+    data: allItems.map((item) => ({
+      fiscalYear: 2025,
+      evaluateeId: u["tsukune@example.com"].id,
+      evalItemId: item.id,
+      selfScore: "ryo" as const,
+      selfReason: null,
+    })),
+  });
+  console.log(`evaluations: ${evaluationsData.length} created (tebasaki/nankotsu 2026), tsukune 2025: ${allItems.length}件・全件入力済み（100% 確認用）`);
 
   // =========================================================================
   // 10. 評価者コメント（manager_comments）+ 最終スコア（manager_score）

@@ -2,6 +2,36 @@ import type { Score } from "@prisma/client";
 import { BadRequestError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 
+export async function getEvaluationProgress(fiscalYear: number) {
+  if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
+    throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
+
+  const [evaluatees, totalItems, evaluations] = await Promise.all([
+    prisma.evaluationAssignment.findMany({
+      where: { fiscalYear },
+      select: { evaluateeId: true, evaluatee: { select: { name: true } } },
+      distinct: ["evaluateeId"],
+      orderBy: { evaluatee: { name: "asc" } },
+    }),
+    prisma.fiscalYearItem.count({ where: { fiscalYear } }),
+    prisma.evaluation.findMany({
+      where: { fiscalYear },
+      select: { evaluateeId: true, selfScore: true, managerScore: true, updatedAt: true },
+    }),
+  ]);
+
+  return evaluatees.map(({ evaluateeId, evaluatee }) => {
+    const evals = evaluations.filter((e) => e.evaluateeId === evaluateeId);
+    const selfScored = evals.filter((e) => e.selfScore !== null).length;
+    const managerScored = evals.filter((e) => e.managerScore !== null).length;
+    const lastUpdatedAt =
+      evals.length > 0
+        ? new Date(Math.max(...evals.map((e) => e.updatedAt.getTime())))
+        : null;
+    return { evaluateeId, name: evaluatee.name, totalItems, selfScored, managerScored, lastUpdatedAt };
+  });
+}
+
 export async function getAllSelfEvaluations(
   fiscalYear: number,
   filter?: { userId?: string },
