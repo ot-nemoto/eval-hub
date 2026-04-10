@@ -35,9 +35,10 @@ type Item = {
 type Props = {
   items: Item[];
   fiscalYear: number;
+  isLocked?: boolean;
 };
 
-export default function EvaluationTabs({ items, fiscalYear }: Props) {
+export default function EvaluationTabs({ items, fiscalYear, isLocked = false }: Props) {
   const categories = [...new Set(items.map((i) => i.category))];
   const [activeCategory, setActiveCategory] = useState(categories[0] ?? "");
 
@@ -82,6 +83,14 @@ export default function EvaluationTabs({ items, fiscalYear }: Props) {
 
   return (
     <div>
+      {/* ロック済みバナー */}
+      {isLocked && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+          <span>🔒</span>
+          <span>この年度はロック済みです。閲覧のみ可能です。</span>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="mb-6 flex gap-1 overflow-x-auto border-b">
         {categories.map((cat) => (
@@ -117,50 +126,57 @@ export default function EvaluationTabs({ items, fiscalYear }: Props) {
               {/* Score */}
               <div>
                 <p className="block text-sm font-medium text-gray-700">自己採点</p>
-                <div className="mt-1 flex gap-2">
-                  {(["none", "ka", "ryo", "yu"] as Score[]).map((score) => (
-                    <button
-                      key={score}
-                      type="button"
-                      onClick={() => setScores((s) => ({ ...s, [item.uid]: score }))}
-                      className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                        scores[item.uid] === score
-                          ? "bg-blue-600 text-white"
-                          : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      {SCORE_LABELS[score]}
-                    </button>
-                  ))}
-                </div>
+                {isLocked ? (
+                  <p className="mt-1 text-sm text-gray-500">
+                    {scores[item.uid] ? SCORE_LABELS[scores[item.uid]] : "未入力"}
+                  </p>
+                ) : (
+                  <div className="mt-1 flex gap-2">
+                    {(["none", "ka", "ryo", "yu"] as Score[]).map((score) => (
+                      <button
+                        key={score}
+                        type="button"
+                        onClick={() => setScores((s) => ({ ...s, [item.uid]: score }))}
+                        className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                          scores[item.uid] === score
+                            ? "bg-blue-600 text-white"
+                            : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {SCORE_LABELS[score]}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Reason */}
               <div>
-                <label
-                  htmlFor={`reason-${item.uid}`}
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  自己採点理由
-                </label>
-                <textarea
-                  id={`reason-${item.uid}`}
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  rows={3}
-                  value={reasons[item.uid] ?? ""}
-                  onChange={(e) => setReasons((r) => ({ ...r, [item.uid]: e.target.value }))}
-                />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Button size="sm" onClick={() => handleSave(item.uid)} disabled={saving[item.uid]}>
-                  {saving[item.uid] ? "保存中..." : "保存"}
-                </Button>
-                {saved[item.uid] && <span className="text-sm text-green-600">保存しました</span>}
-                {errors[item.uid] && (
-                  <span className="text-sm text-red-600">{errors[item.uid]}</span>
+                <p className="block text-sm font-medium text-gray-700">自己採点理由</p>
+                {isLocked ? (
+                  <p className="mt-1 text-sm text-gray-500">{reasons[item.uid] || "未入力"}</p>
+                ) : (
+                  <textarea
+                    id={`reason-${item.uid}`}
+                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    rows={3}
+                    value={reasons[item.uid] ?? ""}
+                    onChange={(e) => setReasons((r) => ({ ...r, [item.uid]: e.target.value }))}
+                  />
                 )}
               </div>
+
+              {!isLocked && (
+                <div className="flex items-center gap-3">
+                  <Button size="sm" onClick={() => handleSave(item.uid)} disabled={saving[item.uid]}>
+                    {saving[item.uid] ? "保存中..." : "保存"}
+                  </Button>
+                  {saved[item.uid] && <span className="text-sm text-green-600">保存しました</span>}
+                  {errors[item.uid] && (
+                    <span className="text-sm text-red-600">{errors[item.uid]}</span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* 評価者コメント（読み取り専用） */}

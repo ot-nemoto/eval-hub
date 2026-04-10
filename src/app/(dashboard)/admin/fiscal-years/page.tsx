@@ -17,6 +17,7 @@ export default async function FiscalYearsPage() {
       startDate: true,
       endDate: true,
       isCurrent: true,
+      isLocked: true,
       _count: {
         select: {
           fiscalYearItems: true,
@@ -48,13 +49,14 @@ export default async function FiscalYearsPage() {
               <th className="px-4 py-3 text-left font-medium text-gray-700">開始日</th>
               <th className="px-4 py-3 text-left font-medium text-gray-700">終了日</th>
               <th className="px-4 py-3 text-left font-medium text-gray-700">現在年度</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-700">状態</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y">
             {fiscalYears.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
                   年度が登録されていません。
                 </td>
               </tr>
@@ -73,6 +75,15 @@ export default async function FiscalYearsPage() {
                     {fy.isCurrent ? (
                       <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
                         現在
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {fy.isLocked ? (
+                      <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
+                        🔒 ロック済み
                       </span>
                     ) : (
                       <span className="text-gray-400">—</span>

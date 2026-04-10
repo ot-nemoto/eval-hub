@@ -97,6 +97,8 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 
 `self_evaluation_enabled = false` の場合、自己評価入力フォームを非表示にする。
 
+対象年度が **ロック済み**（`is_locked = true`）の場合、画面上部に「🔒 この年度はロック済みです。閲覧のみ可能です。」バナーを表示し、入力 UI（採点ボタン・テキストエリア・保存ボタン）を非表示にして閲覧専用モードに切り替える。
+
 ### 社員一覧（`/members`）
 
 対象年度の被評価者一覧を表示する。現在年度（`fiscal_years.is_current = true`）が未設定の場合は `/evaluations` にリダイレクトする。
@@ -122,6 +124,8 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 
 アクセス制御：`evaluation_assignments` でアサインされた評価者または admin のみ（サーバー側で検証）。
 
+対象年度が **ロック済み**（`is_locked = true`）の場合、画面上部に「🔒 この年度はロック済みです。閲覧のみ可能です。」バナーを表示し、採点ボタン・保存ボタン・コメント追加／編集／削除ボタンをすべて非表示にして閲覧専用モードに切り替える。
+
 ### 管理：大分類・中分類マスタ（`/admin/targets`）
 
 大分類の一覧表示・追加・編集・削除を行う。中分類が紐づいている場合は削除不可（エラー表示）。
@@ -132,12 +136,13 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 
 ### 管理：年度管理（`/admin/fiscal-years`）
 
-年度の一覧表示・追加・編集・削除・現在年度設定を行う。関連データがある年度は削除不可。
+年度の一覧表示・追加・編集・削除・現在年度設定・ロック設定を行う。関連データがある年度は削除不可。
 
 | 機能 | 説明 |
 |------|------|
-| 年度一覧 | 年度名・期間・現在年度フラグを表示 |
+| 年度一覧 | 年度名・期間・現在年度フラグ・ロック状態を表示 |
 | 現在年度設定 | `is_current = true` は常に1件のみ |
+| ロック/解除 | ADMIN が年度をロック（`is_locked = true`）すると、その年度の評価編集を一括禁止。解除も可能 |
 | 有効評価項目管理 | 年度ごとに有効な評価項目を追加・削除 |
 
 ### 管理：ユーザー一覧（`/admin/users`）
@@ -224,6 +229,7 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 | Loading | データ取得中 | テーブルスケルトン |
 | Empty | 年度が 0 件 | 「年度がありません。」（`text-gray-500`） |
 | Error | 削除時に関連データが存在する | フォーム上部エラーメッセージ（`text-red-600`） |
+| Locked | 対象年度がロック済み | 黄色バナー「🔒 この年度はロック済みです。閲覧のみ可能です。」を表示し、入力 UI を非表示 |
 
 ### 管理：ユーザー一覧（`/admin/users`）
 
@@ -304,7 +310,7 @@ src/app/layout.tsx（RootLayout）
 | `EvaluationItemForm` | Client Component | 評価項目の追加・編集フォーム |
 | `EvaluationItemActions` | Client Component | 評価項目の編集・削除ボタン |
 | `FiscalYearForm` | Client Component | 年度の追加・編集フォーム |
-| `FiscalYearActions` | Client Component | 年度の編集・削除・現在年度設定ボタン |
+| `FiscalYearActions` | Client Component | 年度の編集・削除・現在年度設定・ロック/解除ボタン |
 | `UserActions` | Client Component | ユーザーのロール変更・有効化/無効化・削除ボタン |
 | `EvaluationSettingToggle` | Client Component | 自己評価要否のトグルスイッチ |
 | `AdminYearSelector` | Client Component | 年度絞り込みセレクトボックス。`year` クエリパラメータを更新して遷移 |

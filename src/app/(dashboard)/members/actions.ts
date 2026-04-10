@@ -22,6 +22,15 @@ type ManagerCommentPayload = {
   createdAt: Date;
 };
 
+async function assertFiscalYearUnlocked(fiscalYear: number): Promise<{ error: string } | null> {
+  const fy = await prisma.fiscalYear.findUnique({
+    where: { year: fiscalYear },
+    select: { isLocked: true },
+  });
+  if (fy?.isLocked) return { error: "この年度はロックされているため編集できません" };
+  return null;
+}
+
 export async function upsertManagerScoreAction(
   evaluateeId: string,
   fiscalYear: number,
@@ -35,6 +44,9 @@ export async function upsertManagerScoreAction(
     return { error: "fiscalYear は 1900〜9999 の整数で指定してください" };
   if (!Number.isInteger(evalItemId) || evalItemId < 1)
     return { error: "evalItemId は正の整数で指定してください" };
+
+  const lockError = await assertFiscalYearUnlocked(fiscalYear);
+  if (lockError) return lockError;
 
   const isAdmin = session.user.role === "ADMIN";
   if (!isAdmin) {
@@ -75,6 +87,9 @@ export async function addManagerCommentAction(
     return { error: "fiscalYear は 1900〜9999 の整数で指定してください" };
   if (!Number.isInteger(evalItemId) || evalItemId < 1)
     return { error: "evalItemId は正の整数で指定してください" };
+
+  const lockError = await assertFiscalYearUnlocked(fiscalYear);
+  if (lockError) return lockError;
 
   const isAdmin = session.user.role === "ADMIN";
   if (!isAdmin) {
@@ -127,11 +142,17 @@ export async function updateManagerCommentAction(
   const isAdmin = session.user.role === "ADMIN";
   const existing = await prisma.managerComment.findUnique({
     where: { id: commentId },
-    include: { evaluator: { select: { name: true } } },
+    include: {
+      evaluator: { select: { name: true } },
+      evaluation: { select: { fiscalYear: true } },
+    },
   });
   if (!existing) return { error: "コメントが見つかりません" };
   if (!isAdmin && existing.evaluatorId !== session.user.id)
     return { error: "自分のコメントのみ編集できます" };
+
+  const lockError = await assertFiscalYearUnlocked(existing.evaluation.fiscalYear);
+  if (lockError) return lockError;
 
   let updated: Awaited<ReturnType<typeof updateManagerComment>>;
   try {
@@ -161,11 +182,16 @@ export async function deleteManagerCommentAction(
   if (!session) redirect("/login");
 
   const isAdmin = session.user.role === "ADMIN";
-  if (!isAdmin) {
-    const comment = await prisma.managerComment.findUnique({ where: { id: commentId } });
-    if (!comment) return { error: "コメントが見つかりません" };
-    if (comment.evaluatorId !== session.user.id) return { error: "自分のコメントのみ削除できます" };
-  }
+  const comment = await prisma.managerComment.findUnique({
+    where: { id: commentId },
+    include: { evaluation: { select: { fiscalYear: true } } },
+  });
+  if (!comment) return { error: "コメントが見つかりません" };
+  if (!isAdmin && comment.evaluatorId !== session.user.id)
+    return { error: "自分のコメントのみ削除できます" };
+
+  const lockError = await assertFiscalYearUnlocked(comment.evaluation.fiscalYear);
+  if (lockError) return lockError;
 
   try {
     await deleteManagerComment(commentId);

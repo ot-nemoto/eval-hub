@@ -8,6 +8,7 @@ const fiscalYearSelect = {
   startDate: true,
   endDate: true,
   isCurrent: true,
+  isLocked: true,
 } as const;
 
 export async function getFiscalYears() {
@@ -126,6 +127,17 @@ export async function updateFiscalYear(
       data: updateData,
       select: fiscalYearSelect,
     });
+  });
+}
+
+export async function toggleFiscalYearLock(year: number, isLocked: boolean) {
+  const target = await prisma.fiscalYear.findUnique({ where: { year } });
+  if (!target) throw new NotFoundError("年度が見つかりません");
+
+  return prisma.fiscalYear.update({
+    where: { year },
+    data: { isLocked },
+    select: fiscalYearSelect,
   });
 }
 

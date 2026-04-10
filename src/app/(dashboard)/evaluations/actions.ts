@@ -22,6 +22,13 @@ export async function upsertSelfEvaluationAction(
   if (!Number.isInteger(evalItemId) || evalItemId < 1)
     return { error: "evalItemId は正の整数で指定してください" };
 
+  const fiscalYearRecord = await prisma.fiscalYear.findUnique({
+    where: { year: fiscalYear },
+    select: { isLocked: true },
+  });
+  if (fiscalYearRecord?.isLocked)
+    return { error: "この年度はロックされているため編集できません" };
+
   const setting = await prisma.evaluationSetting.findUnique({
     where: { userId_fiscalYear: { userId: session.user.id, fiscalYear } },
   });
