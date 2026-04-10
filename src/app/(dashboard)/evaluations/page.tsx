@@ -12,7 +12,7 @@ export default async function EvaluationsPage() {
   const fiscalYear = await getCurrentFiscalYear();
   if (!fiscalYear) redirect("/login");
 
-  const [items, evaluations, setting] = await Promise.all([
+  const [items, evaluations, setting, fiscalYearRecord] = await Promise.all([
     prisma.evaluationItem.findMany({
       where: { fiscalYearItems: { some: { fiscalYear: fiscalYear } } },
       orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
@@ -22,7 +22,12 @@ export default async function EvaluationsPage() {
     prisma.evaluationSetting.findUnique({
       where: { userId_fiscalYear: { userId: userId, fiscalYear: fiscalYear } },
     }),
+    prisma.fiscalYear.findUnique({
+      where: { year: fiscalYear },
+      select: { isLocked: true },
+    }),
   ]);
+  const isLocked = fiscalYearRecord?.isLocked ?? false;
 
   const selfEvaluationEnabled = setting?.selfEvaluationEnabled ?? false;
 
@@ -63,7 +68,7 @@ export default async function EvaluationsPage() {
         <h2 className="text-xl font-bold text-gray-900">自己評価</h2>
         <p className="text-sm text-gray-500">{fiscalYear}年度</p>
       </div>
-      <EvaluationTabs items={itemsWithEval} fiscalYear={fiscalYear} />
+      <EvaluationTabs items={itemsWithEval} fiscalYear={fiscalYear} isLocked={isLocked} />
     </div>
   );
 }

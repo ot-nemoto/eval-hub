@@ -142,6 +142,9 @@ async function main() {
   // =========================================================================
   // 2. 年度マスタ（fiscal_years）
   // =========================================================================
+  // 2025: isLocked = true（ロック済み年度の動作確認用）
+  // 2026: 現在年度・未ロック
+  // 2027: 未来年度・未ロック（アサインなし）
   const fiscalYearsBase = [
     {
       year: 2025,
@@ -149,6 +152,7 @@ async function main() {
       startDate: new Date("2025-04-01"),
       endDate: new Date("2026-03-31"),
       isCurrent: false,
+      isLocked: true,
     },
     {
       year: 2026,
@@ -156,6 +160,7 @@ async function main() {
       startDate: new Date("2026-04-01"),
       endDate: new Date("2027-03-31"),
       isCurrent: true,
+      isLocked: false,
     },
     {
       year: 2027,
@@ -163,6 +168,7 @@ async function main() {
       startDate: new Date("2027-04-01"),
       endDate: new Date("2028-03-31"),
       isCurrent: false,
+      isLocked: false,
     },
   ];
   for (const fy of fiscalYearsBase) {
@@ -173,6 +179,7 @@ async function main() {
         startDate: fy.startDate,
         endDate: fy.endDate,
         isCurrent: fy.isCurrent,
+        isLocked: fy.isLocked,
       },
       create: fy,
     });

@@ -9,6 +9,7 @@ import {
   getFiscalYearItems,
   getFiscalYears,
   removeFiscalYearItem,
+  toggleFiscalYearLock,
   updateFiscalYear,
 } from "./fiscal-years";
 
@@ -59,6 +60,7 @@ const mockFy = {
   startDate: new Date("2024-04-01"),
   endDate: new Date("2025-03-31"),
   isCurrent: true,
+  isLocked: false,
 };
 
 const mockItem = { id: 1, targetId: 1, categoryId: 1, no: 1, name: "項目A" };
@@ -359,5 +361,39 @@ describe("removeFiscalYearItem", () => {
     vi.mocked(prisma.fiscalYearItem.findUnique).mockResolvedValue(null);
 
     await expect(removeFiscalYearItem(2024, 99)).rejects.toThrow(NotFoundError);
+  });
+});
+
+describe("toggleFiscalYearLock", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("年度をロックする", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
+    vi.mocked(prisma.fiscalYear.update).mockResolvedValue({ ...mockFy, isLocked: true } as never);
+
+    const result = await toggleFiscalYearLock(2024, true);
+
+    expect(prisma.fiscalYear.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { year: 2024 }, data: { isLocked: true } }),
+    );
+    expect(result.isLocked).toBe(true);
+  });
+
+  it("年度のロックを解除する", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue({ ...mockFy, isLocked: true } as never);
+    vi.mocked(prisma.fiscalYear.update).mockResolvedValue({ ...mockFy, isLocked: false } as never);
+
+    const result = await toggleFiscalYearLock(2024, false);
+
+    expect(prisma.fiscalYear.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { year: 2024 }, data: { isLocked: false } }),
+    );
+    expect(result.isLocked).toBe(false);
+  });
+
+  it("存在しない年度の場合は NotFoundError をスロー", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(null);
+
+    await expect(toggleFiscalYearLock(9999, true)).rejects.toThrow(NotFoundError);
   });
 });

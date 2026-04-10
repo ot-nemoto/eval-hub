@@ -50,6 +50,7 @@ model FiscalYear {
   startDate DateTime @map("start_date") @db.Date
   endDate   DateTime @map("end_date") @db.Date
   isCurrent Boolean  @default(false) @map("is_current") // 部分ユニークインデックスで true は最大1件（migration で管理）
+  isLocked  Boolean  @default(false) @map("is_locked")
   createdAt DateTime @default(now()) @map("created_at")
 
   fiscalYearItems      FiscalYearItem[]

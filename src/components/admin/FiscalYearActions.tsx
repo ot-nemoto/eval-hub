@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import {
   deleteFiscalYearAction,
+  toggleFiscalYearLockAction,
   updateFiscalYearAction,
 } from "@/app/(dashboard)/admin/fiscal-years/actions";
 
@@ -14,6 +15,7 @@ type FiscalYear = {
   startDate: Date;
   endDate: Date;
   isCurrent: boolean;
+  isLocked: boolean;
 };
 
 type Props = { fiscalYear: FiscalYear; isDeletable: boolean };
@@ -54,6 +56,27 @@ export function FiscalYearActions({ fiscalYear, isDeletable }: Props) {
         alert(result.error);
       } else {
         setEditing(false);
+        router.refresh();
+      }
+    } catch {
+      alert("通信エラーが発生しました");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleToggleLock() {
+    const next = !fiscalYear.isLocked;
+    const msg = next
+      ? `${fiscalYear.name}をロックしますか？ロック中は評価の編集ができなくなります。`
+      : `${fiscalYear.name}のロックを解除しますか？`;
+    if (!confirm(msg)) return;
+    setLoading(true);
+    try {
+      const result = await toggleFiscalYearLockAction(fiscalYear.year, next);
+      if (result.error) {
+        alert(result.error);
+      } else {
         router.refresh();
       }
     } catch {
@@ -136,6 +159,18 @@ export function FiscalYearActions({ fiscalYear, isDeletable }: Props) {
           現在年度に設定
         </button>
       )}
+      <button
+        type="button"
+        onClick={handleToggleLock}
+        disabled={loading}
+        className={
+          fiscalYear.isLocked
+            ? "rounded border border-yellow-400 px-2 py-1 text-xs text-yellow-700 hover:bg-yellow-50 disabled:opacity-50"
+            : "rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+        }
+      >
+        {fiscalYear.isLocked ? "ロック解除" : "ロック"}
+      </button>
       <button
         type="button"
         onClick={() => setEditing(true)}

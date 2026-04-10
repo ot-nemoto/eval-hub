@@ -45,14 +45,19 @@ export default async function MemberEvaluationsPage({ params }: Props) {
   });
   if (!evaluatee) notFound();
 
-  const [items, evaluations] = await Promise.all([
+  const [items, evaluations, fiscalYearRecord] = await Promise.all([
     prisma.evaluationItem.findMany({
       where: { fiscalYearItems: { some: { fiscalYear: fiscalYear } } },
       orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
       include: { target: true, category: true },
     }),
     getEvaluations(evaluateeId, fiscalYear),
+    prisma.fiscalYear.findUnique({
+      where: { year: fiscalYear },
+      select: { isLocked: true },
+    }),
   ]);
+  const isLocked = fiscalYearRecord?.isLocked ?? false;
 
   const evalMap = Object.fromEntries(evaluations.map((e) => [e.evalItemId, e]));
 
@@ -88,6 +93,7 @@ export default async function MemberEvaluationsPage({ params }: Props) {
         currentUserId={session.user.id}
         isAdmin={isAdmin}
         readOnly={readOnly}
+        isLocked={isLocked}
       />
     </div>
   );

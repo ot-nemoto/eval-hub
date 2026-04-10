@@ -55,6 +55,7 @@ erDiagram
         DATE start_date
         DATE end_date
         BOOLEAN is_current
+        BOOLEAN is_locked
         TIMESTAMP created_at
     }
     fiscal_year_items {
@@ -163,6 +164,7 @@ erDiagram
 | start_date | DATE | NOT NULL | 開始日 |
 | end_date | DATE | NOT NULL | 終了日 |
 | is_current | BOOLEAN | DEFAULT false | 現在年度フラグ（部分ユニークインデックスで true は最大1件） |
+| is_locked | BOOLEAN | DEFAULT false | ロックフラグ（true の場合、評価の作成・編集・削除を一切禁止） |
 | created_at | TIMESTAMP | DEFAULT now() | |
 
 ---

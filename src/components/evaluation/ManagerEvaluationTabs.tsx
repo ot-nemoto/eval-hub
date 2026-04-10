@@ -46,6 +46,7 @@ type Props = {
   currentUserId: string;
   isAdmin: boolean;
   readOnly?: boolean;
+  isLocked?: boolean;
 };
 
 export default function ManagerEvaluationTabs({
@@ -55,6 +56,7 @@ export default function ManagerEvaluationTabs({
   currentUserId,
   isAdmin,
   readOnly = false,
+  isLocked = false,
 }: Props) {
   const categories = [...new Set(items.map((i) => i.category))];
   const [activeCategory, setActiveCategory] = useState(categories[0] ?? "");
@@ -184,8 +186,18 @@ export default function ManagerEvaluationTabs({
     return <p className="text-gray-500">評価項目がありません。</p>;
   }
 
+  const effectiveReadOnly = readOnly || isLocked;
+
   return (
     <div>
+      {/* ロック済みバナー */}
+      {isLocked && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+          <span>🔒</span>
+          <span>この年度はロック済みです。閲覧のみ可能です。</span>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="mb-6 flex gap-1 overflow-x-auto border-b">
         {categories.map((cat) => (
@@ -237,7 +249,7 @@ export default function ManagerEvaluationTabs({
               {/* 最終評価スコア */}
               <div className="mb-4 space-y-2">
                 <p className="text-sm font-medium text-gray-700">最終評価スコア</p>
-                {readOnly ? (
+                {effectiveReadOnly ? (
                   <span className="inline-block rounded-md border bg-white px-3 py-1.5 text-sm font-medium text-gray-700">
                     {finalScores[item.uid] != null ? SCORE_LABELS[finalScores[item.uid]!] : "未設定"}
                   </span>
@@ -310,7 +322,7 @@ export default function ManagerEvaluationTabs({
                             {new Date(cm.createdAt).toLocaleString("ja-JP")}
                           </span>
                         </div>
-                        {!readOnly && canEdit && !isEditing && (
+                        {!effectiveReadOnly && canEdit && !isEditing && (
                           <div className="flex gap-1">
                             <Button
                               size="sm"
@@ -376,8 +388,8 @@ export default function ManagerEvaluationTabs({
                 })}
               </div>
 
-              {/* コメント追加フォーム（readOnly 時は非表示） */}
-              {!readOnly && adding[item.uid] ? (
+              {/* コメント追加フォーム（readOnly / isLocked 時は非表示） */}
+              {!effectiveReadOnly && adding[item.uid] ? (
                 <div className="space-y-2 rounded-md border border-blue-200 bg-blue-50 p-3">
                   <p className="text-sm font-medium text-gray-700">コメントを追加</p>
                   <textarea
@@ -410,7 +422,7 @@ export default function ManagerEvaluationTabs({
                   </div>
                 </div>
               ) : (
-                !readOnly && (
+                !effectiveReadOnly && (
                   <Button
                     size="sm"
                     variant="outline"

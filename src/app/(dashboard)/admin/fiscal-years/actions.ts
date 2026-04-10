@@ -10,6 +10,7 @@ import {
   createFiscalYear,
   deleteFiscalYear,
   removeFiscalYearItem,
+  toggleFiscalYearLock,
   updateFiscalYear,
 } from "@/lib/fiscal-years";
 
@@ -59,6 +60,28 @@ export async function updateFiscalYearAction(
     await updateFiscalYear(year, data);
   } catch (e) {
     if (e instanceof BadRequestError || e instanceof NotFoundError) return { error: e.message };
+    throw e;
+  }
+
+  revalidatePath("/admin/fiscal-years");
+  return {};
+}
+
+export async function toggleFiscalYearLockAction(
+  year: number,
+  isLocked: boolean,
+): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (session.user.role !== "ADMIN") redirect("/evaluations");
+
+  if (!Number.isInteger(year) || year < 1900 || year > 9999)
+    return { error: "year は 1900〜9999 の整数で指定してください" };
+
+  try {
+    await toggleFiscalYearLock(year, isLocked);
+  } catch (e) {
+    if (e instanceof NotFoundError) return { error: e.message };
     throw e;
   }
 
