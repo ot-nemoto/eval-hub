@@ -22,7 +22,7 @@ vi.mock("@/lib/prisma", () => ({
       findMany: vi.fn(),
     },
     fiscalYearItem: {
-      count: vi.fn(),
+      findMany: vi.fn(),
     },
     managerComment: {
       create: vi.fn(),
@@ -397,7 +397,11 @@ describe("getEvaluationProgress", () => {
       { evaluateeId: "user-1", evaluatee: { name: "田中" } },
       { evaluateeId: "user-2", evaluatee: { name: "鈴木" } },
     ] as never);
-    vi.mocked(prisma.fiscalYearItem.count).mockResolvedValue(3);
+    vi.mocked(prisma.fiscalYearItem.findMany).mockResolvedValue([
+      { evaluationItemId: 1 },
+      { evaluationItemId: 2 },
+      { evaluationItemId: 3 },
+    ] as never);
     vi.mocked(prisma.evaluation.findMany).mockResolvedValue([
       { evaluateeId: "user-1", selfScore: "ryo", managerScore: "yu", updatedAt: now },
       { evaluateeId: "user-1", selfScore: "ka", managerScore: null, updatedAt: older },
@@ -431,7 +435,13 @@ describe("getEvaluationProgress", () => {
     vi.mocked(prisma.evaluationAssignment.findMany).mockResolvedValue([
       { evaluateeId: "user-1", evaluatee: { name: "田中" } },
     ] as never);
-    vi.mocked(prisma.fiscalYearItem.count).mockResolvedValue(5);
+    vi.mocked(prisma.fiscalYearItem.findMany).mockResolvedValue([
+      { evaluationItemId: 1 },
+      { evaluationItemId: 2 },
+      { evaluationItemId: 3 },
+      { evaluationItemId: 4 },
+      { evaluationItemId: 5 },
+    ] as never);
     vi.mocked(prisma.evaluation.findMany).mockResolvedValue([] as never);
 
     const result = await getEvaluationProgress(2026);

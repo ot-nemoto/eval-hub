@@ -6,19 +6,25 @@ export async function getEvaluationProgress(fiscalYear: number) {
   if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
     throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
 
-  const [evaluatees, totalItems, evaluations] = await Promise.all([
+  const [evaluatees, fiscalYearItems] = await Promise.all([
     prisma.evaluationAssignment.findMany({
       where: { fiscalYear },
       select: { evaluateeId: true, evaluatee: { select: { name: true } } },
       distinct: ["evaluateeId"],
       orderBy: { evaluatee: { name: "asc" } },
     }),
-    prisma.fiscalYearItem.count({ where: { fiscalYear } }),
-    prisma.evaluation.findMany({
+    prisma.fiscalYearItem.findMany({
       where: { fiscalYear },
-      select: { evaluateeId: true, selfScore: true, managerScore: true, updatedAt: true },
+      select: { evaluationItemId: true },
     }),
   ]);
+
+  const fiscalYearItemIds = fiscalYearItems.map((item) => item.evaluationItemId);
+  const totalItems = fiscalYearItemIds.length;
+  const evaluations = await prisma.evaluation.findMany({
+    where: { fiscalYear, evalItemId: { in: fiscalYearItemIds } },
+    select: { evaluateeId: true, selfScore: true, managerScore: true, updatedAt: true },
+  });
 
   return evaluatees.map(({ evaluateeId, evaluatee }) => {
     const evals = evaluations.filter((e) => e.evaluateeId === evaluateeId);
