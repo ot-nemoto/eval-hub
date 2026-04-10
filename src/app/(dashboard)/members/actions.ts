@@ -12,6 +12,7 @@ import {
   updateManagerComment,
   upsertManagerScore,
 } from "@/lib/evaluations";
+import { assertFiscalYearUnlocked } from "@/lib/fiscal-years";
 import { prisma } from "@/lib/prisma";
 
 type ManagerCommentPayload = {
@@ -21,15 +22,6 @@ type ManagerCommentPayload = {
   reason: string | null;
   createdAt: Date;
 };
-
-async function assertFiscalYearUnlocked(fiscalYear: number): Promise<{ error: string } | null> {
-  const fy = await prisma.fiscalYear.findUnique({
-    where: { year: fiscalYear },
-    select: { isLocked: true },
-  });
-  if (fy?.isLocked) return { error: "この年度はロックされているため編集できません" };
-  return null;
-}
 
 export async function upsertManagerScoreAction(
   evaluateeId: string,
