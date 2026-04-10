@@ -130,6 +130,15 @@ export async function updateFiscalYear(
   });
 }
 
+export async function assertFiscalYearUnlocked(fiscalYear: number): Promise<{ error: string } | null> {
+  const fy = await prisma.fiscalYear.findUnique({
+    where: { year: fiscalYear },
+    select: { isLocked: true },
+  });
+  if (fy?.isLocked) return { error: "この年度はロックされているため編集できません" };
+  return null;
+}
+
 export async function toggleFiscalYearLock(year: number, isLocked: boolean) {
   const target = await prisma.fiscalYear.findUnique({ where: { year } });
   if (!target) throw new NotFoundError("年度が見つかりません");

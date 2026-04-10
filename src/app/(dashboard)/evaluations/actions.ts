@@ -7,6 +7,7 @@ import type { Score } from "@prisma/client";
 import { getSession } from "@/lib/auth";
 import { BadRequestError } from "@/lib/errors";
 import { upsertEvaluation } from "@/lib/evaluations";
+import { assertFiscalYearUnlocked } from "@/lib/fiscal-years";
 import { prisma } from "@/lib/prisma";
 
 export async function upsertSelfEvaluationAction(
@@ -22,12 +23,8 @@ export async function upsertSelfEvaluationAction(
   if (!Number.isInteger(evalItemId) || evalItemId < 1)
     return { error: "evalItemId は正の整数で指定してください" };
 
-  const fiscalYearRecord = await prisma.fiscalYear.findUnique({
-    where: { year: fiscalYear },
-    select: { isLocked: true },
-  });
-  if (fiscalYearRecord?.isLocked)
-    return { error: "この年度はロックされているため編集できません" };
+  const lockError = await assertFiscalYearUnlocked(fiscalYear);
+  if (lockError) return lockError;
 
   const setting = await prisma.evaluationSetting.findUnique({
     where: { userId_fiscalYear: { userId: session.user.id, fiscalYear } },
