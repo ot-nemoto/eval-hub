@@ -26,8 +26,16 @@ export async function getEvaluationProgress(fiscalYear: number) {
     select: { evaluateeId: true, selfScore: true, managerScore: true, updatedAt: true },
   });
 
+  // O(N+M): 被評価者 ID をキーにした Map で事前グルーピング
+  const evalsByUser = new Map<string, typeof evaluations>();
+  for (const e of evaluations) {
+    const list = evalsByUser.get(e.evaluateeId) ?? [];
+    list.push(e);
+    evalsByUser.set(e.evaluateeId, list);
+  }
+
   return evaluatees.map(({ evaluateeId, evaluatee }) => {
-    const evals = evaluations.filter((e) => e.evaluateeId === evaluateeId);
+    const evals = evalsByUser.get(evaluateeId) ?? [];
     const selfScored = evals.filter((e) => e.selfScore !== null).length;
     const managerScored = evals.filter((e) => e.managerScore !== null).length;
     const lastUpdatedAt =
