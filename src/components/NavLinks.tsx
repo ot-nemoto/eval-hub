@@ -12,6 +12,7 @@ const adminLinks = [
   { href: "/admin/users", label: "ユーザー管理" },
   { href: "/admin/evaluation-assignments", label: "アサイン管理" },
   { href: "/admin/self-evaluations", label: "自己評価一覧" },
+  { href: "/admin/manager-evaluations", label: "上長評価一覧" },
   { href: "/admin/progress", label: "評価進捗" },
   { href: "/admin/targets", label: "マスタ管理" },
   { href: "/admin/evaluation-items", label: "評価項目管理" },

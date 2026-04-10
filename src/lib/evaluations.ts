@@ -46,6 +46,61 @@ export async function getEvaluationProgress(fiscalYear: number) {
   });
 }
 
+export async function getAllManagerEvaluations(
+  fiscalYear: number,
+  filter?: { userId?: string },
+) {
+  if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
+    throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
+
+  const rows = await prisma.evaluation.findMany({
+    where: {
+      fiscalYear,
+      evaluatee: { isActive: true },
+      ...(filter?.userId ? { evaluateeId: filter.userId } : {}),
+    },
+    include: {
+      evaluatee: { select: { id: true, name: true } },
+      evaluationItem: {
+        select: {
+          no: true,
+          name: true,
+          target: { select: { no: true } },
+          category: { select: { no: true } },
+        },
+      },
+      managerComments: {
+        select: { reason: true, evaluator: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+    },
+    orderBy: [
+      { evaluatee: { name: "asc" } },
+      { evaluationItem: { target: { no: "asc" } } },
+      { evaluationItem: { category: { no: "asc" } } },
+      { evaluationItem: { no: "asc" } },
+    ],
+  });
+
+  return rows.map((r) => {
+    const latestComment = r.managerComments[0] ?? null;
+    return {
+      id: r.id,
+      evaluatee: r.evaluatee,
+      item: {
+        uid: `${r.evaluationItem.target.no}-${r.evaluationItem.category.no}-${r.evaluationItem.no}`,
+        name: r.evaluationItem.name,
+      },
+      managerScore: r.managerScore,
+      latestComment: latestComment
+        ? { reason: latestComment.reason, evaluatorName: latestComment.evaluator.name }
+        : null,
+      updatedAt: r.updatedAt,
+    };
+  });
+}
+
 export async function getAllSelfEvaluations(
   fiscalYear: number,
   filter?: { userId?: string },
