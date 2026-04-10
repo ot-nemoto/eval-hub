@@ -2,6 +2,50 @@ import type { Score } from "@prisma/client";
 import { BadRequestError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 
+export async function getEvaluationProgress(fiscalYear: number) {
+  if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
+    throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
+
+  const [evaluatees, fiscalYearItems] = await Promise.all([
+    prisma.evaluationAssignment.findMany({
+      where: { fiscalYear },
+      select: { evaluateeId: true, evaluatee: { select: { name: true } } },
+      distinct: ["evaluateeId"],
+      orderBy: { evaluatee: { name: "asc" } },
+    }),
+    prisma.fiscalYearItem.findMany({
+      where: { fiscalYear },
+      select: { evaluationItemId: true },
+    }),
+  ]);
+
+  const fiscalYearItemIds = fiscalYearItems.map((item) => item.evaluationItemId);
+  const totalItems = fiscalYearItemIds.length;
+  const evaluations = await prisma.evaluation.findMany({
+    where: { fiscalYear, evalItemId: { in: fiscalYearItemIds } },
+    select: { evaluateeId: true, selfScore: true, managerScore: true, updatedAt: true },
+  });
+
+  // O(N+M): 被評価者 ID をキーにした Map で事前グルーピング
+  const evalsByUser = new Map<string, typeof evaluations>();
+  for (const e of evaluations) {
+    const list = evalsByUser.get(e.evaluateeId) ?? [];
+    list.push(e);
+    evalsByUser.set(e.evaluateeId, list);
+  }
+
+  return evaluatees.map(({ evaluateeId, evaluatee }) => {
+    const evals = evalsByUser.get(evaluateeId) ?? [];
+    const selfScored = evals.filter((e) => e.selfScore !== null).length;
+    const managerScored = evals.filter((e) => e.managerScore !== null).length;
+    const lastUpdatedAt =
+      evals.length > 0
+        ? new Date(Math.max(...evals.map((e) => e.updatedAt.getTime())))
+        : null;
+    return { evaluateeId, name: evaluatee.name, totalItems, selfScored, managerScored, lastUpdatedAt };
+  });
+}
+
 export async function getAllSelfEvaluations(
   fiscalYear: number,
   filter?: { userId?: string },
