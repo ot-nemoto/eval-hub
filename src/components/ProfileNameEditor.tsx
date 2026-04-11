@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import React, { useRef, useState, useTransition } from "react";
 import { updateNameAction } from "@/app/(dashboard)/actions";
 
 export function ProfileNameEditor({ name }: { name: string }) {
