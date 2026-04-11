@@ -24,13 +24,18 @@ export function ProfileNameEditor({ name }: { name: string }) {
 
   function save() {
     startTransition(async () => {
-      const result = await updateNameAction(value);
-      if (result.error) {
-        setError(result.error);
-        return;
+      try {
+        const result = await updateNameAction(value);
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
+        setEditing(false);
+        setError(null);
+      } catch {
+        setError(null);
+        alert("通信エラーが発生しました");
       }
-      setEditing(false);
-      setError(null);
     });
   }
 
