@@ -10,16 +10,22 @@ type Props = {
 };
 
 export function RoleSelect({ userId, currentRole, disabled }: Props) {
+  const [role, setRole] = useState(currentRole);
   const [loading, setLoading] = useState(false);
 
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const newRole = e.target.value as "ADMIN" | "MEMBER";
+    setRole(newRole);
 
     setLoading(true);
     try {
       const result = await updateUserAction(userId, { role: newRole });
-      if (result.error) alert(result.error);
+      if (result.error) {
+        setRole(currentRole);
+        alert(result.error);
+      }
     } catch {
+      setRole(currentRole);
       alert("通信エラーが発生しました");
     } finally {
       setLoading(false);
@@ -28,7 +34,7 @@ export function RoleSelect({ userId, currentRole, disabled }: Props) {
 
   return (
     <select
-      value={currentRole}
+      value={role}
       onChange={handleChange}
       disabled={disabled || loading}
       aria-label="ロール"
