@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { FiscalYearSelector } from "@/components/FiscalYearSelector";
 import { LogoutButton } from "@/components/LogoutButton";
 import { NavLinks } from "@/components/NavLinks";
+import { ProfileNameEditor } from "@/components/ProfileNameEditor";
 import { getSession } from "@/lib/auth";
 import { APP_NAME } from "@/lib/constants";
 import { getCurrentFiscalYear } from "@/lib/fiscal-year";
@@ -38,7 +39,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
           <div className="flex items-center gap-4">
             <FiscalYearSelector years={years} currentYear={currentYear} />
-            <span className="text-sm text-gray-600">{session.user.name}</span>
+            <ProfileNameEditor name={session.user.name} />
             <LogoutButton />
           </div>
         </div>

@@ -47,6 +47,17 @@ export async function updateUser(
   });
 }
 
+export async function updateCurrentUserName(id: string, name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) throw new BadRequestError("名前を入力してください");
+
+  return prisma.user.update({
+    where: { id },
+    data: { name: trimmed },
+    select: { id: true, name: true },
+  });
+}
+
 export async function deleteUser(id: string, currentUserId: string) {
   if (id === currentUserId) throw new ForbiddenError("自分自身は削除できません");
 
