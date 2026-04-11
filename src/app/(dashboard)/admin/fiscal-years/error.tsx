@@ -1,6 +1,6 @@
 "use client";
 
-export default function ErrorPage({
+export default function PageError({
   error,
   reset,
 }: {
@@ -20,4 +20,3 @@ export default function ErrorPage({
     </div>
   );
 }
-

@@ -10,22 +10,24 @@ export default function AdminUsersLoading() {
         <table className="w-full text-sm">
           <thead className="border-b bg-gray-50">
             <tr>
-              {[...Array(6)].map((_, i) => (
-                <th key={i} className="px-4 py-3">
-                  <div className="h-4 w-16 rounded bg-gray-200" />
-                </th>
-              ))}
+              <th className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></th>
+              <th className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></th>
+              <th className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></th>
+              <th className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></th>
+              <th className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></th>
+              <th className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y">
-            {[...Array(5)].map((_, i) => (
+            {[1, 2, 3, 4, 5].map((i) => (
               <tr key={i}>
-                {[...Array(6)].map((_, j) => (
-                  <td key={j} className="px-4 py-3">
-                    <div className="h-4 w-20 rounded bg-gray-200" />
-                  </td>
-                ))}
+                <td className="px-4 py-3"><div className="h-4 w-20 rounded bg-gray-200" /></td>
+                <td className="px-4 py-3"><div className="h-4 w-20 rounded bg-gray-200" /></td>
+                <td className="px-4 py-3"><div className="h-4 w-20 rounded bg-gray-200" /></td>
+                <td className="px-4 py-3"><div className="h-4 w-20 rounded bg-gray-200" /></td>
+                <td className="px-4 py-3"><div className="h-4 w-20 rounded bg-gray-200" /></td>
+                <td className="px-4 py-3"><div className="h-4 w-20 rounded bg-gray-200" /></td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-2">
                     <div className="h-6 w-14 rounded bg-gray-200" />

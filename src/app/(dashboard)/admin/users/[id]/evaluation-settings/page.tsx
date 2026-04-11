@@ -27,9 +27,7 @@ export default async function UserEvaluationSettingsPage({
     getEvaluationSettings(id),
   ]);
 
-  const settingMap = Object.fromEntries(
-    settings.map((s) => [s.fiscalYear, s.selfEvaluationEnabled]),
-  );
+  const settingMap = new Map(settings.map((s) => [s.fiscalYear, s.selfEvaluationEnabled]));
 
   return (
     <div>
@@ -58,7 +56,7 @@ export default async function UserEvaluationSettingsPage({
             <tbody className="divide-y">
               {fiscalYears.map(({ year }) => {
                 // 未設定の場合はデフォルト false（自己評価なし）
-                const enabled = settingMap[year] ?? false;
+                const enabled = settingMap.get(year) ?? false;
                 return (
                   <tr key={year} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium text-gray-900">{year}年度</td>
