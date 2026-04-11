@@ -1,0 +1,57 @@
+export default function AdminProgressLoading() {
+  return (
+    <div className="animate-pulse">
+      <div className="mb-6">
+        <div className="h-7 w-40 rounded bg-gray-200" />
+        <div className="mt-1 h-4 w-56 rounded bg-gray-200" />
+      </div>
+
+      <div className="mb-4 h-9 w-40 rounded bg-gray-200" />
+
+      <div className="overflow-hidden rounded-lg border bg-white">
+        <table className="w-full text-sm">
+          <thead className="border-b bg-gray-50">
+            <tr>
+              <th className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></th>
+              <th className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></th>
+              <th className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></th>
+              <th className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            <tr>
+              <td className="px-4 py-3"><div className="h-4 w-24 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3"><div className="h-4 w-24 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></td>
+            </tr>
+            <tr>
+              <td className="px-4 py-3"><div className="h-4 w-24 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3"><div className="h-4 w-24 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></td>
+            </tr>
+            <tr>
+              <td className="px-4 py-3"><div className="h-4 w-24 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3"><div className="h-4 w-24 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></td>
+            </tr>
+            <tr>
+              <td className="px-4 py-3"><div className="h-4 w-24 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3"><div className="h-4 w-24 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></td>
+            </tr>
+            <tr>
+              <td className="px-4 py-3"><div className="h-4 w-24 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3"><div className="h-4 w-24 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

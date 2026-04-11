@@ -22,13 +22,12 @@ export default async function UserEvaluationSettingsPage({
   });
   if (!user) redirect("/admin/users");
 
-  const currentYear = new Date().getFullYear();
-  const years = [currentYear - 1, currentYear, currentYear + 1];
+  const [fiscalYears, settings] = await Promise.all([
+    prisma.fiscalYear.findMany({ orderBy: { year: "desc" }, select: { year: true } }),
+    getEvaluationSettings(id),
+  ]);
 
-  const settings = await getEvaluationSettings(id);
-  const settingMap = Object.fromEntries(
-    settings.map((s) => [s.fiscalYear, s.selfEvaluationEnabled]),
-  );
+  const settingMap = new Map(settings.map((s) => [s.fiscalYear, s.selfEvaluationEnabled]));
 
   return (
     <div>
@@ -42,32 +41,36 @@ export default async function UserEvaluationSettingsPage({
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-lg border bg-white">
-        <table className="w-full text-sm">
-          <thead className="border-b bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left font-medium text-gray-700">年度</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-700">自己評価</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-700">状態</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {years.map((year) => {
-              // 未設定の場合はデフォルト false（自己評価なし）
-              const enabled = settingMap[year] ?? false;
-              return (
-                <tr key={year} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{year}年度</td>
-                  <td className="px-4 py-3">
-                    <EvaluationSettingToggle userId={id} fiscalYear={year} enabled={enabled} />
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">{enabled ? "必要" : "不要"}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      {fiscalYears.length === 0 ? (
+        <p className="text-gray-500">設定可能な年度がありません。</p>
+      ) : (
+        <div className="overflow-hidden rounded-lg border bg-white">
+          <table className="w-full text-sm">
+            <thead className="border-b bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left font-medium text-gray-700">年度</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-700">自己評価</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-700">状態</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {fiscalYears.map(({ year }) => {
+                // 未設定の場合はデフォルト false（自己評価なし）
+                const enabled = settingMap.get(year) ?? false;
+                return (
+                  <tr key={year} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-900">{year}年度</td>
+                    <td className="px-4 py-3">
+                      <EvaluationSettingToggle userId={id} fiscalYear={year} enabled={enabled} />
+                    </td>
+                    <td className="px-4 py-3 text-gray-500">{enabled ? "必要" : "不要"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
