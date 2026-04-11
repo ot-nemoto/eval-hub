@@ -33,8 +33,8 @@ npm run dev
 
 ```env
 # Database（Neon）
-DATABASE_URL="postgresql://<user>:<password>@<pooler-host>/<db>?sslmode=require"
-DIRECT_URL="postgresql://<user>:<password>@<direct-host>/<db>?sslmode=require"
+DATABASE_URL="postgresql://<user>:<password>@<pooler-host>/<db>?sslmode=require&channel_binding=require"
+DIRECT_URL="postgresql://<user>:<password>@<direct-host>/<db>?sslmode=require&channel_binding=require"
 
 # Clerk
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
