@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { FISCAL_YEAR_COOKIE } from "@/lib/fiscal-year";
+import { BadRequestError } from "@/lib/errors";
 import { updateCurrentUserName } from "@/lib/users";
 
 export async function setFiscalYearAction(
@@ -28,8 +29,9 @@ export async function updateNameAction(name: string): Promise<{ error?: string }
 
   try {
     await updateCurrentUserName(session.user.id, name);
-  } catch {
-    return { error: "名前の更新に失敗しました" };
+  } catch (e) {
+    if (e instanceof BadRequestError) return { error: e.message };
+    throw e;
   }
 
   revalidatePath("/", "layout");
