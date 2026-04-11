@@ -65,6 +65,7 @@ export function ProfileNameEditor({ name }: { name: string }) {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
+        aria-label="プロフィール名"
         disabled={isPending}
         className="rounded border border-gray-300 px-2 py-0.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
         style={{ width: `${Math.max(value.length, 4) + 4}ch` }}
