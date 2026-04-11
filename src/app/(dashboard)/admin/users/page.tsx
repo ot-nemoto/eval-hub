@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { RoleSelect } from "@/components/admin/RoleSelect";
 import { UserActions } from "@/components/admin/UserActions";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -61,15 +62,11 @@ export default async function AdminUsersPage() {
                 <td className="px-4 py-3 text-gray-500">{user.email}</td>
                 <td className="px-4 py-3 text-gray-500">{user.division ?? "—"}</td>
                 <td className="px-4 py-3">
-                  <span
-                    className={
-                      user.role === "ADMIN"
-                        ? "inline-block rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800"
-                        : "inline-block rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600"
-                    }
-                  >
-                    {user.role}
-                  </span>
+                  <RoleSelect
+                    userId={user.id}
+                    currentRole={user.role}
+                    disabled={user.id === session.user.id}
+                  />
                 </td>
                 <td className="px-4 py-3 text-gray-500">
                   {user.createdAt.toLocaleDateString("ja-JP")}
@@ -85,7 +82,6 @@ export default async function AdminUsersPage() {
                 <td className="px-4 py-3">
                   <UserActions
                     userId={user.id}
-                    currentRole={user.role}
                     isActive={user.isActive}
                     isSelf={user.id === session.user.id}
                     isDeletable={Object.values(user._count).every((count) => count === 0)}
