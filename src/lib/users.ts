@@ -47,12 +47,12 @@ export async function updateUser(
   });
 }
 
-export async function updateCurrentUserName(id: string, name: string) {
+export async function updateUserName(userId: string, name: string) {
   const trimmed = name.trim();
   if (!trimmed) throw new BadRequestError("名前を入力してください");
 
   return prisma.user.update({
-    where: { id },
+    where: { id: userId },
     data: { name: trimmed },
     select: { id: true, name: true },
   });

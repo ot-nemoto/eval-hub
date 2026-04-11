@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "./errors";
-import { deleteUser, getUsers, updateCurrentUserName, updateUser } from "./users";
+import { deleteUser, getUsers, updateUserName, updateUser } from "./users";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -99,13 +99,13 @@ describe("updateUser", () => {
   });
 });
 
-describe("updateCurrentUserName", () => {
+describe("updateUserName", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("名前を更新して返す", async () => {
     vi.mocked(prisma.user.update).mockResolvedValue({ id: "user-1", name: "新しい名前" } as never);
 
-    const result = await updateCurrentUserName("user-1", "新しい名前");
+    const result = await updateUserName("user-1", "新しい名前");
 
     expect(prisma.user.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: "user-1" }, data: { name: "新しい名前" } }),
@@ -116,7 +116,7 @@ describe("updateCurrentUserName", () => {
   it("前後の空白をトリムして更新する", async () => {
     vi.mocked(prisma.user.update).mockResolvedValue({ id: "user-1", name: "トリム名" } as never);
 
-    await updateCurrentUserName("user-1", "  トリム名  ");
+    await updateUserName("user-1", "  トリム名  ");
 
     expect(prisma.user.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: { name: "トリム名" } }),
@@ -124,11 +124,11 @@ describe("updateCurrentUserName", () => {
   });
 
   it("空文字の場合は BadRequestError をスロー", async () => {
-    await expect(updateCurrentUserName("user-1", "")).rejects.toThrow(BadRequestError);
+    await expect(updateUserName("user-1", "")).rejects.toThrow(BadRequestError);
   });
 
   it("空白のみの場合は BadRequestError をスロー", async () => {
-    await expect(updateCurrentUserName("user-1", "   ")).rejects.toThrow(BadRequestError);
+    await expect(updateUserName("user-1", "   ")).rejects.toThrow(BadRequestError);
   });
 });
 

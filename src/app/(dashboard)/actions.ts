@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { FISCAL_YEAR_COOKIE } from "@/lib/fiscal-year";
 import { BadRequestError } from "@/lib/errors";
-import { updateCurrentUserName } from "@/lib/users";
+import { updateUserName } from "@/lib/users";
 
 export async function setFiscalYearAction(
   year: number,
@@ -28,7 +28,7 @@ export async function updateNameAction(name: string): Promise<{ error?: string }
   if (!session) redirect("/login");
 
   try {
-    await updateCurrentUserName(session.user.id, name);
+    await updateUserName(session.user.id, name);
   } catch (e) {
     if (e instanceof BadRequestError) return { error: e.message };
     throw e;
