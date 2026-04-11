@@ -39,6 +39,7 @@ model User {
   evaluatorAssignments EvaluationAssignment[] @relation("EvaluatorAssignments")
   evaluations          Evaluation[]
   evaluationSettings   EvaluationSetting[]
+  managerComments      ManagerComment[]
 
   @@map("users")
 }
@@ -49,6 +50,7 @@ model FiscalYear {
   startDate DateTime @map("start_date") @db.Date
   endDate   DateTime @map("end_date") @db.Date
   isCurrent Boolean  @default(false) @map("is_current") // 部分ユニークインデックスで true は最大1件（migration で管理）
+  isLocked  Boolean  @default(false) @map("is_locked")
   createdAt DateTime @default(now()) @map("created_at")
 
   fiscalYearItems      FiscalYearItem[]
@@ -140,19 +142,35 @@ model EvaluationItem {
 }
 
 model Evaluation {
-  id            String  @id @default(uuid())
-  fiscalYear    Int     @map("fiscal_year")
-  evaluateeId   String  @map("evaluatee_id")
-  evalItemId    Int     @map("eval_item_id")
-  selfScore     Score?  @map("self_score")
-  selfReason    String? @map("self_reason") @db.Text
-  managerScore  Score?  @map("manager_score")
-  managerReason String? @map("manager_reason") @db.Text
+  id          String   @id @default(uuid())
+  fiscalYear  Int      @map("fiscal_year")
+  evaluateeId String   @map("evaluatee_id")
+  evalItemId  Int      @map("eval_item_id")
+  selfScore    Score?   @map("self_score")
+  selfReason   String?  @map("self_reason") @db.Text
+  managerScore Score?   @map("manager_score")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  evaluatee     User           @relation(fields: [evaluateeId], references: [id])
-  evaluationItem EvaluationItem @relation(fields: [evalItemId], references: [id])
-  fiscalYearRel FiscalYear     @relation(fields: [fiscalYear], references: [year])
+  evaluatee       User             @relation(fields: [evaluateeId], references: [id])
+  evaluationItem  EvaluationItem   @relation(fields: [evalItemId], references: [id])
+  fiscalYearRel   FiscalYear       @relation(fields: [fiscalYear], references: [year])
+  managerComments ManagerComment[]
 
   @@unique([fiscalYear, evaluateeId, evalItemId])
   @@map("evaluations")
+}
+
+model ManagerComment {
+  id           String   @id @default(uuid())
+  evaluationId String   @map("evaluation_id")
+  evaluatorId  String   @map("evaluator_id")
+  score        Score?
+  reason       String?  @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  evaluation Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  evaluator  User       @relation(fields: [evaluatorId], references: [id])
+
+  @@map("manager_comments")
 }

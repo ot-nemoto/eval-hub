@@ -1,9 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { FiscalYearSelector } from "@/components/FiscalYearSelector";
 import { LogoutButton } from "@/components/LogoutButton";
 import { NavLinks } from "@/components/NavLinks";
+import { ProfileNameEditor } from "@/components/ProfileNameEditor";
 import { getSession } from "@/lib/auth";
 import { APP_NAME } from "@/lib/constants";
+import { getCurrentFiscalYear } from "@/lib/fiscal-year";
+import { getFiscalYears } from "@/lib/fiscal-years";
 import { prisma } from "@/lib/prisma";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -23,6 +27,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/login");
   }
 
+  const [years, currentYear] = await Promise.all([getFiscalYears(), getCurrentFiscalYear()]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b bg-white px-6 py-4">
@@ -32,7 +38,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <NavLinks role={session.user.role} />
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">{session.user.name}</span>
+            <FiscalYearSelector years={years} currentYear={currentYear} />
+            <ProfileNameEditor name={session.user.name} />
             <LogoutButton />
           </div>
         </div>

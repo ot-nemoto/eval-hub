@@ -48,34 +48,33 @@ async function deleteClerkUser(email: string): Promise<void> {
 async function cleanupUser(email: string): Promise<void> {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) return;
-  await prisma.evaluationAssignment.deleteMany({
-    where: { OR: [{ evaluateeId: user.id }, { evaluatorId: user.id }] },
-  });
-  await prisma.evaluation.deleteMany({ where: { evaluateeId: user.id } });
-  await prisma.evaluationSetting.deleteMany({ where: { userId: user.id } });
   await prisma.user.delete({ where: { email } });
   await deleteClerkUser(email);
   console.log(`  deleted: ${email}`);
-}
-
-// ─── 年度マスタ ────────────────────────────────────────────────────────────────
-
-async function seedFiscalYearItems(allItemIds: number[]) {
-  const years = [2025, 2026, 2027];
-  for (const year of years) {
-    await prisma.fiscalYearItem.createMany({
-      data: allItemIds.map((id) => ({ fiscalYear: year, evaluationItemId: id })),
-      skipDuplicates: true,
-    });
-  }
-  console.log(`fiscal_year_items: upserted for ${years.join(", ")}`);
 }
 
 // ─── メイン ────────────────────────────────────────────────────────────────────
 
 async function main() {
   // =========================================================================
-  // 0. 旧 seed ユーザーのクリーンアップ（旧メールアドレスのユーザーを DB・Clerk から削除）
+  // 0. 全データをクリーンアップ（FK 順に削除）
+  //      マスタデータも含めて全削除し、seed JSON から完全に再構築する
+  //      ユーザー・年度マスタ（fiscal_years）は保持する
+  //      ※ 旧ユーザー削除（ステップ 0-2）より先に実行することで、
+  //        FK 制約によるユーザー削除失敗を防ぐ
+  // =========================================================================
+  await prisma.evaluation.deleteMany({});
+  await prisma.fiscalYearItem.deleteMany({});
+  await prisma.evaluationAssignment.deleteMany({});
+  await prisma.evaluationSetting.deleteMany({});
+  await prisma.evaluationItem.deleteMany({});
+  await prisma.category.deleteMany({});
+  await prisma.target.deleteMany({});
+  console.log("all data cleared (evaluations / fiscal_year_items / assignments / settings / items / categories / targets)");
+
+  // =========================================================================
+  // 0-2. 旧 seed ユーザーのクリーンアップ（旧メールアドレスのユーザーを DB・Clerk から削除）
+  //      ステップ 0 の全削除後に実行するため、FK 制約なしで安全に削除できる
   // =========================================================================
   const oldEmails = [
     // 旧ユーザー（ドカベンキャラクター）
@@ -90,30 +89,6 @@ async function main() {
     "sato@example.com",
   ];
   for (const email of oldEmails) await cleanupUser(email);
-
-  // =========================================================================
-  // 0-2. 現 seed ユーザーの可変データを初期化
-  //      E2E テストで追加されたデータを毎回クリーンな状態に戻す
-  //      （ユーザー自体は削除しない。Clerk ユーザーも保持する）
-  // =========================================================================
-  const seedEmails = [
-    "bonjiri@example.com",
-    "tsukune@example.com",
-    "tebasaki@example.com",
-    "nankotsu@example.com",
-    "sunagimo@example.com",
-    "torikawa@example.com",
-  ];
-  for (const email of seedEmails) {
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) continue;
-    await prisma.evaluation.deleteMany({ where: { evaluateeId: user.id } });
-    await prisma.evaluationAssignment.deleteMany({
-      where: { OR: [{ evaluateeId: user.id }, { evaluatorId: user.id }] },
-    });
-    await prisma.evaluationSetting.deleteMany({ where: { userId: user.id } });
-  }
-  console.log("seed users: evaluations / assignments / settings cleared");
 
   // =========================================================================
   // 1. ユーザー
@@ -165,8 +140,11 @@ async function main() {
   console.log(`users: ${usersData.length} upserted`);
 
   // =========================================================================
-  // 2. 年度マスタ（fiscal_years のみ、fiscal_year_items は後で登録）
+  // 2. 年度マスタ（fiscal_years）
   // =========================================================================
+  // 2025: isLocked = true（ロック済み年度の動作確認用）
+  // 2026: 現在年度・未ロック
+  // 2027: 未来年度・未ロック（アサインなし）
   const fiscalYearsBase = [
     {
       year: 2025,
@@ -174,6 +152,7 @@ async function main() {
       startDate: new Date("2025-04-01"),
       endDate: new Date("2026-03-31"),
       isCurrent: false,
+      isLocked: true,
     },
     {
       year: 2026,
@@ -181,6 +160,7 @@ async function main() {
       startDate: new Date("2026-04-01"),
       endDate: new Date("2027-03-31"),
       isCurrent: true,
+      isLocked: false,
     },
     {
       year: 2027,
@@ -188,6 +168,7 @@ async function main() {
       startDate: new Date("2027-04-01"),
       endDate: new Date("2028-03-31"),
       isCurrent: false,
+      isLocked: false,
     },
   ];
   for (const fy of fiscalYearsBase) {
@@ -198,6 +179,7 @@ async function main() {
         startDate: fy.startDate,
         endDate: fy.endDate,
         isCurrent: fy.isCurrent,
+        isLocked: fy.isLocked,
       },
       create: fy,
     });
@@ -216,36 +198,29 @@ async function main() {
   //  ────────────┼───────┼───────┼──────
   //  bonjiri     │ false │ false │ false  ← デフォルトのため登録不要
   //  tsukune     │ true  │ false │ false  ← 2025 のみ登録
-  //  tebasaki    │ true  │ true  │ true
-  //  nankotsu    │ true  │ true  │ true
+  //  tebasaki    │ true  │ true  │ false  ← 2027 はアサインなし・自己評価なし（空年度確認用）
+  //  nankotsu    │ true  │ true  │ false  ← 同上
   //  sunagimo    │ false │ false │ false  ← デフォルトのため登録不要
   //  torikawa    │ false │ false │ false  ← デフォルトのため登録不要
   // =========================================================================
-  const settingsData: { email: string; fiscalYear: number; selfEvaluationEnabled: boolean }[] = [
+  const settingsData = [
     { email: "tsukune@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
     { email: "tebasaki@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
     { email: "tebasaki@example.com", fiscalYear: 2026, selfEvaluationEnabled: true },
-    { email: "tebasaki@example.com", fiscalYear: 2027, selfEvaluationEnabled: true },
     { email: "nankotsu@example.com", fiscalYear: 2025, selfEvaluationEnabled: true },
     { email: "nankotsu@example.com", fiscalYear: 2026, selfEvaluationEnabled: true },
-    { email: "nankotsu@example.com", fiscalYear: 2027, selfEvaluationEnabled: true },
   ];
-
-  for (const s of settingsData) {
-    await prisma.evaluationSetting.upsert({
-      where: { userId_fiscalYear: { userId: u[s.email].id, fiscalYear: s.fiscalYear } },
-      update: { selfEvaluationEnabled: s.selfEvaluationEnabled },
-      create: {
-        userId: u[s.email].id,
-        fiscalYear: s.fiscalYear,
-        selfEvaluationEnabled: s.selfEvaluationEnabled,
-      },
-    });
-  }
-  console.log(`evaluation_settings: ${settingsData.length} upserted`);
+  await prisma.evaluationSetting.createMany({
+    data: settingsData.map((s) => ({
+      userId: u[s.email].id,
+      fiscalYear: s.fiscalYear,
+      selfEvaluationEnabled: s.selfEvaluationEnabled,
+    })),
+  });
+  console.log(`evaluation_settings: ${settingsData.length} created`);
 
   // =========================================================================
-  // 3. 評価者アサイン（evaluation_assignments）
+  // 4. 評価者アサイン（evaluation_assignments）
   //
   //  年度  │ 被評価者  │ 評価者（上長）
   //  ──────┼───────────┼────────────────
@@ -270,28 +245,17 @@ async function main() {
     { fiscalYear: 2026, evaluatee: "nankotsu@example.com", evaluator: "tsukune@example.com" },
     { fiscalYear: 2026, evaluatee: "nankotsu@example.com", evaluator: "tebasaki@example.com" },
   ];
-
-  for (const a of assignmentsData) {
-    await prisma.evaluationAssignment.upsert({
-      where: {
-        fiscalYear_evaluateeId_evaluatorId: {
-          fiscalYear: a.fiscalYear,
-          evaluateeId: u[a.evaluatee].id,
-          evaluatorId: u[a.evaluator].id,
-        },
-      },
-      update: {},
-      create: {
-        fiscalYear: a.fiscalYear,
-        evaluateeId: u[a.evaluatee].id,
-        evaluatorId: u[a.evaluator].id,
-      },
-    });
-  }
-  console.log(`evaluation_assignments: ${assignmentsData.length} upserted`);
+  await prisma.evaluationAssignment.createMany({
+    data: assignmentsData.map((a) => ({
+      fiscalYear: a.fiscalYear,
+      evaluateeId: u[a.evaluatee].id,
+      evaluatorId: u[a.evaluator].id,
+    })),
+  });
+  console.log(`evaluation_assignments: ${assignmentsData.length} created`);
 
   // =========================================================================
-  // 4. 評価項目マスタ（evaluation_items）
+  // 5. 大分類マスタ（targets）
   // =========================================================================
   const targetsData = [
     ...new Map(
@@ -299,191 +263,288 @@ async function main() {
     ).values(),
   ].sort((a, b) => a.no - b.no);
 
-  for (const t of targetsData) {
-    await prisma.target.upsert({
-      where: { no: t.no },
-      update: { name: t.name },
-      create: { name: t.name, no: t.no },
-    });
-  }
-  console.log(`targets: ${targetsData.length} upserted`);
+  await prisma.target.createMany({ data: targetsData });
+  console.log(`targets: ${targetsData.length} created`);
 
   // =========================================================================
   // 6. 中分類マスタ（categories）
+  //    seed JSON では (target, category_no) が重複するケースがあるため、
+  //    category_name を一意識別子とし、target 内で連番の no を自動付与する
   // =========================================================================
   const allTargets = await prisma.target.findMany();
   const targetByName = Object.fromEntries(allTargets.map((t) => [t.name, t]));
 
-  const categoriesData = [
-    ...new Map(
-      evaluationItemsData.map((d) => [
-        `${d.target}|${d.category}`,
-        { target: d.target, name: d.category, no: d.category_no ?? 0 },
-      ]),
-    ).values(),
-  ].sort((a, b) => a.no - b.no);
-
-  for (const c of categoriesData) {
-    const target = targetByName[c.target];
-    await prisma.category.upsert({
-      where: { targetId_no: { targetId: target.id, no: c.no } },
-      update: { name: c.name },
-      create: { targetId: target.id, name: c.name, no: c.no },
-    });
+  // target ごとに category_name の出現順で一意リストを構築
+  const seenCategoryKeys = new Set<string>();
+  const categoriesByTarget = new Map<string, string[]>();
+  for (const d of evaluationItemsData) {
+    const key = `${d.target}|${d.category}`;
+    if (!seenCategoryKeys.has(key)) {
+      seenCategoryKeys.add(key);
+      if (!categoriesByTarget.has(d.target)) categoriesByTarget.set(d.target, []);
+      categoriesByTarget.get(d.target)?.push(d.category);
+    }
   }
-  console.log(`categories: ${categoriesData.length} upserted`);
+
+  // target 内で連番の no を付与
+  const categoriesData: { target: string; name: string; no: number }[] = [];
+  for (const [target, names] of categoriesByTarget) {
+    for (let i = 0; i < names.length; i++) {
+      categoriesData.push({ target, name: names[i], no: i + 1 });
+    }
+  }
+
+  await prisma.category.createMany({
+    data: categoriesData.map((c) => ({
+      targetId: targetByName[c.target].id,
+      name: c.name,
+      no: c.no,
+    })),
+  });
+  console.log(`categories: ${categoriesData.length} created`);
 
   // =========================================================================
   // 7. 評価項目マスタ（evaluation_items）
+  //    category は target|category_name で引く
   // =========================================================================
   const allCategories = await prisma.category.findMany({ include: { target: true } });
-  const categoryKey = (targetName: string, categoryName: string) => `${targetName}|${categoryName}`;
   const categoryByKey = Object.fromEntries(
-    allCategories.map((c) => [categoryKey(c.target.name, c.name), c]),
+    allCategories.map((c) => [`${c.target.name}|${c.name}`, c]),
   );
 
-  for (const item of evaluationItemsData) {
-    const target = targetByName[item.target];
-    const category = categoryByKey[categoryKey(item.target, item.category)];
-    await prisma.evaluationItem.upsert({
-      where: { categoryId_no: { categoryId: category.id, no: item.item_no } },
-      update: {
-        targetId: target.id,
-        name: item.name,
-        description: item.description ?? null,
-        evalCriteria: item.eval_criteria ?? null,
-      },
-      create: {
-        targetId: target.id,
-        categoryId: category.id,
-        no: item.item_no,
-        name: item.name,
-        description: item.description ?? null,
-        evalCriteria: item.eval_criteria ?? null,
-      },
-    });
-  }
-  console.log(`evaluation_items: ${evaluationItemsData.length} upserted`);
+  // name が空のプレースホルダー行と (target, category, item_no) の重複を除外する
+  const seenItemKeys = new Set<string>();
+  const deduplicatedItems = evaluationItemsData.filter((item) => {
+    if (!item.name || item.name.trim() === "") return false; // 空 name を除外
+    const key = `${item.target}|${item.category}|${item.item_no}`;
+    if (seenItemKeys.has(key)) return false;
+    seenItemKeys.add(key);
+    return true;
+  });
+
+  await prisma.evaluationItem.createMany({
+    data: deduplicatedItems.map((item) => ({
+      targetId: targetByName[item.target].id,
+      categoryId: categoryByKey[`${item.target}|${item.category}`].id,
+      no: item.item_no,
+      name: item.name,
+      description: item.description ?? null,
+      evalCriteria: item.eval_criteria ?? null,
+    })),
+  });
+  console.log(`evaluation_items: ${deduplicatedItems.length} created (${evaluationItemsData.length - deduplicatedItems.length} duplicates skipped)`);
 
   // =========================================================================
   // 8. fiscal_year_items（年度と評価項目の紐付け）
+  //    2026（現在年度）: 採用カテゴリ2件＋改善カテゴリ1件を除外（フィルタリング動作確認用）
+  //    → 採用: オンボーディングのみ表示（1件）、改善: 課題発見・改善実施のみ表示（2件）
   // =========================================================================
   const allItems = await prisma.evaluationItem.findMany({
-    select: { id: true },
+    select: { id: true, name: true },
     orderBy: { id: "asc" },
   });
-  await seedFiscalYearItems(allItems.map((i) => i.id));
+
+  // 2026 から除外する項目（フィルタリング動作確認用）
+  //   採用カテゴリ: 採用計画・面接実施を除外（オンボーディングは残す → 1件のみ表示）
+  //   改善カテゴリ: 効果測定を除外（課題発見・改善実施は残す → 2件のみ表示）
+  const adoptionExcluded = new Set(
+    allItems
+      .filter((item) => ["採用計画", "面接実施", "効果測定"].includes(item.name))
+      .map((item) => item.id),
+  );
+  const items2026 = allItems.filter((item) => !adoptionExcluded.has(item.id));
+
+  await prisma.fiscalYearItem.createMany({
+    data: [
+      ...allItems.flatMap((item) => [
+        { fiscalYear: 2025, evaluationItemId: item.id },
+        { fiscalYear: 2027, evaluationItemId: item.id },
+      ]),
+      ...items2026.map((item) => ({ fiscalYear: 2026, evaluationItemId: item.id })),
+    ],
+  });
+  console.log(
+    `fiscal_year_items: created (2025/2027: ${allItems.length}件, 2026: ${items2026.length}件 ※採用2件・効果測定1件除外)`,
+  );
 
   // =========================================================================
   // 9. 評価データ（evaluations）
   //    「採点欄は表示されるが編集不可」シナリオの表示確認用に事前データを投入する
   //
-  //  tebasaki（2026年度）: 先頭3件に self_score + manager_score を設定
-  //    → 自己評価画面で評価者採点欄が表示・編集不可であることを確認できる
-  //  nankotsu（2026年度）: 先頭3件に self_score のみ設定
-  //    → 評価者画面で自己採点欄が表示・編集不可であることを確認できる
+  //  tebasaki（2026年度）: 先頭3件に self_score を設定、評価者コメントは後続セクションで登録
+  //    → 自己評価画面で評価者コメント欄が表示されることを確認できる
+  //    → 評価者画面（bonjiri/tsukune）で最終スコア・コメント操作を確認できる
+  //  nankotsu（2026年度）: 4件目に self_score = null（未入力表示確認用）、先頭3件に self_score のみ設定
+  //    → 全ユーザー自己評価一覧で「未入力」表示を確認できる
+  //    → 評価者画面（tebasaki）で MEMBER 評価者としての操作を確認できる
+  //  tsukune（2025年度）: 全評価項目に self_score を設定（進捗 100% 緑色表示の確認用）
+  //    → 進捗ダッシュボードで 2025年度を表示し、100% が緑色表示されることを確認できる
   // =========================================================================
-  if (allItems.length < 3) {
+  if (allItems.length < 4) {
     throw new Error(
-      `評価データの投入に必要な評価項目が不足しています（取得件数: ${allItems.length}、必要数: 3）`,
+      `評価データの投入に必要な評価項目が不足しています（取得件数: ${allItems.length}、必要数: 4）`,
     );
   }
-  const seedItems = allItems.slice(0, 3);
+  const seedItems = allItems.slice(0, 4);
 
-  const evaluationsData: {
-    fiscalYear: number;
-    evaluateeEmail: string;
-    itemId: number;
-    selfScore: "ka" | "ryo" | "yu" | null;
-    selfReason: string | null;
-    managerScore: "ka" | "ryo" | "yu" | null;
-    managerReason: string | null;
-  }[] = [
-    // tebasaki: 自己採点 + 評価者採点あり
+  const evaluationsData = [
+    // tebasaki: 自己採点あり（評価者コメントは後で登録）
     {
       fiscalYear: 2026,
       evaluateeEmail: "tebasaki@example.com",
       itemId: seedItems[0].id,
-      selfScore: "ryo",
+      selfScore: "ryo" as const,
       selfReason: "積極的に取り組みました",
-      managerScore: "yu",
-      managerReason: "非常に優秀な取り組みでした",
     },
     {
       fiscalYear: 2026,
       evaluateeEmail: "tebasaki@example.com",
       itemId: seedItems[1].id,
-      selfScore: "ka",
+      selfScore: "ka" as const,
       selfReason: "改善の余地があります",
-      managerScore: "ryo",
-      managerReason: "着実に成長しています",
     },
     {
       fiscalYear: 2026,
       evaluateeEmail: "tebasaki@example.com",
       itemId: seedItems[2].id,
-      selfScore: "yu",
+      selfScore: "yu" as const,
       selfReason: "目標を超えて達成できました",
-      managerScore: "yu",
-      managerReason: "期待以上の成果でした",
+    },
+    // nankotsu: 自己採点未入力（未入力表示確認用）
+    {
+      fiscalYear: 2026,
+      evaluateeEmail: "nankotsu@example.com",
+      itemId: seedItems[3].id,
+      selfScore: null,
+      selfReason: null,
     },
     // nankotsu: 自己採点のみ（評価者採点なし）
     {
       fiscalYear: 2026,
       evaluateeEmail: "nankotsu@example.com",
       itemId: seedItems[0].id,
-      selfScore: "ka",
+      selfScore: "ka" as const,
       selfReason: "基本的なことはできました",
-      managerScore: null,
-      managerReason: null,
     },
     {
       fiscalYear: 2026,
       evaluateeEmail: "nankotsu@example.com",
       itemId: seedItems[1].id,
-      selfScore: "ryo",
+      selfScore: "ryo" as const,
       selfReason: "しっかり対応できました",
-      managerScore: null,
-      managerReason: null,
     },
     {
       fiscalYear: 2026,
       evaluateeEmail: "nankotsu@example.com",
       itemId: seedItems[2].id,
-      selfScore: "ryo",
+      selfScore: "ryo" as const,
       selfReason: "チームに貢献できました",
-      managerScore: null,
-      managerReason: null,
     },
   ];
 
-  for (const e of evaluationsData) {
-    await prisma.evaluation.upsert({
-      where: {
-        fiscalYear_evaluateeId_evalItemId: {
-          fiscalYear: e.fiscalYear,
-          evaluateeId: u[e.evaluateeEmail].id,
-          evalItemId: e.itemId,
-        },
-      },
-      update: {
-        selfScore: e.selfScore,
-        selfReason: e.selfReason,
-        managerScore: e.managerScore,
-        managerReason: e.managerReason,
-      },
-      create: {
-        fiscalYear: e.fiscalYear,
-        evaluateeId: u[e.evaluateeEmail].id,
-        evalItemId: e.itemId,
-        selfScore: e.selfScore,
-        selfReason: e.selfReason,
-        managerScore: e.managerScore,
-        managerReason: e.managerReason,
-      },
-    });
-  }
-  console.log(`evaluations: ${evaluationsData.length} upserted`);
+  await prisma.evaluation.createMany({
+    data: evaluationsData.map((e) => ({
+      fiscalYear: e.fiscalYear,
+      evaluateeId: u[e.evaluateeEmail].id,
+      evalItemId: e.itemId,
+      selfScore: e.selfScore,
+      selfReason: e.selfReason,
+    })),
+  });
+
+  // tsukune（2025年度）: 全評価項目に self_score を設定（進捗 100% 緑色表示の確認用）
+  await prisma.evaluation.createMany({
+    data: allItems.map((item) => ({
+      fiscalYear: 2025,
+      evaluateeId: u["tsukune@example.com"].id,
+      evalItemId: item.id,
+      selfScore: "ryo" as const,
+      selfReason: null,
+    })),
+  });
+  console.log(`evaluations: ${evaluationsData.length} created (tebasaki/nankotsu 2026), tsukune 2025: ${allItems.length}件・全件入力済み（100% 確認用）`);
+
+  // =========================================================================
+  // 10. 評価者コメント（manager_comments）+ 最終スコア（manager_score）
+  //
+  //  【tebasaki の評価】評価者: bonjiri（ADMIN・アサインなし）/ tsukune（ADMIN・アサイン済み）
+  //    item[0]: bonjiri + tsukune の2人がコメント（複数評価者コメントの確認用）
+  //    item[1,2]: bonjiri のみ
+  //    item[0]: managerScore = "yu"（最終スコア設定済みの確認用）
+  //
+  //  【nankotsu の評価】評価者: tsukune（ADMIN・アサイン済み）/ tebasaki（MEMBER・アサイン済み）
+  //    item[0]: tsukune のみコメント
+  //    → tebasaki（MEMBER評価者）でログインし「他者コメントは閲覧のみ」を確認できる
+  //    item[0]: managerScore = "ryo"（最終スコア設定済みの確認用）
+  // =========================================================================
+
+  // tebasaki の評価 MAP
+  const tebasakiEvals = await prisma.evaluation.findMany({
+    where: {
+      fiscalYear: 2026,
+      evaluateeId: u["tebasaki@example.com"].id,
+      evalItemId: { in: [seedItems[0].id, seedItems[1].id, seedItems[2].id] },
+    },
+  });
+  const tebasakiEvalMap = Object.fromEntries(
+    tebasakiEvals.map((e) => [e.evalItemId, e.id]),
+  );
+
+  // nankotsu の評価 MAP
+  const nankotsuEvals = await prisma.evaluation.findMany({
+    where: {
+      fiscalYear: 2026,
+      evaluateeId: u["nankotsu@example.com"].id,
+      evalItemId: { in: [seedItems[0].id] },
+    },
+  });
+  const nankotsuEvalMap = Object.fromEntries(
+    nankotsuEvals.map((e) => [e.evalItemId, e.id]),
+  );
+
+  const managerCommentsData = [
+    // tebasaki item[0]: bonjiri + tsukune の2人がコメント（複数評価者ケース）
+    {
+      evaluationId: tebasakiEvalMap[seedItems[0].id],
+      evaluatorId: u["bonjiri@example.com"].id,
+      reason: "非常に優秀な取り組みでした",
+    },
+    {
+      evaluationId: tebasakiEvalMap[seedItems[0].id],
+      evaluatorId: u["tsukune@example.com"].id,
+      reason: "よく頑張っています。さらなる成長を期待しています",
+    },
+    // tebasaki item[1,2]: bonjiri のみ
+    {
+      evaluationId: tebasakiEvalMap[seedItems[1].id],
+      evaluatorId: u["bonjiri@example.com"].id,
+      reason: "着実に成長しています",
+    },
+    {
+      evaluationId: tebasakiEvalMap[seedItems[2].id],
+      evaluatorId: u["bonjiri@example.com"].id,
+      reason: "期待以上の成果でした",
+    },
+    // nankotsu item[0]: tsukune のみ（tebasaki が「他者コメント閲覧のみ」を確認するため）
+    {
+      evaluationId: nankotsuEvalMap[seedItems[0].id],
+      evaluatorId: u["tsukune@example.com"].id,
+      reason: "基礎的な部分はしっかりできています",
+    },
+  ];
+  await prisma.managerComment.createMany({ data: managerCommentsData });
+  console.log(`manager_comments: ${managerCommentsData.length} created`);
+
+  // 最終スコア設定
+  await prisma.evaluation.update({
+    where: { id: tebasakiEvalMap[seedItems[0].id] },
+    data: { managerScore: "yu" },
+  });
+  await prisma.evaluation.update({
+    where: { id: nankotsuEvalMap[seedItems[0].id] },
+    data: { managerScore: "ryo" },
+  });
+  console.log("evaluations: managerScore updated for tebasaki item[0] and nankotsu item[0]");
 }
 
 main()

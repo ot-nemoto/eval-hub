@@ -33,8 +33,8 @@ npm run dev
 
 ```env
 # Database（Neon）
-DATABASE_URL="postgresql://<user>:<password>@<pooler-host>/<db>?sslmode=require"
-DIRECT_URL="postgresql://<user>:<password>@<direct-host>/<db>?sslmode=require"
+DATABASE_URL="postgresql://<user>:<password>@<pooler-host>/<db>?sslmode=require&channel_binding=require"
+DIRECT_URL="postgresql://<user>:<password>@<direct-host>/<db>?sslmode=require&channel_binding=require"
 
 # Clerk
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
@@ -87,6 +87,14 @@ npx prisma migrate status
 npx prisma migrate reset --force
 npx prisma db seed
 ```
+
+> **注意: マイグレーション履歴の一本化について**
+>
+> 2026-04-08 (T34) に、旧マイグレーション（複数ファイル）を `20260408151219_init` 1本に統合しました。
+>
+> **背景**: 手動作成した `uppercase_role_enum` マイグレーションが shadow DB に非対応の SQL を含んでおり、`prisma migrate dev` が通らない状態でした。本プロジェクトは開発環境のみで本番 DB への適用環境はないため、DB リセットを前提に一本化しました。
+>
+> この変更以前の環境からセットアップし直す場合は、**`npx prisma migrate reset` で DB を完全リセットしてから** `npx prisma db seed` を実行してください。
 
 ### テストデータ投入（Seed）
 

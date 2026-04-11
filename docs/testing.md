@@ -69,6 +69,8 @@ vi.mock("@/lib/auth", () => ({
 
 機能実装・修正後は [docs/e2e-scenarios.md](e2e-scenarios.md) の対応セクションを参照して動作確認を行う。
 
+- シナリオを追加・変更した場合は `prisma/seed.ts` のテストデータも見直し、シナリオが実行可能な状態を保つこと
+
 ---
 
 ## E2E テスト（Playwright MCP）

@@ -6,30 +6,13 @@ import { deleteUserAction, updateUserAction } from "@/app/(dashboard)/admin/user
 
 type Props = {
   userId: string;
-  currentRole: "ADMIN" | "MEMBER";
   isActive: boolean;
   isSelf: boolean;
   isDeletable: boolean;
 };
 
-export function UserActions({ userId, currentRole, isActive, isSelf, isDeletable }: Props) {
+export function UserActions({ userId, isActive, isSelf, isDeletable }: Props) {
   const [loading, setLoading] = useState(false);
-
-  async function handleRoleChange() {
-    const newRole = currentRole === "ADMIN" ? "MEMBER" : "ADMIN";
-    const label = newRole === "ADMIN" ? "adminに昇格" : "memberに変更";
-    if (!confirm(`このユーザーを${label}しますか？`)) return;
-
-    setLoading(true);
-    try {
-      const result = await updateUserAction(userId, { role: newRole });
-      if (result.error) alert(result.error);
-    } catch {
-      alert("通信エラーが発生しました");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function handleToggleActive() {
     const label = isActive ? "無効化" : "有効化";
@@ -66,14 +49,6 @@ export function UserActions({ userId, currentRole, isActive, isSelf, isDeletable
 
   return (
     <div className="flex justify-end gap-2">
-      <button
-        type="button"
-        onClick={handleRoleChange}
-        disabled={loading || !isActive}
-        className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-      >
-        {currentRole === "ADMIN" ? "member に変更" : "admin に昇格"}
-      </button>
       <button
         type="button"
         onClick={handleToggleActive}

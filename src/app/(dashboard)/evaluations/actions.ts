@@ -3,10 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { Score } from "@prisma/client";
+import type { Score } from "@prisma/client";
 import { getSession } from "@/lib/auth";
 import { BadRequestError } from "@/lib/errors";
 import { upsertEvaluation } from "@/lib/evaluations";
+import { assertFiscalYearUnlocked } from "@/lib/fiscal-years";
 import { prisma } from "@/lib/prisma";
 
 export async function upsertSelfEvaluationAction(
@@ -21,6 +22,9 @@ export async function upsertSelfEvaluationAction(
     return { error: "fiscalYear は 1900〜9999 の整数で指定してください" };
   if (!Number.isInteger(evalItemId) || evalItemId < 1)
     return { error: "evalItemId は正の整数で指定してください" };
+
+  const lockError = await assertFiscalYearUnlocked(fiscalYear);
+  if (lockError) return lockError;
 
   const setting = await prisma.evaluationSetting.findUnique({
     where: { userId_fiscalYear: { userId: session.user.id, fiscalYear } },
