@@ -479,7 +479,6 @@
 |--------|------|
 | `"コメントが見つかりません"` | 指定 commentId が存在しない（NotFoundError） |
 | `"自分のコメントのみ編集できます"` | 他者のコメント（ForbiddenError、ADMIN は除く） |
-| バリデーションエラーメッセージ | score が不正値（BadRequestError） |
 
 ---
 
