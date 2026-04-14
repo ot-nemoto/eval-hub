@@ -103,32 +103,4 @@
 
 ## 画面一覧
 
-| 画面 | パス | 説明 | ロール制限 |
-|---|---|---|---|
-| ログイン | `/login` | Clerk SignIn UI（メール・パスワード） | 全員（未認証） |
-| 認証エラー | `/auth-error` | アカウント無効化などの認証エラー表示 | 全員 |
-| 評価一覧（自分） | `/evaluations` | 自分の評価項目一覧・自己評価入力 | MEMBER / ADMIN |
-| メンバー一覧 | `/members` | 社員一覧（評価者として担当する被評価者へのリンク） | MEMBER / ADMIN |
-| メンバー別評価 | `/members/[id]/evaluations` | 指定メンバーへの評価者評価入力 | MEMBER（アサイン済み）/ ADMIN |
-| 管理：大分類・中分類マスタ | `/admin/targets` | 大分類（target）の追加・編集・削除、および配下の中分類（category）のインライン管理 | admin |
-| 管理：評価項目マスタ | `/admin/evaluation-items` | 評価項目の追加・編集・削除 | admin |
-| 管理：年度管理 | `/admin/fiscal-years` | 年度の追加・編集・削除・現在年度設定 | admin |
-| 管理：ユーザー一覧 | `/admin/users` | ユーザー一覧・有効化/無効化・削除 | admin |
-| 管理：自己評価要否設定 | `/admin/users/[id]/evaluation-settings` | ユーザーごとの年度別自己評価要否設定 | admin |
-| 管理：評価者アサイン管理 | `/admin/evaluation-assignments` | 年度ごとの評価者アサイン登録・削除 | admin |
-| 管理：全ユーザー自己評価一覧 | `/admin/self-evaluations` | 全ユーザーの自己評価を年度・ユーザーで絞り込んで確認 | admin |
-| 管理：全ユーザー上長評価一覧 | `/admin/manager-evaluations` | 全ユーザーの上長評価を年度・ユーザーで絞り込んで確認 | admin |
-| 管理：評価進捗ダッシュボード | `/admin/progress` | 全被評価者の評価入力状況を年度別に一覧表示 | admin |
-
----
-
-## v1.1 以降（defer）
-
-| 機能 | 内容 |
-|---|---|
-| 社員プロフィール管理 | 基本情報・配属履歴の編集 |
-| キャリアプラン管理 | 将来ロール・年度目標・面談コメント |
-| ロール認定 | ロール定義・マッピング・qualified 判定 |
-| 配点管理 | 事業部別・評価項目別の配点設定 |
-| 月次実績管理 | タスク実績の記録 |
-| ユーザー管理画面 | admin によるメンバー追加・削除 |
+画面一覧・遷移・UI仕様は [`docs/ui.md`](ui.md) を参照。
