@@ -478,7 +478,7 @@
 | エラー | 条件 |
 |--------|------|
 | `"コメントが見つかりません"` | 指定 commentId が存在しない（NotFoundError） |
-| `"このコメントを編集する権限がありません"` | 他者のコメント（ForbiddenError、ADMIN は除く） |
+| `"自分のコメントのみ編集できます"` | 他者のコメント（ForbiddenError、ADMIN は除く） |
 | バリデーションエラーメッセージ | score が不正値（BadRequestError） |
 
 ---
@@ -494,7 +494,7 @@
 | エラー | 条件 |
 |--------|------|
 | `"コメントが見つかりません"` | 指定 commentId が存在しない（NotFoundError） |
-| `"このコメントを削除する権限がありません"` | 他者のコメント（ForbiddenError、ADMIN は除く） |
+| `"自分のコメントのみ削除できます"` | 他者のコメント（ForbiddenError、ADMIN は除く） |
 
 ---
 
