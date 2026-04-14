@@ -117,8 +117,6 @@ npx prisma db seed
 
 > Clerk へのユーザー作成は `NODE_ENV !== 'production'` の場合のみ実行される。本番環境ではスキップされる。
 
-詳細は [`docs/testing.md`](./testing.md) の「テストデータ投入（Seed）」節を参照。
-
 ### Prisma Studio
 
 ```bash
