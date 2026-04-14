@@ -2,52 +2,19 @@
 
 タスクの詳細・状態は **GitHub Issues** で管理する。
 
----
+## マイルストーン一覧
 
-## MVP スコープ
-
-> **MVP = Phase 1〜4**
->
-> MVP の定義：「社員が自己評価を入力し、上長が評価・コメントを記録し、ロール認定状況を確認できる」
-
----
-
-## Phase 1: 基盤構築
-
-- [Issues — Phase 1: 基盤構築](https://github.com/ot-nemoto/eval-hub/milestone/1)
-
-## Phase 2: 評価API
-
-- [Issues — Phase 2: 評価API](https://github.com/ot-nemoto/eval-hub/milestone/2)
-
-## Phase 3: 評価UI
-
-- [Issues — Phase 3: 評価UI](https://github.com/ot-nemoto/eval-hub/milestone/3)
-
-## Phase 4: デプロイ
-
-- [Issues — Phase 4: デプロイ](https://github.com/ot-nemoto/eval-hub/milestone/4)
-
-> **方針変更（2026-03-16）**: Cloudflare Workers は無料プランの 3 MiB サイズ制限を超過するため、**Vercel** にデプロイ先を変更。
->
-> - T31: Cloudflare Workers 関連コードの削除（`@opennextjs/cloudflare`・`wrangler`・`wrangler.toml`）
-> - T32: Vercel デプロイ設定（プロジェクト作成・環境変数設定）
-
----
-
-## v1.1 以降
-
-フェーズ構成・優先順位は v1.1 着手時に改めて検討する。以下は候補タスク（順不同）。
-
-- 実績管理・集計
-  - 月次実績 API（GET/PUT /api/members/:id/records）
-  - 月次実績入力画面（月×プロダクト×タスクのグリッド）
-  - 配点管理 API（admin 用）
-  - 年度切り替え処理（２年ルール項目の自動コピー）
-- UI 整備・仕上げ
-  - ダッシュボード（評価進捗・ロール認定状況のサマリ）
-  - 印刷・PDF エクスポート（Overview 画面）
-  - バリデーション強化・エラーハンドリング整備
-  - レスポンシブ対応（タブレット）
-  - E2E テスト（Playwright）主要フロー
-  - ユーザー管理 API（admin による POST/DELETE /api/members）
+| # | マイルストーン | リンク |
+|---|---|---|
+| 1 | Phase 1: 基盤構築 | [Issues](https://github.com/ot-nemoto/eval-hub/milestone/1) |
+| 2 | Phase 2: 評価API | [Issues](https://github.com/ot-nemoto/eval-hub/milestone/2) |
+| 3 | Phase 3: 評価UI | [Issues](https://github.com/ot-nemoto/eval-hub/milestone/3) |
+| 4 | Phase 4: デプロイ | [Issues](https://github.com/ot-nemoto/eval-hub/milestone/4) |
+| 5 | Phase 5: Admin管理機能の整備 | [Issues](https://github.com/ot-nemoto/eval-hub/milestone/7) |
+| 6 | 認証基盤移行（Clerk） | [Issues](https://github.com/ot-nemoto/eval-hub/milestone/5) |
+| 7 | Phase 6: 評価フロー完成 | [Issues](https://github.com/ot-nemoto/eval-hub/milestone/6) |
+| 8 | Phase 7: 年度管理 | [Issues](https://github.com/ot-nemoto/eval-hub/milestone/8) |
+| 9 | 評価項目マスタ拡張 | [Issues](https://github.com/ot-nemoto/eval-hub/milestone/10) |
+| 10 | Phase 8: Server Actions 移行 | [Issues](https://github.com/ot-nemoto/eval-hub/milestone/12) |
+| 11 | 基盤統一（daily-hub / link-hub 準拠） | [Issues](https://github.com/ot-nemoto/eval-hub/milestone/11) |
+| 12 | 継続的改善 | [Issues](https://github.com/ot-nemoto/eval-hub/milestone/9) |
