@@ -32,7 +32,7 @@ applyTo: "**"
 ## Server Actions 規約
 
 - 各ページディレクトリに `actions.ts` を配置する（`"use server"` ディレクティブ）
-- 戻り値の型は `Promise<{ error?: string }>` に統一する
+- 戻り値は少なくとも `error?: string` を含める（例: `Promise<{ error?: string }>` / `Promise<{ error?: string; comment?: Comment }>`）
 - 各 Server Action の先頭で `getSession()` を呼び出して認証チェックをする
   - 未認証: `redirect("/login")`
   - 権限なし（非 admin が admin 系 Action を呼んだ場合）: `redirect("/evaluations")`
@@ -44,7 +44,7 @@ applyTo: "**"
 | 違反内容 | 重大度 |
 |---|---|
 | Server Action の先頭に `getSession()` 呼び出しがない | **BLOCKER** |
-| 戻り値の型が `Promise<{ error?: string }>` 以外になっている | **MAJOR** |
+| 戻り値に `error?: string` が含まれていない | **MAJOR** |
 | `revalidatePath()` が呼ばれていない（DB 変更がある場合） | **MAJOR** |
 | 全例外を握りつぶして再 throw していない（`catch { return { error } }` のみ） | **MAJOR** |
 
@@ -123,12 +123,17 @@ applyTo: "**"
    - 必須更新: `docs/e2e-scenarios.md`
    - 指摘条件: 上記コード変更があるのに `docs/e2e-scenarios.md` の差分がない
 
-2. **API 仕様変更**
-   - 対象例: `src/app/api/**/route.ts`、APIレスポンス/リクエスト型、エンドポイント追加・削除・挙動変更
+2. **外部 REST API 仕様変更**
+   - 対象例: `src/app/api/**/route.ts` の新規追加・エンドポイント変更
    - 必須更新: `docs/api.md`
    - 指摘条件: 上記変更があるのに `docs/api.md` の差分がない
 
-3. **スキーマ変更**
+3. **Server Actions 仕様変更**
+   - 対象例: `src/app/**/actions.ts` の引数・戻り値・認可ロジックの変更
+   - 必須更新: `docs/actions.md`
+   - 指摘条件: 上記変更があるのに `docs/actions.md` の差分がない
+
+4. **スキーマ変更**
    - 対象例: Prisma schema / migration / DB カラム変更
    - 必須更新: `docs/schema.md`
    - 指摘条件: 上記変更があるのに `docs/schema.md` の差分がない
@@ -151,7 +156,7 @@ applyTo: "**"
 
 | 違反内容 | 重大度 |
 |---|---|
-| ユーザー入力を Prisma クエリの `where` に無加工で渡している | **BLOCKER** |
+| ユーザー入力を Prisma クエリの `where` などの検索条件に、入力バリデーションや認可条件なしで反映している | **BLOCKER** |
 | `dangerouslySetInnerHTML` を使用している | **BLOCKER** |
 | API ルートでロールチェックが行われていない | **BLOCKER** |
 | セッション情報を使わずリクエストパラメータのユーザー ID を信頼している | **BLOCKER** |
@@ -224,17 +229,23 @@ applyTo: "**"
 
 ## フォーム実装パターン
 
-- `useActionState` は使わず、`useState` + `try-catch` で手動管理する
-- フォームの状態は `open`（開閉）/ `loading`（送信中）/ エラーメッセージ の state で管理する
+### 複雑なフォーム（複数 state を持つ場合）
+
+- `useState` で `loading`（送信中）・エラーメッセージの state を管理する
 - Server Action の戻り値 `{ error }` が存在する場合は `alert(result.error)` で表示する
 - 通信エラー（catch）は `alert("通信エラーが発生しました")` でシンプルに処理する
 - 成功後はフォームの state をリセットして閉じる
+
+### シンプルな単一操作ボタン（`DeleteButton` など）
+
+- `useActionState` を使っても良い（`<form action={formAction}>` パターンで送信するシンプルな操作に限る）
+- それ以外の用途では `useState` + 非同期ハンドラのパターンを使う
 
 ### 違反チェック
 
 | 違反内容 | 重大度 |
 |---|---|
-| `useActionState` を使用している | **MAJOR** |
+| 複雑なフォームで `useActionState` を使用している（状態管理が必要な場面） | **MAJOR** |
 | Server Action の `{ error }` を `alert()` 以外の方法で表示している（ただし UI で inline 表示する場合は許容） | **NIT** |
 | 通信エラー（catch）を無視・握りつぶしている | **MAJOR** |
 | 成功後にフォーム state をリセットしていない | **NIT** |
@@ -245,6 +256,7 @@ applyTo: "**"
 
 - ファイル先頭に `// @vitest-environment node` を付ける
 - `vi.mock("@/lib/prisma", ...)` で Prisma クライアントをモックする
+- Server Action など Prisma を直接参照しない場合は、必要な `@/lib/*` をモックするパターンも許容する
 - `beforeEach` で `vi.clearAllMocks()` を呼び出す
 - `vi.mocked()` でモック関数を型付きで参照する
 - トップレベルの `describe()` は関数名、`it()` は日本語でテストケースを説明する
