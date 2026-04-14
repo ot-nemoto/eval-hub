@@ -4,6 +4,7 @@
 
 | 対象 | 完了条件 |
 |------|---------|
+| Server Actions（`src/app/**/actions.ts`） | ユニットテストの作成をもって完了 |
 | ユーティリティ関数（`src/lib/`） | ユニットテストの作成をもって完了 |
 | UI コンポーネント | 手動動作確認をもって完了（[docs/e2e-scenarios.md](e2e-scenarios.md) 参照） |
 
@@ -23,6 +24,7 @@ npm run test:coverage             # カバレッジレポート出力
 
 ### 対象・方針
 
+- `src/app/**/actions.ts`（Server Actions）はユニットテスト必須
 - `src/lib/` 配下のユーティリティ関数はユニットテスト必須
 - テストファイルは実装ファイルと同じディレクトリに `[name].test.ts` で配置
 - Prisma・Clerk 等の外部依存は `vi.mock` でモック化する

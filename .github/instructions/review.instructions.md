@@ -84,6 +84,7 @@ applyTo: "**"
 
 ## テストルール
 
+- **Server Actions（`src/app/**/actions.ts`）の実装にはユニットテストが必要**
 - **APIルートの実装にはユニットテストが必要**
 - **`src/lib/` 配下のユーティリティ関数にはユニットテストが必要**
 - UIコンポーネントのユニットテストは必須としない
@@ -92,6 +93,7 @@ applyTo: "**"
 
 | 違反内容 | 重大度 |
 |---|---|
+| `src/app/**/actions.ts` が追加・変更されているのに対応するテストファイルがない | **BLOCKER** |
 | `src/app/api/**/route.ts` が追加・変更されているのに対応するテストファイルがない | **BLOCKER** |
 | `src/lib/*.ts` が追加・変更されているのに対応する `*.test.ts` がない | **BLOCKER** |
 
@@ -271,6 +273,17 @@ applyTo: "**"
 | 正常系のみで異常系テストがない | **MAJOR** |
 
 ### 最低限カバーすべき観点
+
+#### Server Actions（`src/app/**/actions.ts`）
+
+| ケース | 条件 |
+|--------|------|
+| 正常系 | 期待する戻り値（`error` が undefined） |
+| 未認証 | `redirect("/login")` が呼ばれる |
+| 権限なし | `redirect("/evaluations")` が呼ばれる |
+| バリデーションエラー | `{ error: string }` を返す |
+| リソース未存在 | `{ error: string }` を返す（`NotFoundError`） |
+| リソース重複 | `{ error: string }` を返す（`ConflictError`） |
 
 #### API ルート（`src/app/api/**/route.ts`）
 
