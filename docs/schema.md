@@ -9,27 +9,6 @@
 
 ---
 
-## MVP スコープ
-
-MVP では **評価登録機能** に絞る。以下のテーブルのみを対象とする。
-
-| テーブル | 用途 |
-|---|---|
-| `users` | ユーザー・認証 |
-| `fiscal_years` | 年度マスタ |
-| `fiscal_year_items` | 年度×評価項目の紐付け（年度ごとに対象項目を制御） |
-| `targets` | 評価項目の大分類マスタ |
-| `categories` | 評価項目の中分類マスタ |
-| `evaluation_items` | 評価項目マスタ |
-| `evaluation_assignments` | 年度ごとの評価者アサイン（誰が誰を評価するか） |
-| `evaluation_settings` | ユーザー×年度ごとの自己評価要否設定 |
-| `evaluations` | 採点レコード（自己評価・最終スコア） |
-| `manager_comments` | 評価者コメント（評価者ごとの採点・理由） |
-
-> **defer（v1.1以降）**：roles / role_eval_mappings / role_members / allocations / career_plans / goals / goal_eval_links / monthly_records / assignment_histories
-
----
-
 ## ER 概要
 
 ```mermaid
