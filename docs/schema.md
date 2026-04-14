@@ -1,5 +1,3 @@
-> 最終更新: 2026-04-10 (fiscal_years / fiscal_year_items / targets / categories テーブル定義を追加)
-
 # schema.md — DB スキーマ定義
 
 ## PostgreSQL 固有の注意点
