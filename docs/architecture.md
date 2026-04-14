@@ -1,130 +1,126 @@
-> 最終更新: 2026-04-07 (Server Actions 移行完了に伴うドキュメント更新)
-
 # architecture.md — 実装方針・技術スタック
 
 ## 技術スタック
 
 | レイヤー | 技術 | 選定理由 |
-|---|---|---|
-| Frontend | Next.js (App Router) + TypeScript | SSR/CSR の柔軟な使い分け、型安全 |
-| Styling | Tailwind CSS + shadcn/ui | 高速なUI構築、デザイン統一 |
-| Backend | Next.js Server Actions | フロントと同リポジトリで管理・型安全なサーバー呼び出し |
-| ORM | Prisma | TypeScript との親和性、スキーマ管理 |
-| DB | Neon (PostgreSQL) | PostgreSQL 互換・Edge 対応・無料10プロジェクト・ブランチ機能あり |
-| 認証 | Clerk | ホスト型UI・セッション管理・ロール制御が容易 |
-| デプロイ | Vercel + Neon（DB） | 無料枠で完結・Next.js 16 フルサポート・Serverless Functions 50 MiB |
-
-## システム構成
-
-```
-[ブラウザ]
-    │ HTTPS
-    ▼
-[Next.js (Vercel / Serverless Functions)]
-├── /src/app              ← ページ（App Router）
-├── /src/app/**/actions.ts ← Server Actions（フォーム・ボタン操作）
-├── /src/app/api          ← API Routes（外部連携・認証用のみ残存）
-└── /src/components       ← UI コンポーネント
-    │
-    │ Prisma + @prisma/adapter-neon (WebSocket)
-    ▼
-[Neon (PostgreSQL)]
-├── users（ユーザー・認証）
-├── evaluation_assignments（年度ごとの評価者アサイン）
-├── evaluation_items（評価項目マスタ）
-└── evaluations（採点レコード）
-※ roles / allocations / career_plans 等は v1.1 以降
-```
+|----------|------|----------|
+| フレームワーク | Next.js 16 (App Router) | SSR/CSR の柔軟な使い分け、TypeScript 標準対応 |
+| 言語 | TypeScript (strict) | 型安全、補完が効く |
+| スタイリング | Tailwind CSS v4 + shadcn/ui | 高速な UI 構築、デザイン統一 |
+| Lint / Format | Biome | ESLint + Prettier を 1 ツールで代替、高速 |
+| ORM | Prisma 7 | 型安全な DB アクセス、マイグレーション管理 |
+| DB | PostgreSQL (Neon) | サーバーレス PostgreSQL、Edge 対応、無料枠で運用可能 |
+| 認証 | Clerk (@clerk/nextjs v7, @clerk/backend v3) | ホスト型 UI・セッション管理・ロール制御が容易 |
+| ホスティング | Vercel (Hobby) | Next.js の開発元、無料枠・無期限、デプロイが最も簡単 |
+| ユニットテスト | Vitest | 高速、Vite 互換 |
+| 開発サーバー | Turbopack | Next.js 16 デフォルト、HMR が高速 |
+| パッケージ管理 | npm | devcontainer のデフォルト環境に合わせる |
 
 ## ディレクトリ構成
 
 ```
-/
+eval-hub/
+├── .github/
+│   ├── instructions/
+│   │   └── review.instructions.md  # Copilot PR レビュー指示
+│   └── workflows/
+│       ├── bump-version.yml        # master PR ラベルで自動バージョンバンプ
+│       └── release.yml             # master push 時に自動リリース
+├── docs/                           # 設計ドキュメント
+├── prisma/
+│   ├── schema.prisma               # DB スキーマ定義
+│   ├── seed.ts                     # 開発用シードデータ
+│   └── migrations/                 # マイグレーションファイル
+├── prisma.config.ts                # Prisma 7 設定（datasource URL）
 ├── src/
 │   ├── app/
 │   │   ├── (auth)/
-│   │   │   └── login/
+│   │   │   └── login/              # Clerk SignIn
+│   │   ├── auth-error/             # 認証エラー（isActive=false 等）
 │   │   ├── (dashboard)/
+│   │   │   ├── actions.ts          # 共通 Server Actions（年度切り替え・名前変更）
 │   │   │   ├── members/
-│   │   │   │   ├── page.tsx            ← 社員一覧
-│   │   │   │   ├── actions.ts          ← 評価者評価 Server Actions
+│   │   │   │   ├── page.tsx        # 社員一覧
+│   │   │   │   ├── actions.ts      # 評価者評価 Server Actions
 │   │   │   │   └── [id]/evaluations/
 │   │   │   ├── evaluations/
-│   │   │   │   ├── page.tsx            ← 自己評価
-│   │   │   │   └── actions.ts          ← 自己評価 Server Actions
-│   │   │   └── admin/                  ← マスタ管理（admin専用）
-│   │   │       ├── targets/
-│   │   │       │   ├── page.tsx
-│   │   │       │   └── actions.ts
-│   │   │       ├── evaluation-items/
-│   │   │       │   ├── page.tsx
-│   │   │       │   └── actions.ts
-│   │   │       ├── fiscal-years/
-│   │   │       │   ├── page.tsx
-│   │   │       │   └── actions.ts
-│   │   │       ├── users/
-│   │   │       │   ├── page.tsx
-│   │   │       │   ├── actions.ts
-│   │   │       │   └── [id]/evaluation-settings/
-│   │   │       │       ├── page.tsx
-│   │   │       │       └── actions.ts
-│   │   │       └── evaluation-assignments/
-│   │   │           └── actions.ts      ← アサイン管理 Server Actions（UI は T62 で実装予定）
-│   │   │       ※ career/・roles/・records/ は v1.1 以降に追加予定（現状は未作成）
-│   │   ├── api/
-│   │   │   ├── auth/[...nextauth]/     ← NextAuth スタブ（404 応答・削除対象）
-│   │   │   └── members/[id]/evaluation-settings/  ← 削除対象（#182）
+│   │   │   │   ├── page.tsx        # 自己評価
+│   │   │   │   └── actions.ts      # 自己評価 Server Actions
+│   │   │   └── admin/              # マスタ管理（ADMIN 専用）
+│   │   │       ├── targets/        # 大分類・中分類
+│   │   │       ├── evaluation-items/   # 評価項目
+│   │   │       ├── fiscal-years/   # 年度管理
+│   │   │       ├── users/          # ユーザー管理
+│   │   │       │   └── [id]/evaluation-settings/  # 評価設定
+│   │   │       └── evaluation-assignments/  # 評価者アサイン
+│   │   ├── api/                    # API Routes（外部連携・認証用のみ。現在は残存のみ）
 │   │   └── layout.tsx
-│   ├── auth.ts
 │   ├── components/
-│   │   ├── ui/                         ← shadcn/ui ベース
-│   │   ├── evaluation/
-│   │   └── admin/
-│   │       ※ career/・role/ は v1.1 以降に追加予定（現状は未作成）
+│   │   ├── ui/                     # shadcn/ui ベース
+│   │   ├── evaluation/             # 評価関連
+│   │   └── admin/                  # 管理画面
 │   ├── lib/
-│   │   ├── prisma.ts                   ← Prisma クライアント
-│   │   ├── auth.ts                     ← セッション取得
-│   │   ├── errors.ts                   ← カスタムエラークラス
-│   │   ├── targets.ts                  ← 大分類・中分類 共通メソッド
-│   │   ├── evaluation-items.ts         ← 評価項目 共通メソッド
-│   │   ├── fiscal-years.ts             ← 年度 共通メソッド
-│   │   ├── users.ts                    ← ユーザー 共通メソッド
-│   │   ├── evaluation-settings.ts      ← 評価設定 共通メソッド
-│   │   ├── evaluation-assignments.ts   ← 評価者アサイン 共通メソッド
-│   │   ├── evaluations.ts              ← 採点 共通メソッド
+│   │   ├── prisma.ts               # Prisma クライアント
+│   │   ├── auth.ts                 # セッション取得
+│   │   ├── errors.ts               # カスタムエラークラス
+│   │   ├── targets.ts              # 大分類・中分類
+│   │   ├── categories.ts           # 中分類
+│   │   ├── evaluation-items.ts     # 評価項目
+│   │   ├── fiscal-years.ts         # 年度
+│   │   ├── users.ts                # ユーザー
+│   │   ├── evaluation-settings.ts  # 評価設定
+│   │   ├── evaluation-assignments.ts  # 評価者アサイン
+│   │   ├── evaluations.ts          # 採点
 │   │   └── utils.ts
 │   ├── test/
-│   │   └── setup.ts                    ← Vitest セットアップ
-│   └── types/
-├── prisma/
-│   └── schema.prisma
+│   │   └── setup.ts                # Vitest セットアップ
+│   └── proxy.ts                    # Next.js 16 middleware（旧 middleware.ts）
+├── CLAUDE.md
+├── biome.json
 ├── vitest.config.ts
-└── docs/
+└── package.json
 ```
 
-## 設計方針
+## 認証フロー
 
-### Neon 接続設定
+[`docs/auth.md`](auth.md) を参照。
 
-```ts
-// src/lib/prisma.ts
-import { PrismaClient } from '@prisma/client'
-import { PrismaNeon } from '@prisma/adapter-neon'
+## データフロー
 
-const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL })
-export const prisma = new PrismaClient({ adapter })
+```
+Client (Browser)
+  └── Next.js App Router (React Server Components / Client Components)
+        └── Server Actions (reads → Prisma 直接, writes → actions.ts)
+              └── Prisma ORM (@prisma/adapter-neon / WebSocket)
+                    └── Neon PostgreSQL
 ```
 
-```prisma
-// prisma/schema.prisma（Prisma v7: url は prisma.config.ts で管理）
-generator client {
-  provider = "prisma-client-js"
-}
+## 実装方針
 
-datasource db {
-  provider = "postgresql"
-}
-```
+- ページコンポーネントは Server Components を基本とし、インタラクションが必要な部分のみ Client Components を使用する
+- **reads（データ取得）**: Server Components から Prisma を直接呼ぶ
+- **writes（書き込み操作）**: Server Actions（`actions.ts`）に集約する。REST API は原則使用しない
+- ビジネスロジックは `src/lib/` に集約し、Server Actions はできるだけ薄く保つ
+- Server Actions の仕様は [`docs/actions.md`](actions.md) を参照
+- 外部 REST API の方針は [`docs/api.md`](api.md) を参照
+
+### 機能追加時のガイドライン
+
+| 判断 | 方針 |
+|------|------|
+| 新しい書き込み操作を追加する | 対応するページディレクトリの `actions.ts` に Server Action を追加する |
+| 新しい REST API が必要になった | 外部クライアントからの利用が明確に必要な場合のみ `src/app/api/` に追加する。UI 操作は必ず Server Actions を経由する |
+| 新しい画面・コンポーネントを追加する | 認証済み画面は `src/app/(dashboard)/` 配下に配置する。インタラクションが不要なものは Server Component、状態管理・イベント処理が必要なものは Client Component とする |
+
+## Prisma 7 の接続構成
+
+| 設定箇所 | URL | 用途 |
+|----------|-----|------|
+| `prisma.config.ts` → `datasource.url` | `DIRECT_URL` | CLI（migrate / generate） |
+| `src/lib/prisma.ts` → `PrismaClient` adapter | `DATABASE_URL` | ランタイム（クエリ） |
+
+- `DATABASE_URL`: Neon の **接続プール URL**。Vercel Functions のサーバーレス環境で接続数を節約するために使用。`@prisma/adapter-neon` 経由で渡す
+- `DIRECT_URL`: Neon の **直接接続 URL**。`prisma migrate` は接続プール非対応のため直接接続が必要
 
 ### DB ブランチ戦略
 
@@ -133,115 +129,25 @@ datasource db {
 | `main` | 本番用（予定） | Vercel 環境変数（Production） |
 | `develop` | 検証用 | Vercel 環境変数（Preview） / `.env.local` |
 
-### Server Actions 設計
-- ページ内の操作（フォーム送信・ボタン操作）はすべて Server Actions で処理する（`"use server"` ディレクティブ）
-- 各 `(dashboard)` ページディレクトリに `actions.ts` を配置する
-- 戻り値は `Promise<{ error?: string }>` に統一し、エラー時はメッセージを返す
-- 認証は各 Server Action の先頭で `getSession()` を呼び出す
-  - 未認証: `redirect("/login")`
-  - 権限なし（非 ADMIN が admin 系 Action を呼んだ場合）: `redirect("/evaluations")`
-- 処理成功後は `revalidatePath()` でキャッシュを更新する
-- lib 層のカスタムエラー（`BadRequestError` / `NotFoundError` 等）は catch して `{ error: message }` を返す。それ以外は再 throw する
-
-### API Routes（残存）
-- 現時点で維持する API Routes はなし
-- 残存しているルートはすべて削除対象：
-  - `GET/POST /api/auth/[...nextauth]`：NextAuth スタブ（404 応答）— 削除対象（#182）
-  - `GET/PUT /api/members/:id/evaluation-settings`：呼び出し元なし — 削除対象（#182）
-
-### 評価ロジック
-- 自己採点・評価者採点は同一テーブル（`evaluations`）の別カラムに保存
-- 被評価者 × 年度 × 評価項目 で1レコード
-- 複数の評価者がいる場合、評価者側で意見をまとめて1つのスコアを登録する
-
-#### スコア順序定義
-```
-none(0) < 可=ka(1) < 良=ryo(2) < 優=yu(3)
-```
-
-### 年度管理
-- 年度は `fiscal_year`（例: `2025`）で管理
-- 評価はすべて `fiscal_year` に紐付く
-- `evaluation_assignments` も年度単位で管理（年度ごとに評価者を変更可）
-
-### 権限制御
-- Server Actions・API Routes ともにセッション + DB 参照によるアクセス制御
-- `member`（自己評価）: `evaluatee_id == 自分` のレコードの `self_score / self_reason` のみ更新可
-- `member`（評価者）: `evaluation_assignments` に `evaluator_id == 自分` のレコードがある被評価者の `manager_score / manager_reason` を更新可
-- `admin`: すべてのデータ操作可
-
-> `manager` ロールは廃止。評価権限は `evaluation_assignments` で動的に管理する。
-
-## 認証フロー
-
-詳細は [`docs/auth.md`](./auth.md) を参照。
-
-概要：
-
-```
-未認証ユーザー
-  → proxy.ts（clerkMiddleware）でセッション確認
-  → 未認証なら /login にリダイレクト（Clerk が処理）
-  → 認証済み → getSession() で DB ユーザーを取得
-    → isActive = false → /auth-error へリダイレクト
-    → clerkId 未紐付け → メールで突合し自動紐付け
-    → セッション返却
-```
-
-非本番環境で `MOCK_USER_ID` または `MOCK_USER_EMAIL` 環境変数が設定されている場合は Clerk をバイパスし、指定した ID またはメールアドレスに対応するユーザーで固定セッションを返す（ローカル開発用）。
-
----
-
-## デプロイフロー
-
-```
-develop ブランチ
-  → git push origin develop
-  → Vercel が自動検知
-  → next build（ビルド）
-  → Vercel にデプロイ（Preview / Production）
-  ※ マイグレーションは手動実行（docs/development.md 参照）
-
-master ブランチ
-  → git push origin master
-  → GitHub Actions (release.yml) が起動
-  → package.json のバージョンを取得
-  → タグが未存在なら GitHub Releases を即時公開
-```
-
----
-
-## 開発環境
-
-```bash
-# 起動
-npm run dev
-
-# DB マイグレーション
-npx prisma migrate dev
-
-# シード（マスタデータ投入）
-npx prisma db seed
-```
-
 ## 環境変数
 
-```bash
-# .env
-
-# Neon のプーリング接続 URL（アプリケーション実行時に PrismaClient が使用）
+```env
+# Database（Neon）
 DATABASE_URL="postgresql://<user>:<password>@<pooler-host>/<db>?sslmode=require"
-
-# Neon の直接接続 URL（prisma migrate dev / db seed 実行時に prisma.config.ts が使用）
-# Neon のコネクションプーラーはトランザクションモードのため、
-# マイグレーションには直接接続が必要
 DIRECT_URL="postgresql://<user>:<password>@<direct-host>/<db>?sslmode=require"
 
+# Clerk
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
 CLERK_SECRET_KEY="sk_test_..."
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/evaluations
+
+# ローカル開発用認証バイパス（任意、どちらか一方を設定）
+# MOCK_USER_ID="<DB の users.id>"
+# MOCK_USER_EMAIL="<DB の users.email>"
 ```
 
----
+セットアップ手順・DB 操作・デプロイ手順の詳細は [`docs/development.md`](./development.md) を参照。
 
 ## コーディング規約
 
@@ -268,6 +174,12 @@ createdAt    DateTime @default(now()) @map("created_at")
 invitedById  String   @map("invited_by_id")
 ```
 
-### Next.js バージョン固有の仕様
+## バージョン固有仕様・既知のパターン
 
-- **`src/proxy.ts`** は Next.js 16 以降の middleware ファイル名（旧 `middleware.ts` から改名）。`middleware.ts` に変更するよう指摘されても対応不要。（参照: [Next.js 公式 — proxy.ts](https://nextjsjp.org/docs/app/api-reference/file-conventions/proxy)）
+### Next.js 16: middleware ファイル名の変更
+
+Next.js 16 以降、middleware は **Proxy** に改称され、ファイル名が `middleware.ts` から `src/proxy.ts` に変わっている。
+参照: [Next.js 公式ドキュメント - Proxy](https://nextjsjp.org/docs/app/api-reference/file-conventions/proxy)
+
+- **正しいファイル名**: `src/proxy.ts`
+- AI ツールや外部ドキュメントが `middleware.ts` への変更を提案してきても対応不要
