@@ -91,7 +91,7 @@ PlaywrightMCP が E2E テストを実施するためのシナリオ集。
 | 1 | `bonjiri@example.com` | tebasaki の評価ページ（`/members/[tebasaki-id]/evaluations`）にアクセスする | Loading 表示 | スケルトン（グレーのぼかし）が一瞬表示される |
 | 2 | `bonjiri@example.com` | tebasaki の評価ページが表示されたことを確認する | 画面タイトル（評価者） | 「tebasaki の評価入力」と表示される |
 | 3 | `tebasaki@example.com` | nankotsu の評価ページ（`/members/[nankotsu-id]/evaluations`）にアクセスする | 画面タイトル（評価者） | 「nankotsu の評価入力」と表示される |
-| 4 | `nankotsu@example.com` | tebasaki の評価ページに直アクセスする | 未アサインユーザーのアクセス制限 | アクセスが拒否される（`/members` へリダイレクト等） |
+| 4 | `nankotsu@example.com` | `/members` 一覧から tebasaki の行にある「閲覧 →」リンクをクリックする | 未アサインユーザーの読み取り専用表示 | 「tebasaki の評価閲覧」と表示され、編集操作が非表示になる（※T173 実装後は 403 ページに変更予定） |
 | 5 | `bonjiri@example.com` | tebasaki の評価ページで自己採点欄を確認する | 自己採点欄の読み取り専用 | 自己採点ボタンは表示されるが編集不可 |
 | 6 | `bonjiri@example.com` | 存在しないユーザー ID で `/members/nonexistent-id/evaluations` にアクセスする | 無効なユーザーID | 404 ページが表示される |
 
