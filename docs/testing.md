@@ -6,7 +6,7 @@
 |------|---------|
 | Server Actions（`src/app/**/actions.ts`） | ユニットテストの作成をもって完了 |
 | ユーティリティ関数（`src/lib/`） | ユニットテストの作成をもって完了 |
-| UI コンポーネント | 手動動作確認をもって完了（[docs/e2e-scenarios.md](e2e-scenarios.md) 参照） |
+| UI コンポーネント | Playwright MCP による E2E テスト実行をもって完了 |
 
 ---
 
@@ -52,54 +52,28 @@ vi.mock("@/lib/auth", () => ({
 
 ---
 
-## 手動テスト
-
-機能実装・修正後は [docs/e2e-scenarios.md](e2e-scenarios.md) の対応セクションを参照して動作確認を行う。
-
-- シナリオを追加・変更した場合は `prisma/seed.ts` のテストデータも見直し、シナリオが実行可能な状態を保つこと
-
----
-
 ## E2E テスト（Playwright MCP）
 
-### 認証バイパス
+### テストユーザー
 
-開発環境では `MOCK_USER_EMAIL` または `MOCK_USER_ID` を `.env.local` に設定することで Clerk 認証をバイパスできる。E2E テストでは `MOCK_USER_EMAIL` を使用する。
+**E2E テストはシード実行済みであることを前提とする。** シードの実行方法は [`docs/development.md` — テストデータ投入](development.md#テストデータ投入seed) を参照。
 
-| テストの種類 | MOCK の要否 |
-|------------|------------|
-| 機能テスト・ロールベースのシナリオ | MOCK 使用 |
-| isActive=false の挙動 | MOCK 使用（代替可能） |
-| 実際の Clerk ログイン・ログアウトフロー | 手動確認 |
+ただし、`prisma/seed.ts` は `NODE_ENV === "production"` の環境では Clerk ユーザー作成をスキップする。そのため、以下のメールアドレス / パスワードでログインできるのは **非 production 環境で seed により Clerk 側のユーザーも作成されている場合** に限る。
 
-### テストユーザー（`prisma/seed.ts` のシードデータ）
+Vercel などの production 環境で Playwright MCP を実行する場合は、次のいずれかを事前に満たすこと。
 
-シードで作成されるテストユーザーの詳細は [`docs/development.md`](development.md) の「テストデータ投入（Seed）」節を参照。
+- Clerk 管理画面側で、下表のテストユーザーを事前に作成しておく
+- E2E の実行対象を、seed により Clerk ユーザーも作成される非 production 環境に限定する
 
-### Playwright MCP への指示例
+| ユーザー | メールアドレス | パスワード | 用途 |
+|---------|-------------|---------|------|
+| bonjiri | `bonjiri@example.com` | `Yakitori2026` | 管理操作テスト（ADMIN・自己評価なし・アサインなし） |
+| tsukune | `tsukune@example.com` | `Yakitori2026` | 被評価者テスト（ADMIN・評価データあり） |
+| tebasaki | `tebasaki@example.com` | `Yakitori2026` | 評価者・被評価者ロールのテスト（MEMBER） |
+| nankotsu | `nankotsu@example.com` | `Yakitori2026` | 複数評価者に評価されるユーザーのテスト（MEMBER） |
+| sunagimo | `sunagimo@example.com` | `Yakitori2026` | 無効化ユーザーの auth-error リダイレクト確認（isActive=false） |
+| torikawa | `torikawa@example.com` | `Yakitori2026` | ロール変更・削除操作のテスト対象（MEMBER・関連データなし） |
 
-```
-以下の手順で E2E テストを実施してください。
+### 実施方法
 
-## 事前準備
-1. `npx prisma db seed` を実行してテストデータを初期化する
-2. `.env.local` の `MOCK_USER_EMAIL` にテストユーザーのメールアドレスを設定する
-3. `npm run dev` でサーバーを起動する（ポート: 3000）
-
-## 制約
-- MOCK_USER_EMAIL を設定した状態では Clerk の実認証フローは確認できない
-- テストユーザーを切り替える場合は .env.local を書き換えてサーバーを再起動すること
-
-## テスト対象
-docs/e2e-scenarios.md の [テストしたいセクション名] を参照してテストを実施してください。
-```
-
----
-
-## テストデータ投入（Seed）
-
-詳細は [`docs/development.md`](development.md) の「テストデータ投入（Seed）」節を参照。
-
-```bash
-npx prisma db seed
-```
+テスト対象の URL と [`docs/e2e-scenarios.md`](e2e-scenarios.md) のシナリオをモデルに渡して実施する。
