@@ -258,8 +258,8 @@ PlaywrightMCP が E2E テストを実施するためのシナリオ集。
 
 | # | ユーザー | 手順 | 確認観点 | 期待値 |
 |---|---------|------|---------|-------|
-| 1 | `tebasaki@example.com` | nankotsu の評価ページ（`/members/[nankotsu-id]/evaluations`）にアクセスする（tebasaki は nankotsu の評価者） | アサイン済み評価者のアクセス | ページが表示される |
-| 2 | `nankotsu@example.com` | tebasaki の評価ページ（`/members/[tebasaki-id]/evaluations`）に直アクセスする | 未アサインユーザーのアクセス制限 | アクセスが拒否される |
+| 1 | `tebasaki@example.com` | `/members` 一覧から nankotsu の行にある「評価入力 →」リンクをクリックする（tebasaki は nankotsu の評価者） | アサイン済み評価者のアクセス | ページが表示される |
+| 2 | `nankotsu@example.com` | `/members` 一覧から tebasaki の行にある「閲覧 →」リンクをクリックする | 未アサインユーザーの読み取り専用表示 | 「tebasaki の評価閲覧」と表示され、編集操作が非表示になる（※T173 実装後は 403 ページに変更予定） |
 | 3 | `tebasaki@example.com` | 自己採点を変更して保存する | 自己採点の編集権限 | 保存される |
 | 4 | `tebasaki@example.com` | nankotsu の評価ページで nankotsu の自己採点欄を確認する | 他ユーザー自己採点の編集不可 | 自己採点欄が読み取り専用で表示される |
 | 5 | `bonjiri@example.com` | tebasaki の評価ページにアクセスする | ADMIN の全ユーザー参照・編集権限 | 評価入力ページが表示され編集できる |
