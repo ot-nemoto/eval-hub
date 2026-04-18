@@ -1,31 +1,81 @@
-# e2e-scenarios.md — E2Eテストシナリオ・手動テスト観点
+# e2e-scenarios.md — E2Eテストシナリオ
 
-各機能を実装・修正したときに確認すべき観点をまとめたもの。
-「この機能を触れば、ここが確認できる」という指標として使う。
+PlaywrightMCP が E2E テストを実行するためのシナリオ集。
+機能実装・修正後の確認観点としても使う。
+
+---
+
+## 報告フォーマット
+
+各確認項目を以下の3段階で報告する：
+
+| 結果 | 意味 |
+|---|---|
+| OK | 期待値通りの動作を確認 |
+| NG | 期待値と異なる動作。再現手順・実際の挙動を記載 |
+| SKIP | 技術的制約などにより確認不可。理由を記載 |
+
+---
+
+## 事前準備
+
+```bash
+# 1. テストデータを初期化する
+npx prisma db seed
+
+# 2. .env.local の MOCK_USER_EMAIL にテストユーザーのメールアドレスを設定する
+# 例: MOCK_USER_EMAIL="tebasaki@example.com"
+
+# 3. 開発サーバーを起動する（ポート: 3000）
+npm run dev
+```
+
+> ユーザーを切り替える場合は `.env.local` の `MOCK_USER_EMAIL` を書き換えてサーバーを再起動する。
+
+---
+
+## テストユーザー
+
+共通パスワード: `Yakitori2026`
+
+| email | role | isActive | 用途 |
+|---|---|---|---|
+| bonjiri@example.com | ADMIN | true | 管理操作確認用（自己評価なし・評価アサインなし） |
+| tsukune@example.com | ADMIN | true | 2025のみ自己評価あり・上長評価される |
+| tebasaki@example.com | MEMBER | true | 通年自己評価あり・評価者かつ被評価者・採点データあり |
+| nankotsu@example.com | MEMBER | true | 通年自己評価あり・複数の上長に評価される |
+| sunagimo@example.com | MEMBER | false | 無効化ユーザー（auth-error リダイレクト確認用） |
+| torikawa@example.com | MEMBER | true | 評価なし・アサインなし（削除テスト用） |
 
 ---
 
 ## 認証・リダイレクト
 
-未ログイン状態で保護ルートにアクセスしたとき `/login` にリダイレクトされるかを確認する。
+**使用ユーザー**: なし（未ログイン確認）/ `sunagimo@example.com`（無効化確認）
 
-- `/evaluations` / `/members` / `/admin/targets` 等に未ログインでアクセス → `/login` にリダイレクトされるか
-- サインイン成功後に元のページ（またはデフォルトページ）に遷移するか
-- `isActive=false` のユーザーでログインしたとき `/auth-error` にリダイレクトされ「アカウントが無効化されています」と表示されるか
-- `/auth-error` でサインアウトボタンを押すと `/login` に遷移するか
+> Clerk の実認証フロー（ログイン操作・ログアウト操作）は MOCK 環境では確認できないため SKIP とする。
+
+- `MOCK_USER_EMAIL` を設定しない状態で `/evaluations` / `/members` / `/admin/targets` 等に直アクセスすると `/login` にリダイレクトされるか
+- サインイン成功後に元のページ（またはデフォルトページ）に遷移するか（SKIP: Clerk 実認証フロー）
+- `MOCK_USER_EMAIL=sunagimo@example.com` を設定してアクセスすると `/auth-error` にリダイレクトされ「アカウントが無効化されています」と表示されるか
+- `/auth-error` でサインアウトボタンを押すと `/login` に遷移するか（SKIP: Clerk 実認証フロー）
 
 ---
 
 ## ナビゲーション（ロール別表示）
 
-- member ロールでログインしたとき「評価」「メンバー」が表示されるか
-- admin ロールでログインしたとき「評価」「メンバー」に加え「管理」メニューが表示されるか
-- member が `/admin/*` に直アクセスしたとき `/evaluations` にリダイレクトされるか
-- member が admin 系 Server Action（ユーザー操作・アサイン操作等）を呼び出したとき `/evaluations` にリダイレクトされるか
+**使用ユーザー**: `tebasaki@example.com`（MEMBER）/ `bonjiri@example.com`（ADMIN）
+
+- `tebasaki@example.com` でログインしたとき「評価」「メンバー」が表示されるか
+- `bonjiri@example.com` でログインしたとき「評価」「メンバー」に加え「管理」メニューが表示されるか
+- `tebasaki@example.com` で `/admin/*` に直アクセスしたとき `/evaluations` にリダイレクトされるか
+- `tebasaki@example.com` で admin 系 Server Action（ユーザー操作・アサイン操作等）を呼び出したとき `/evaluations` にリダイレクトされるか
 
 ---
 
 ## プロフィール名変更（ヘッダー）
+
+**使用ユーザー**: `tebasaki@example.com`
 
 - ヘッダーに表示されている名前がクリック可能なボタンとして表示されるか
 - 名前をクリックするとインライン編集フォーム（入力欄・保存・キャンセルボタン）に切り替わるか
@@ -39,10 +89,12 @@
 
 ## 自己評価（`/evaluations`）
 
+**使用ユーザー**: `tebasaki@example.com`（評価データあり）/ `torikawa@example.com`（空状態確認）
+
 - ページ遷移時にスケルトン（グレーのぼかし）が表示されるか（Loading）
 - APIエラー発生時に赤いエラーボックスと「再試行」ボタンが表示されるか（Error）
 - 現在年度の評価項目一覧が表示されるか
-- 評価項目が0件のとき空状態が表示されるか
+- 評価項目が0件のとき空状態が表示されるか（`torikawa@example.com` で確認）
 - 自己採点（なし / 可 / 良 / 優）を選択して保存できるか
 - 自己採点理由を入力して保存できるか
 - 保存後にリロードしてもデータが保持されているか
@@ -54,6 +106,8 @@
 
 ## メンバー一覧・評価者評価（`/members`）
 
+**使用ユーザー**: `tebasaki@example.com`（評価者かつ被評価者）/ `bonjiri@example.com`（ADMIN・アサインなし）/ `torikawa@example.com`（アサインなし MEMBER）
+
 - ページ遷移時にスケルトン（グレーのぼかし）が表示されるか（Loading）
 - APIエラー発生時に赤いエラーボックスと「再試行」ボタンが表示されるか（Error）
 - 現在年度が未設定のとき `/evaluations` にリダイレクトされるか
@@ -61,11 +115,13 @@
 - 自分自身が被評価者として表示される場合、「自己評価 →」リンクで `/evaluations` に遷移するか
 - 自分が評価者としてアサインされた被評価者には「評価入力 →」リンクが表示されるか
 - アサインされていない被評価者には「閲覧 →」リンクが表示されるか
-- admin は全被評価者に「評価入力 →」リンクが表示されるか
-- 対象年度に評価者・被評価者としてアサインされていない MEMBER は空リスト（「表示できる社員がいません。」）が表示されるか
-- ADMIN は対象年度にアサインがなくても一覧を閲覧できるか（アサインなし年度は空リスト表示）
+- `bonjiri@example.com`（admin）は全被評価者に「評価入力 →」リンクが表示されるか
+- 対象年度に評価者・被評価者としてアサインされていない MEMBER（`torikawa@example.com`）は空リスト（「表示できる社員がいません。」）が表示されるか
+- `bonjiri@example.com`（ADMIN）は対象年度にアサインがなくても一覧を閲覧できるか（アサインなし年度は空リスト表示）
 
 ### メンバー別評価（`/members/[id]/evaluations`）
+
+**使用ユーザー**: `tebasaki@example.com`（評価者として）/ `bonjiri@example.com`（ADMIN として）
 
 - ページ遷移時にスケルトン（グレーのぼかし）が表示されるか（Loading）
 - APIエラー発生時に赤いエラーボックスと「再試行」ボタンが表示されるか（Error）
@@ -91,12 +147,14 @@
 - 他の評価者のコメントは閲覧のみで編集・削除ボタンが表示されないか
 - 自分のコメントを編集して保存できるか
 - 自分のコメントを削除できるか
-- admin は他者のコメントも編集・削除できるか
+- `bonjiri@example.com`（admin）は他者のコメントも編集・削除できるか
 - 対象年度がロック済みの場合、「🔒 この年度はロック済みです。閲覧のみ可能です。」バナーが表示され、採点ボタン・スコア保存ボタン・コメント追加／編集／削除ボタンがすべて非表示になるか
 
 ---
 
 ## 管理：大分類・中分類マスタ（`/admin/targets`）
+
+**使用ユーザー**: `bonjiri@example.com`（ADMIN）
 
 - ページ遷移時にスケルトン（グレーのぼかし）が表示されるか（Loading）
 - APIエラー発生時に赤いエラーボックスと「再試行」ボタンが表示されるか（Error）
@@ -121,6 +179,8 @@
 
 ## 管理：評価項目マスタ（`/admin/evaluation-items`）
 
+**使用ユーザー**: `bonjiri@example.com`（ADMIN）
+
 - ページ遷移時にスケルトン（グレーのぼかし）が表示されるか（Loading）
 - APIエラー発生時に赤いエラーボックスと「再試行」ボタンが表示されるか（Error）
 - 評価項目一覧が表示されるか
@@ -132,10 +192,12 @@
 
 ## 管理：全ユーザー上長評価一覧（`/admin/manager-evaluations`）
 
+**使用ユーザー**: `bonjiri@example.com`（ADMIN）/ `tebasaki@example.com`（MEMBER・アクセス制限確認）
+
 - ページ遷移時にスケルトン（グレーのぼかし）が表示されるか（Loading）
 - APIエラー発生時に赤いエラーボックスと「再試行」ボタンが表示されるか（Error）
-- ADMIN でアクセスしたとき上長評価一覧が表示されるか
-- MEMBER ロールで `/admin/manager-evaluations` に直アクセスしたとき `/evaluations` にリダイレクトされるか
+- `bonjiri@example.com` でアクセスしたとき上長評価一覧が表示されるか
+- `tebasaki@example.com` で `/admin/manager-evaluations` に直アクセスしたとき `/evaluations` にリダイレクトされるか
 - 年度セレクターを切り替えると対象年度のデータに切り替わるか
 - ユーザーフィルターで特定ユーザーに絞り込めるか
 - `?year=abc` など非数値クエリパラメータを渡したとき 500 にならず現在年度にフォールバックするか
@@ -149,10 +211,12 @@
 
 ## 管理：評価進捗ダッシュボード（`/admin/progress`）
 
+**使用ユーザー**: `bonjiri@example.com`（ADMIN）/ `tebasaki@example.com`（MEMBER・アクセス制限確認）
+
 - ページ遷移時にスケルトン（グレーのぼかし）が表示されるか（Loading）
 - APIエラー発生時に赤いエラーボックスと「再試行」ボタンが表示されるか（Error）
-- ADMIN でアクセスしたとき全被評価者の進捗一覧が表示されるか
-- MEMBER ロールで `/admin/progress` に直アクセスしたとき `/evaluations` にリダイレクトされるか
+- `bonjiri@example.com` でアクセスしたとき全被評価者の進捗一覧が表示されるか
+- `tebasaki@example.com` で `/admin/progress` に直アクセスしたとき `/evaluations` にリダイレクトされるか
 - 年度セレクターを切り替えると対象年度の進捗に切り替わるか
 - `?year=abc` など非数値クエリパラメータを渡したとき 500 にならず現在年度にフォールバックするか
 - 自己評価進捗・上長評価進捗が「入力済み件数 / 全件数（%）」形式で表示されるか
@@ -163,6 +227,8 @@
 ---
 
 ## 管理：年度管理（`/admin/fiscal-years`）
+
+**使用ユーザー**: `bonjiri@example.com`（ADMIN）
 
 - ページ遷移時にスケルトン（グレーのぼかし）が表示されるか（Loading）
 - APIエラー発生時に赤いエラーボックスと「再試行」ボタンが表示されるか（Error）
@@ -178,6 +244,8 @@
 
 ## 管理：ユーザー管理（`/admin/users`）
 
+**使用ユーザー**: `bonjiri@example.com`（ADMIN）
+
 - ページ遷移時にスケルトン（グレーのぼかし）が表示されるか（Loading）
 - ユーザーが0件のとき「ユーザーがいません。」が表示されるか（Empty）
 - APIエラー発生時に赤いエラーボックスと「再試行」ボタンが表示されるか（Error）
@@ -185,15 +253,17 @@
 - ロール列にセレクトボックス（ADMIN / MEMBER）が表示されるか
 - セレクトボックスで MEMBER → ADMIN に変更すると即時反映されるか
 - セレクトボックスで ADMIN → MEMBER に変更すると即時反映されるか
-- 自分自身の行のセレクトボックスが disabled になっていて変更できないか
+- 自分自身（`bonjiri@example.com`）の行のセレクトボックスが disabled になっていて変更できないか
 - ユーザーを無効化（isActive=false）できるか
 - 無効化ユーザーがグレーアウト表示されるか
 - 無効化済みユーザーを再有効化できるか
 - 評価データ・アサインデータがあるユーザーを削除しようとしたとき 409 エラーが表示されるか
-- 関連データがないユーザーを削除できるか
+- 関連データがないユーザー（`torikawa@example.com`）を削除できるか
 - 自分自身のロール変更・無効化ができないか
 
 ### 自己評価要否設定（`/admin/users/[id]/evaluation-settings`）
+
+**使用ユーザー**: `bonjiri@example.com`（ADMIN）
 
 - ページ遷移時にスケルトン（グレーのぼかし）が表示されるか（Loading）
 - 年度が0件のとき「設定可能な年度がありません。」が表示されるか（Empty）
@@ -205,6 +275,8 @@
 
 ## 管理：評価者アサイン管理（`/admin/evaluation-assignments`）
 
+**使用ユーザー**: `bonjiri@example.com`（ADMIN）/ `tebasaki@example.com`（MEMBER・アクセス制限確認）
+
 - ページ遷移時にスケルトン（グレーのぼかし）が表示されるか（Loading）
 - APIエラー発生時に赤いエラーボックスと「再試行」ボタンが表示されるか（Error）
 - 年度セレクターに現在年度が初期選択された状態で一覧が表示されるか
@@ -215,16 +287,18 @@
 - 同一年度・被評価者・評価者の組み合わせを重複追加しようとしたとき エラーが表示されるか
 - 評価データのないアサインを削除できるか
 - 評価データが存在するアサインを削除しようとしたとき警告ダイアログが表示され、確認後に削除できるか
-- MEMBER ロールで `/admin/evaluation-assignments` に直アクセスしたとき `/evaluations` にリダイレクトされるか
+- `tebasaki@example.com` で `/admin/evaluation-assignments` に直アクセスしたとき `/evaluations` にリダイレクトされるか
 
 ---
 
 ## 管理：全ユーザー自己評価一覧（`/admin/self-evaluations`）
 
+**使用ユーザー**: `bonjiri@example.com`（ADMIN）/ `tebasaki@example.com`（MEMBER・アクセス制限確認）
+
 - ページ遷移時にスケルトン（グレーのぼかし）が表示されるか（Loading）
 - APIエラー発生時に赤いエラーボックスと「再試行」ボタンが表示されるか（Error）
-- ADMIN でアクセスしたとき全ユーザーの自己評価一覧が表示されるか
-- MEMBER ロールで `/admin/self-evaluations` に直アクセスしたとき `/evaluations` にリダイレクトされるか
+- `bonjiri@example.com` でアクセスしたとき全ユーザーの自己評価一覧が表示されるか
+- `tebasaki@example.com` で `/admin/self-evaluations` に直アクセスしたとき `/evaluations` にリダイレクトされるか
 - 年度セレクターを切り替えると対象年度のデータに切り替わるか
 - ユーザーフィルターで特定ユーザーに絞り込めるか
 - 評価データが 0 件のとき「評価データがありません。」が表示されるか
@@ -233,6 +307,10 @@
 
 ## ユーザー分離
 
-- member A でログインして member B の評価ページ（`/members/[id]/evaluations`）にアサインなしで直アクセスしたとき弾かれるか
-- member は自分の自己採点のみ編集でき、他ユーザーの自己採点は編集できないか
-- admin は全ユーザーの評価を参照・編集できるか
+**使用ユーザー**: `tebasaki@example.com` → `nankotsu@example.com` に切り替えて確認
+
+> ユーザーを切り替える場合は `.env.local` の `MOCK_USER_EMAIL` を書き換えてサーバーを再起動する。
+
+- `tebasaki@example.com` でログインして `nankotsu@example.com` の評価ページ（`/members/[id]/evaluations`）にアサインなしで直アクセスしたとき弾かれるか
+- MEMBER は自分の自己採点のみ編集でき、他ユーザーの自己採点は編集できないか
+- `bonjiri@example.com`（admin）は全ユーザーの評価を参照・編集できるか
