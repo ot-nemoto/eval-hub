@@ -108,7 +108,7 @@ PlaywrightMCP が E2E テストを実施するためのシナリオ集。
 | 1 | `bonjiri@example.com` | tebasaki の評価ページで既存のコメント一覧を確認する | コメント一覧表示 | 投稿者名・日時・テキストが表示される |
 | 2 | `bonjiri@example.com` | 「コメントを追加」ボタンをクリックしてコメントを投稿する | コメント投稿 | 投稿後に一覧に反映される |
 | 3 | `bonjiri@example.com` | 自分が投稿したコメントの行を確認する | 編集・削除ボタン表示 | 編集・削除ボタンが表示される |
-| 4 | `bonjiri@example.com` | tsukune が投稿したコメントの行を確認する | 他者コメントのボタン非表示 | 編集・削除ボタンが表示されない |
+| 4 | `bonjiri@example.com` | tsukune が投稿したコメントの行を確認する | ADMIN の他者コメント操作 | 編集・削除ボタンが表示される（ADMIN は全コメントを管理可） |
 | 5 | `bonjiri@example.com` | 自分のコメントを編集して保存する | コメント編集 | 更新後の内容が一覧に反映される |
 | 6 | `bonjiri@example.com` | 自分が投稿した上記コメントを削除する | コメント削除 | コメントが一覧から消える |
 | 7 | `tebasaki@example.com` | nankotsu の評価ページで tsukune のコメントを確認する | MEMBER 評価者の閲覧のみ | 編集・削除ボタンが表示されない |
