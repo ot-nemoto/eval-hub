@@ -183,8 +183,6 @@ PlaywrightMCP が E2E テストを実施するためのシナリオ集。
 
 ## 管理：年度管理（`/admin/fiscal-years`）
 
-> **注意**: 手順 5〜11 は年度の状態を変更する。手順の順番通りに実施し、必ず元の状態に戻すこと。
-
 | # | ユーザー | 手順 | 確認観点 | 期待値 |
 |---|---------|------|---------|-------|
 | 1 | `bonjiri@example.com` | `/admin/fiscal-years` にアクセスする | 年度一覧表示 | 年度一覧が表示され、2026 年度が現在年度としてハイライトされる |
@@ -205,8 +203,6 @@ PlaywrightMCP が E2E テストを実施するためのシナリオ集。
 
 ## 管理：ユーザー管理（`/admin/users`）
 
-> **注意**: 手順 7 のユーザー削除後は `npx prisma db seed` を実行してデータを復元すること。
-
 | # | ユーザー | 手順 | 確認観点 | 期待値 |
 |---|---------|------|---------|-------|
 | 1 | `bonjiri@example.com` | `/admin/users` にアクセスする | ユーザー一覧表示 | ユーザー一覧が表示される |
@@ -217,7 +213,7 @@ PlaywrightMCP が E2E テストを実施するためのシナリオ集。
 | 6 | `bonjiri@example.com` | `torikawa@example.com` を無効化する | ユーザー無効化 | torikawa の行がグレーアウト表示される |
 | 7 | `bonjiri@example.com` | `torikawa@example.com` を再有効化する（復元） | ユーザー再有効化 | グレーアウトが解除される |
 | 8 | `bonjiri@example.com` | 評価データ・アサインデータがある `tebasaki@example.com` の削除ボタンをクリックする | 依存データありの削除制限 | 409 エラーが表示される |
-| 9 | `bonjiri@example.com` | 関連データがない `torikawa@example.com` を削除する ⚠️ re-seed 必要 | 依存データなしのユーザー削除 | 一覧から消える |
+| 9 | `bonjiri@example.com` | 関連データがない `torikawa@example.com` を削除する | 依存データなしのユーザー削除 | 一覧から消える |
 
 ### 自己評価要否設定（`/admin/users/[id]/evaluation-settings`）
 
