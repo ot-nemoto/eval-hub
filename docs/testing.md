@@ -58,6 +58,13 @@ vi.mock("@/lib/auth", () => ({
 
 **E2E テストはシード実行済みであることを前提とする。** シードの実行方法は [`docs/development.md` — テストデータ投入](development.md#テストデータ投入seed) を参照。
 
+ただし、`prisma/seed.ts` は `NODE_ENV === "production"` の環境では Clerk ユーザー作成をスキップする。そのため、以下のメールアドレス / パスワードでログインできるのは **非 production 環境で seed により Clerk 側のユーザーも作成されている場合** に限る。
+
+Vercel などの production 環境で Playwright MCP を実行する場合は、次のいずれかを事前に満たすこと。
+
+- Clerk 管理画面側で、下表のテストユーザーを事前に作成しておく
+- E2E の実行対象を、seed により Clerk ユーザーも作成される非 production 環境に限定する
+
 | ユーザー | メールアドレス | パスワード | 用途 |
 |---------|-------------|---------|------|
 | bonjiri | `bonjiri@example.com` | `Yakitori2026` | 管理操作テスト（ADMIN・自己評価なし・アサインなし） |
