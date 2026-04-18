@@ -54,4 +54,19 @@ vi.mock("@/lib/auth", () => ({
 
 ## E2E テスト（Playwright MCP）
 
+### テストユーザー
+
+**E2E テストはシード実行済みであることを前提とする。** シードの実行方法は [`docs/development.md` — テストデータ投入](development.md#テストデータ投入seed) を参照。
+
+| ユーザー | メールアドレス | パスワード | 用途 |
+|---------|-------------|---------|------|
+| bonjiri | `bonjiri@example.com` | `Yakitori2026` | 管理操作テスト（ADMIN・自己評価なし・アサインなし） |
+| tsukune | `tsukune@example.com` | `Yakitori2026` | 被評価者テスト（ADMIN・評価データあり） |
+| tebasaki | `tebasaki@example.com` | `Yakitori2026` | 評価者・被評価者ロールのテスト（MEMBER） |
+| nankotsu | `nankotsu@example.com` | `Yakitori2026` | 複数評価者に評価されるユーザーのテスト（MEMBER） |
+| sunagimo | `sunagimo@example.com` | `Yakitori2026` | 無効化ユーザーの auth-error リダイレクト確認（isActive=false） |
+| torikawa | `torikawa@example.com` | `Yakitori2026` | ロール変更・削除操作のテスト対象（MEMBER・関連データなし） |
+
+### 実施方法
+
 テスト対象の URL と [`docs/e2e-scenarios.md`](e2e-scenarios.md) のシナリオをモデルに渡して実施する。
