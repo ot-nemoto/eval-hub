@@ -54,39 +54,4 @@ vi.mock("@/lib/auth", () => ({
 
 ## E2E テスト（Playwright MCP）
 
-### テストユーザー
-
-**E2E テストはシード実行済みであることを前提とする。** シードの実行方法は [`docs/development.md` — テストデータ投入](development.md#テストデータ投入seed) を参照。
-
-| ユーザー | メールアドレス | パスワード | 用途 |
-|---------|-------------|---------|------|
-| bonjiri | `bonjiri@example.com` | `Yakitori2026` | 管理操作確認用（ADMIN・自己評価なし・評価アサインなし） |
-| tsukune | `tsukune@example.com` | `Yakitori2026` | 2025のみ自己評価あり・上長評価される（ADMIN） |
-| tebasaki | `tebasaki@example.com` | `Yakitori2026` | 通年自己評価あり・評価者かつ被評価者・採点データあり（MEMBER） |
-| nankotsu | `nankotsu@example.com` | `Yakitori2026` | 通年自己評価あり・複数の上長に評価される（MEMBER） |
-| sunagimo | `sunagimo@example.com` | `Yakitori2026` | 無効化ユーザー・auth-error リダイレクト確認用（isActive=false） |
-| torikawa | `torikawa@example.com` | `Yakitori2026` | 評価なし・アサインなし・削除テスト用（MEMBER） |
-
-### MOCK による認証バイパス
-
-開発環境では `MOCK_USER_EMAIL` を `.env.local` に設定することで Clerk 認証をバイパスできる。E2E テストはこの MOCK を使用して実施する。
-
-| テストの種類 | MOCK の要否 |
-|------------|------------|
-| 機能テスト・ロールベースのシナリオ | MOCK 使用 |
-| isActive=false の挙動 | MOCK 使用 |
-| 実際の Clerk ログイン・ログアウトフロー | SKIP（手動確認） |
-
-### 実施方法
-
 テスト対象の URL と [`docs/e2e-scenarios.md`](e2e-scenarios.md) のシナリオをモデルに渡して実施する。
-
----
-
-## テストデータ投入（Seed）
-
-詳細は [`docs/development.md`](development.md) の「テストデータ投入（Seed）」節を参照。
-
-```bash
-npx prisma db seed
-```
