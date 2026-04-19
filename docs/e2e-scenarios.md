@@ -101,7 +101,7 @@ PlaywrightMCP が E2E テストを実施するためのシナリオ集。
 | 2 | `tebasaki@example.com` | 一覧で自分自身（tebasaki）の行を確認する | 自己評価リンク | 「自己評価 →」リンクが表示される |
 | 3 | `tebasaki@example.com` | 自分が評価者にアサインされている被評価者（nankotsu）の行を確認する | 評価入力リンク | 「評価入力 →」リンクが表示される |
 | 4 | `nankotsu@example.com` | `/members` にアクセスし、tebasaki の行を確認する | 担当外被評価者のリンク | 「参照 →」リンクが表示される（nankotsu は tebasaki の評価者でないため） |
-| 5 | `torikawa@example.com` | `/members` にアクセスする | アサインなし MEMBER の表示 | 「表示できる社員がいません。」が表示される |
+| 5 | `torikawa@example.com` | `/members` にアクセスする | アサインなし MEMBER の表示 | 2026年度の被評価者一覧が表示され、全行に「参照 →」リンクが表示される |
 | 6 | `bonjiri@example.com` | `/members` にアクセスする | ADMIN の一覧表示 | 全被評価者の行に「評価入力 →」リンクが表示される |
 
 ---

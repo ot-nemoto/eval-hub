@@ -15,7 +15,7 @@ export default async function MembersPage() {
 
   type Member = { id: string; name: string; division: string | null };
 
-  // ADMIN・MEMBER 共通: 対象年度の被評価者のみ表示
+  // 対象年度の被評価者一覧と年度情報を取得
   const [assignments, fiscalYearRecord] = await Promise.all([
     prisma.evaluationAssignment.findMany({
       where: { fiscalYear },
@@ -38,14 +38,9 @@ export default async function MembersPage() {
     evaluateeMap.set(a.evaluateeId, a.evaluatee);
   }
 
-  // 対象年度に評価者または被評価者として関与している場合のみ一覧を表示
-  const hasAccess =
-    isAdmin ||
-    assignments.some((a) => a.evaluatorId === userId || a.evaluateeId === userId);
-
-  const members = hasAccess
-    ? [...evaluateeMap.values()].sort((a, b) => a.name.localeCompare(b.name, "ja"))
-    : [];
+  const members = [...evaluateeMap.values()].sort((a, b) =>
+    a.name.localeCompare(b.name, "ja"),
+  );
 
   // 現在ユーザーが評価者としてアサインされている被評価者 ID
   const assignedEvaluateeIds = new Set(
