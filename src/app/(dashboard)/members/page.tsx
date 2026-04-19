@@ -16,14 +16,22 @@ export default async function MembersPage() {
   type Member = { id: string; name: string; division: string | null };
 
   // ADMIN・MEMBER 共通: 対象年度の被評価者のみ表示
-  const assignments = await prisma.evaluationAssignment.findMany({
-    where: { fiscalYear },
-    select: {
-      evaluatorId: true,
-      evaluateeId: true,
-      evaluatee: { select: { id: true, name: true, division: true } },
-    },
-  });
+  const [assignments, fiscalYearRecord] = await Promise.all([
+    prisma.evaluationAssignment.findMany({
+      where: { fiscalYear },
+      select: {
+        evaluatorId: true,
+        evaluateeId: true,
+        evaluatee: { select: { id: true, name: true, division: true } },
+      },
+    }),
+    prisma.fiscalYear.findUnique({
+      where: { year: fiscalYear },
+      select: { isLocked: true },
+    }),
+  ]);
+
+  const isLocked = fiscalYearRecord?.isLocked ?? false;
 
   const evaluateeMap = new Map<string, Member>();
   for (const a of assignments) {
@@ -45,6 +53,18 @@ export default async function MembersPage() {
       ? [...evaluateeMap.keys()] // admin は全被評価者を評価可能
       : assignments.filter((a) => a.evaluatorId === userId).map((a) => a.evaluateeId),
   );
+
+  function getLinkLabel(memberId: string): string {
+    if (isLocked) return "参照 →";
+    if (memberId === userId) return "自己評価 →";
+    if (assignedEvaluateeIds.has(memberId)) return "評価入力 →";
+    return "参照 →";
+  }
+
+  function getLinkHref(memberId: string): string {
+    if (memberId === userId) return "/evaluations";
+    return `/members/${memberId}/evaluations`;
+  }
 
   return (
     <div>
@@ -71,18 +91,9 @@ export default async function MembersPage() {
                   <td className="px-4 py-3 font-medium text-gray-900">{member.name}</td>
                   <td className="px-4 py-3 text-gray-500">{member.division ?? "—"}</td>
                   <td className="px-4 py-3 text-right">
-                    {member.id === userId ? (
-                      <Link href="/evaluations" className="text-blue-600 hover:underline">
-                        自己評価 →
-                      </Link>
-                    ) : (
-                      <Link
-                        href={`/members/${member.id}/evaluations`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {assignedEvaluateeIds.has(member.id) ? "評価入力 →" : "閲覧 →"}
-                      </Link>
-                    )}
+                    <Link href={getLinkHref(member.id)} className="text-blue-600 hover:underline">
+                      {getLinkLabel(member.id)}
+                    </Link>
                   </td>
                 </tr>
               ))}

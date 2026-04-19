@@ -100,7 +100,7 @@ PlaywrightMCP が E2E テストを実施するためのシナリオ集。
 | 1 | `tebasaki@example.com` | `/members` にアクセスし、一覧が表示されたことを確認する | 被評価者一覧 | 2026年度にアサインされた被評価者のみ表示される |
 | 2 | `tebasaki@example.com` | 一覧で自分自身（tebasaki）の行を確認する | 自己評価リンク | 「自己評価 →」リンクが表示される |
 | 3 | `tebasaki@example.com` | 自分が評価者にアサインされている被評価者（nankotsu）の行を確認する | 評価入力リンク | 「評価入力 →」リンクが表示される |
-| 4 | `nankotsu@example.com` | `/members` にアクセスし、tebasaki の行を確認する | 閲覧リンク（未アサイン被評価者） | 「閲覧 →」リンクが表示される（nankotsu は tebasaki の評価者でないため） |
+| 4 | `nankotsu@example.com` | `/members` にアクセスし、tebasaki の行を確認する | 担当外被評価者のリンク | 「参照 →」リンクが表示される（nankotsu は tebasaki の評価者でないため） |
 | 5 | `torikawa@example.com` | `/members` にアクセスする | アサインなし MEMBER の表示 | 「表示できる社員がいません。」が表示される |
 | 6 | `bonjiri@example.com` | `/members` にアクセスする | ADMIN の一覧表示 | 全被評価者の行に「評価入力 →」リンクが表示される |
 
@@ -114,7 +114,7 @@ PlaywrightMCP が E2E テストを実施するためのシナリオ集。
 |---|---------|------|---------|-------|
 | 1 | `bonjiri@example.com` | `/members` 一覧から tebasaki の行にある「評価入力 →」リンクをクリックする | 画面タイトル（評価者） | 「tebasaki の評価入力」と表示される |
 | 2 | `tebasaki@example.com` | `/members` 一覧から nankotsu の行にある「評価入力 →」リンクをクリックする | 画面タイトル（評価者） | 「nankotsu の評価入力」と表示される |
-| 3 | `nankotsu@example.com` | `/members` 一覧から tebasaki の行にある「閲覧 →」リンクをクリックする | 未アサインユーザーの読み取り専用表示 | 「tebasaki の評価閲覧」と表示され、編集操作が非表示になる（※T173 実装後は 403 ページに変更予定） |
+| 3 | `nankotsu@example.com` | `/members` 一覧から tebasaki の行にある「参照 →」リンクをクリックする | 担当外ユーザーの読み取り専用表示 | 「tebasaki の評価参照」と表示され、編集操作が非表示になる |
 | 4 | `bonjiri@example.com` | tebasaki の評価ページで自己採点欄を確認する | 自己採点欄の読み取り専用 | 自己採点ボタンは表示されるが編集不可 |
 | 5 | `bonjiri@example.com` | 存在しないユーザー ID で `/members/nonexistent-id/evaluations` にアクセスする | 無効なユーザーID | 404 ページが表示される |
 
@@ -297,7 +297,7 @@ PlaywrightMCP が E2E テストを実施するためのシナリオ集。
 | # | ユーザー | 手順 | 確認観点 | 期待値 |
 |---|---------|------|---------|-------|
 | 1 | `tebasaki@example.com` | `/members` 一覧から nankotsu の行にある「評価入力 →」リンクをクリックする（tebasaki は nankotsu の評価者） | アサイン済み評価者のアクセス | ページが表示される |
-| 2 | `nankotsu@example.com` | `/members` 一覧から tebasaki の行にある「閲覧 →」リンクをクリックする | 未アサインユーザーの読み取り専用表示 | 「tebasaki の評価閲覧」と表示され、編集操作が非表示になる（※T173 実装後は 403 ページに変更予定） |
+| 2 | `nankotsu@example.com` | `/members` 一覧から tebasaki の行にある「参照 →」リンクをクリックする | 担当外ユーザーの読み取り専用表示 | 「tebasaki の評価参照」と表示され、編集操作が非表示になる |
 | 3 | `tebasaki@example.com` | 自己採点を変更して保存する | 自己採点の編集権限 | 保存される |
 | 4 | `tebasaki@example.com` | nankotsu の評価ページで nankotsu の自己採点欄を確認する | 他ユーザー自己採点の編集不可 | 自己採点欄が読み取り専用で表示される |
 | 5 | `bonjiri@example.com` | tebasaki の評価ページにアクセスする | ADMIN の全ユーザー参照・編集権限 | 評価入力ページが表示され編集できる |
