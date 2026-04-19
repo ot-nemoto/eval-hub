@@ -52,8 +52,8 @@ flowchart TD
 
     subgraph Header ["Header（全画面共通）"]
         direction LR
-        H_EVAL("自己評価"):::nav
-        H_MEMBERS("社員一覧"):::nav
+        H_EVAL("評価"):::nav
+        H_MEMBERS("メンバー"):::nav
         H_ADMIN_USERS("ユーザー管理 admin"):::nav
         H_ADMIN_YEARS("年度管理 admin"):::nav
         H_ADMIN_TARGETS("マスタ管理 admin"):::nav
@@ -335,7 +335,7 @@ src/app/layout.tsx（RootLayout）
 
 | コンポーネント | 種別 | 用途 | 使用箇所 |
 |--------------|------|------|---------|
-| `NavLinks` | Client Component | ロールに応じたナビゲーションリンク。member は自己評価・社員一覧、admin はさらに管理メニューを表示 | DashboardLayout |
+| `NavLinks` | Client Component | ロールに応じたナビゲーションリンク。member は評価・メンバー、admin はさらに管理メニューを表示 | DashboardLayout |
 | `SignOutButton` | Clerk 提供 | ログアウト処理。`redirectUrl="/login"` を指定 | DashboardLayout |
 | `ui/Button` | Client Component | 共通ボタン（variant: default / outline / secondary / destructive 等） | 全画面 |
 
