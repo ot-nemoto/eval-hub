@@ -82,7 +82,7 @@ export default async function MemberEvaluationsPage({ params }: Props) {
     <div>
       <div className="mb-6">
         <h2 className="text-xl font-bold text-gray-900">
-          {evaluatee.name} の{readOnly ? "評価閲覧" : "評価入力"}
+          {evaluatee.name} の{readOnly || isLocked ? "評価参照" : "評価入力"}
         </h2>
         <p className="text-sm text-gray-500">{fiscalYear}年度</p>
       </div>

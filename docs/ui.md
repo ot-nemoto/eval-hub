@@ -10,7 +10,7 @@
 | 認証エラー | `/auth-error` | ヘッダーなし | なし |
 | 自己評価一覧 | `/evaluations` | ヘッダーあり | 要ログイン |
 | 社員一覧 | `/members` | ヘッダーあり | 要ログイン |
-| メンバー別評価 | `/members/[id]/evaluations` | ヘッダーあり | 要ログイン（アサイン済み評価者 / admin） |
+| メンバー別評価 | `/members/[id]/evaluations` | ヘッダーあり | 要ログイン |
 | 管理：大分類・中分類マスタ | `/admin/targets` | ヘッダーあり | admin のみ |
 | 管理：評価項目マスタ | `/admin/evaluation-items` | ヘッダーあり | admin のみ |
 | 管理：年度管理 | `/admin/fiscal-years` | ヘッダーあり | admin のみ |
@@ -52,8 +52,8 @@ flowchart TD
 
     subgraph Header ["Header（全画面共通）"]
         direction LR
-        H_EVAL("自己評価"):::nav
-        H_MEMBERS("社員一覧"):::nav
+        H_EVAL("評価"):::nav
+        H_MEMBERS("メンバー"):::nav
         H_ADMIN_USERS("ユーザー管理 admin"):::nav
         H_ADMIN_YEARS("年度管理 admin"):::nav
         H_ADMIN_TARGETS("マスタ管理 admin"):::nav
@@ -103,12 +103,10 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 
 対象年度の被評価者一覧を表示する。現在年度（`fiscal_years.is_current = true`）が未設定の場合は `/evaluations` にリダイレクトする。
 
-**閲覧権限：** 対象年度に評価者または被評価者としてアサインされているユーザー、および ADMIN。アサインに一切関与していない MEMBER は空リスト（「表示できる社員がいません。」）を表示する。
-
 | 機能 | 説明 |
 |------|------|
 | メンバー一覧 | 対象年度の被評価者の氏名・所属部署を表示 |
-| 評価リンク | 自分がアサインされている被評価者、または admin は全員へのリンクを表示 |
+| 評価リンク | アクセス者の役割に応じてリンク種別を切り替える（後述） |
 
 ### メンバー別評価（`/members/[id]/evaluations`）
 
@@ -122,7 +120,25 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 | 評価者採点理由 | テキストエリアで入力 |
 | 保存ボタン | 項目ごとに個別保存 |
 
-アクセス制御：`evaluation_assignments` でアサインされた評価者または admin のみ（サーバー側で検証）。
+アクセス制御：要ログイン。評価は過去も含めてオープンで、ログイン済みであれば誰でも閲覧可能。以下の「リンク（一覧）」は、一覧に表示されたメンバーに対して、アクセス者の役割に応じて切り替わる。
+
+| 条件 | リンク（一覧） | ページモード |
+|------|-------------|------------|
+| 年度ロック済み（全員） | 参照 → | 読み取り専用 |
+| 自分自身 | 自己評価 → | 読み取り専用（自己評価ページへ） |
+| 担当の被評価者（アサイン済み） | 評価入力 → | 編集可能 |
+| 担当外の被評価者 | 参照 → | 読み取り専用 |
+
+当該年度に被評価者として登録されていないユーザーの URL に直接アクセスした場合は 404 を返す。
+
+#### 評価者コメント
+
+評価ページのコメントスレッドは以下のルールで編集・削除ボタンを表示する。
+
+| ロール | 自分のコメント | 他者のコメント |
+|--------|-------------|-------------|
+| MEMBER（評価者） | 編集・削除ボタンを表示 | ボタン非表示 |
+| ADMIN | 編集・削除ボタンを表示 | **編集・削除ボタンを表示**（全コメント管理可） |
 
 対象年度が **ロック済み**（`is_locked = true`）の場合、画面上部に「🔒 この年度はロック済みです。閲覧のみ可能です。」バナーを表示し、採点ボタン・保存ボタン・コメント追加／編集／削除ボタンをすべて非表示にして閲覧専用モードに切り替える。
 
@@ -326,7 +342,7 @@ src/app/layout.tsx（RootLayout）
 
 | コンポーネント | 種別 | 用途 | 使用箇所 |
 |--------------|------|------|---------|
-| `NavLinks` | Client Component | ロールに応じたナビゲーションリンク。member は自己評価・社員一覧、admin はさらに管理メニューを表示 | DashboardLayout |
+| `NavLinks` | Client Component | ロールに応じたナビゲーションリンク。member は評価・メンバー、admin はさらに管理メニューを表示 | DashboardLayout |
 | `SignOutButton` | Clerk 提供 | ログアウト処理。`redirectUrl="/login"` を指定 | DashboardLayout |
 | `ui/Button` | Client Component | 共通ボタン（variant: default / outline / secondary / destructive 等） | 全画面 |
 
@@ -335,7 +351,7 @@ src/app/layout.tsx（RootLayout）
 | コンポーネント | 種別 | 用途 |
 |--------------|------|------|
 | `EvaluationTabs` | Client Component | 自己評価入力。中分類タブ・採点ボタン・理由テキストエリア・個別保存 |
-| `ManagerEvaluationTabs` | Client Component | 評価者採点入力。中分類タブ・自己評価表示・最終スコアセクション（evaluations.manager_score、アサイン済み評価者/admin が上書き可）・コメントスレッド（投稿者名・理由・日時）・追加フォーム・自コメントの編集/削除 |
+| `ManagerEvaluationTabs` | Client Component | 評価者採点入力。中分類タブ・自己評価表示・最終スコアセクション（evaluations.manager_score、アサイン済み評価者/admin が上書き可）・コメントスレッド（投稿者名・理由・日時）・追加フォーム・自コメントの編集/削除（ADMIN は全コメントの編集/削除可） |
 
 ### ページ内コンポーネント（`src/components/admin/`）
 
