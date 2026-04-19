@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const memberLinks = [
-  { href: "/evaluations", label: "自己評価" },
-  { href: "/members", label: "社員一覧" },
+  { href: "/evaluations", label: "評価" },
+  { href: "/members", label: "メンバー" },
 ];
 
 const adminLinks = [
