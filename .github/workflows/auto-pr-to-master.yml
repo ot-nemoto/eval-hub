@@ -39,7 +39,7 @@ jobs:
         id: content
         if: steps.diff.outputs.has_diff == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.AUTO_PR_TOKEN }}
         run: |
           LABEL="bump:patch"
           ISSUES_SECTION=""
@@ -93,7 +93,7 @@ jobs:
       - name: Create or update PR
         if: steps.diff.outputs.has_diff == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.AUTO_PR_TOKEN }}
         run: |
           LABEL="${{ steps.content.outputs.label }}"
           EXISTING_PR=$(gh pr list --base master --head develop --state open --json number --jq '.[0].number')
