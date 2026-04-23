@@ -99,13 +99,17 @@ jobs:
           EXISTING_PR=$(gh pr list --base master --head develop --state open --json number --jq '.[0].number')
 
           if [ -z "$EXISTING_PR" ]; then
-            PR_URL=$(gh pr create \
-              --base master \
-              --head develop \
-              --title "chore: develop → master $(TZ=Asia/Tokyo date +'%Y-%m-%d')" \
-              --body-file /tmp/pr_body.md)
-            PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
-            gh pr edit "$PR_NUMBER" --add-label "$LABEL"
+            PR_BODY=$(cat /tmp/pr_body.md)
+            PR_NUMBER=$(gh api repos/${{ github.repository }}/pulls \
+              --method POST \
+              --field title="chore: develop → master $(TZ=Asia/Tokyo date +'%Y-%m-%d')" \
+              --field body="$PR_BODY" \
+              --field head="develop" \
+              --field base="master" \
+              --jq '.number')
+            gh api repos/${{ github.repository }}/issues/$PR_NUMBER/labels \
+              --method POST \
+              --field "labels[]=$LABEL"
             echo "✅ PR を新規作成しました（ラベル: $LABEL）"
           else
             # 本文を更新
