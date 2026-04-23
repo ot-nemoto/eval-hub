@@ -99,12 +99,13 @@ jobs:
           EXISTING_PR=$(gh pr list --base master --head develop --state open --json number --jq '.[0].number')
 
           if [ -z "$EXISTING_PR" ]; then
-            gh pr create \
+            PR_URL=$(gh pr create \
               --base master \
               --head develop \
               --title "chore: develop → master $(TZ=Asia/Tokyo date +'%Y-%m-%d')" \
-              --body-file /tmp/pr_body.md \
-              --label "$LABEL"
+              --body-file /tmp/pr_body.md)
+            PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
+            gh pr edit "$PR_NUMBER" --add-label "$LABEL"
             echo "✅ PR を新規作成しました（ラベル: $LABEL）"
           else
             # 本文を更新
