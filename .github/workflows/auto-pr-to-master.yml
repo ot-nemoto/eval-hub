@@ -96,29 +96,37 @@ jobs:
           GH_TOKEN: ${{ secrets.AUTO_PR_TOKEN }}
         run: |
           LABEL="${{ steps.content.outputs.label }}"
-          EXISTING_PR=$(gh pr list --base master --head develop --state open --json number --jq '.[0].number')
+          REPO="${{ github.repository }}"
+          OWNER="${{ github.repository_owner }}"
+          PR_BODY=$(cat /tmp/pr_body.md)
+
+          # 既存の open PR を REST API で確認（GraphQL 不使用）
+          EXISTING_PR=$(gh api "repos/$REPO/pulls?base=master&head=${OWNER}:develop&state=open" --jq '.[0].number // empty')
 
           if [ -z "$EXISTING_PR" ]; then
-            PR_BODY=$(cat /tmp/pr_body.md)
-            PR_NUMBER=$(gh api repos/${{ github.repository }}/pulls \
+            # 新規 PR を REST API で作成
+            PR_NUMBER=$(gh api "repos/$REPO/pulls" \
               --method POST \
               --field title="chore: develop → master $(TZ=Asia/Tokyo date +'%Y-%m-%d')" \
               --field body="$PR_BODY" \
               --field head="develop" \
               --field base="master" \
               --jq '.number')
-            gh api repos/${{ github.repository }}/issues/$PR_NUMBER/labels \
+            # ラベルを REST API で追加
+            gh api "repos/$REPO/issues/$PR_NUMBER/labels" \
               --method POST \
               --field "labels[]=$LABEL"
             echo "✅ PR を新規作成しました（ラベル: $LABEL）"
           else
-            # 本文を更新
-            gh pr edit "$EXISTING_PR" --body-file /tmp/pr_body.md
-
-            # ラベルを差し替え
-            gh pr edit "$EXISTING_PR" --remove-label "bump:minor" 2>/dev/null || true
-            gh pr edit "$EXISTING_PR" --remove-label "bump:patch" 2>/dev/null || true
-            gh pr edit "$EXISTING_PR" --add-label "$LABEL"
-
+            # 本文を REST API で更新
+            gh api "repos/$REPO/pulls/$EXISTING_PR" \
+              --method PATCH \
+              --field body="$PR_BODY"
+            # ラベルを REST API で差し替え
+            gh api "repos/$REPO/issues/$EXISTING_PR/labels/bump%3Aminor" --method DELETE 2>/dev/null || true
+            gh api "repos/$REPO/issues/$EXISTING_PR/labels/bump%3Apatch" --method DELETE 2>/dev/null || true
+            gh api "repos/$REPO/issues/$EXISTING_PR/labels" \
+              --method POST \
+              --field "labels[]=$LABEL"
             echo "✅ PR #${EXISTING_PR} を更新しました（ラベル: $LABEL）"
           fi
