@@ -47,8 +47,21 @@ jobs:
           # コミットメッセージから Issue 番号を抽出
           ISSUE_NUMBERS=$(git log origin/master..origin/develop --format="%B" \
             | grep -oE '(Closes|Fixes|closes|fixes) #[0-9]+' \
+            | grep -oE '[0-9]+' || true)
+
+          # マージコミットの PR description からも Issue 番号を抽出
+          PR_NUMBERS=$(git log origin/master..origin/develop --format="%s" \
+            | grep -oE 'pull request #[0-9]+' \
             | grep -oE '[0-9]+' \
-            | sort -u)
+            | sort -u || true)
+          for PR_NUM in $PR_NUMBERS; do
+            PR_CLOSES=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUM}" --jq '.body // ""' 2>/dev/null \
+              | grep -oE '(Closes|Fixes|closes|fixes) #[0-9]+' \
+              | grep -oE '[0-9]+' || true)
+            ISSUE_NUMBERS="${ISSUE_NUMBERS} ${PR_CLOSES}"
+          done
+
+          ISSUE_NUMBERS=$(echo "$ISSUE_NUMBERS" | tr ' ' '\n' | grep -v '^$' | sort -u || true)
 
           for NUM in $ISSUE_NUMBERS; do
             ISSUE_DATA=$(gh issue view "$NUM" --json title,labels 2>/dev/null) || continue
