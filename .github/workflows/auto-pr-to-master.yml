@@ -50,6 +50,7 @@ jobs:
             | grep -oE '[0-9]+' || true)
 
           # マージコミットの PR description からも Issue 番号を抽出
+          # （gh pr merge --merge は Closes #N を PR description にのみ記録するため）
           PR_NUMBERS=$(git log origin/master..origin/develop --format="%s" \
             | grep -oE 'pull request #[0-9]+' \
             | grep -oE '[0-9]+' \
