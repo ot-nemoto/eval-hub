@@ -127,7 +127,7 @@ Client (Browser)
 | ブランチ | 用途 | 接続先環境変数 |
 |---|---|---|
 | `main` | 本番用（予定） | Vercel 環境変数（Production） |
-| `develop` | 検証用 | Vercel 環境変数（Preview） / `.env.local` |
+| `develop` | 検証用 | Vercel 環境変数（Preview） / `.env` |
 
 ## 環境変数
 

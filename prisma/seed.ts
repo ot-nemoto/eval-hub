@@ -4,7 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import * as dotenv from "dotenv";
 import evaluationItemsData from "./seeds/evaluation_items.json";
 
-dotenv.config({ path: ".env.local" });
+dotenv.config({ path: ".env" });
 
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
