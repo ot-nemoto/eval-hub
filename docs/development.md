@@ -16,7 +16,7 @@ git clone https://github.com/ot-nemoto/eval-hub.git
 
 # 以降のコマンドはすべて devcontainer 内（リポジトリルート）で実行する
 
-# 2. .env.local を作成し、環境変数を設定する（下の「環境変数」節を参照）
+# 2. .env を作成し、環境変数を設定する（下の「環境変数」節を参照）
 
 # 3. DB マイグレーションを適用する
 npx prisma migrate deploy
@@ -29,7 +29,7 @@ npm run dev
 
 ## 環境変数
 
-`.env.local` をプロジェクトルートに作成し、以下の変数を設定する。
+`.env` をプロジェクトルートに作成し、以下の変数を設定する。
 
 ```env
 # Database（Neon）
@@ -56,7 +56,7 @@ NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/evaluations
 
 ### ローカル開発用認証バイパス
 
-Clerk 認証なしで動作確認するため、`MOCK_USER_ID` または `MOCK_USER_EMAIL` を `.env.local` に設定する。
+Clerk 認証なしで動作確認するため、`MOCK_USER_ID` または `MOCK_USER_EMAIL` を `.env` に設定する。
 
 - 設定すると `src/proxy.ts`（middleware）が Clerk 認証をスキップし、`src/lib/auth.ts` の `getSession()` が DB から直接ユーザーを返す
 - **優先順位**: `MOCK_USER_ID` > `MOCK_USER_EMAIL`（両方設定した場合は `MOCK_USER_ID` が使われる）
