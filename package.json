@@ -49,8 +49,8 @@
     "dotenv": "^17.4.2",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4",
-    "tsx": "^4.22.2",
+    "tsx": "^4.22.3",
     "typescript": "^6",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.7"
   }
 }
