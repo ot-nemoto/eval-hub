@@ -1,6 +1,6 @@
 {
   "name": "eval-hub",
-  "version": "0.18.5",
+  "version": "0.18.6",
   "private": true,
   "prisma": {
     "seed": "tsx prisma/seed.ts"
