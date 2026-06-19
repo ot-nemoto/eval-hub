@@ -38,7 +38,7 @@ export function RoleSelect({ userId, currentRole, disabled }: Props) {
       onChange={handleChange}
       disabled={disabled || loading}
       aria-label="ロール"
-      className="rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-700 focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+      className="rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-700 focus:border-zinc-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
     >
       <option value="ADMIN">ADMIN</option>
       <option value="MEMBER">MEMBER</option>

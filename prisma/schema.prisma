@@ -25,6 +25,7 @@ enum Score {
 model User {
   id                    String    @id @default(uuid())
   clerkId               String?   @unique @map("clerk_id") @db.VarChar(255)
+  apiKey                String?   @unique @map("api_key") @db.VarChar(255)
   email                 String    @unique @db.VarChar(255)
   name                  String    @db.VarChar(100)
   division              String?   @db.VarChar(100)

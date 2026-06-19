@@ -131,7 +131,7 @@ export function FiscalYearActions({ fiscalYear, isDeletable }: Props) {
         <button
           type="submit"
           disabled={loading}
-          className="rounded border border-blue-400 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+          className="rounded border border-zinc-400 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
         >
           保存
         </button>
@@ -154,7 +154,7 @@ export function FiscalYearActions({ fiscalYear, isDeletable }: Props) {
           type="button"
           onClick={handleSetCurrent}
           disabled={loading}
-          className="rounded border border-blue-300 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+          className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
         >
           現在年度に設定
         </button>

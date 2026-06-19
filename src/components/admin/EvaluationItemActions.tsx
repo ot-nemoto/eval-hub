@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   deleteEvaluationItemAction,
   updateEvaluationItemAction,
-} from "@/app/(dashboard)/admin/evaluation-items/actions";
+} from "@/app/(dashboard)/admin/targets/actions";
 
 type EvaluationItem = {
   id: number;
@@ -16,6 +17,7 @@ type EvaluationItem = {
 type Props = { item: EvaluationItem; hasEvaluations: boolean };
 
 export function EvaluationItemActions({ item, hasEvaluations }: Props) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
@@ -40,6 +42,7 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
       });
       if (!result.error) {
         setEditing(false);
+        router.refresh();
       } else {
         alert(result.error);
       }
@@ -55,7 +58,9 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
     setLoading(true);
     try {
       const result = await deleteEvaluationItemAction(item.id);
-      if (result.error) {
+      if (!result.error) {
+        router.refresh();
+      } else {
         alert(result.error);
       }
     } catch {
@@ -97,7 +102,7 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
           <button
             type="submit"
             disabled={loading}
-            className="rounded border border-blue-400 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+            className="rounded border border-zinc-400 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
           >
             保存
           </button>

@@ -1,18 +1,24 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ConflictError, NotFoundError } from "./errors";
-import { createTarget, deleteTarget, getTargets, updateTarget } from "./targets";
+import { createTarget, deleteTarget, getTargets, reorderTargets, updateTarget } from "./targets";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     target: {
       findMany: vi.fn(),
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
     },
     category: { count: vi.fn() },
+    $transaction: vi.fn((cb: (tx: unknown) => Promise<unknown>) =>
+      cb({
+        target: { update: vi.mocked(prisma.target.update) },
+      }),
+    ),
   },
 }));
 
@@ -42,19 +48,27 @@ describe("getTargets", () => {
 describe("createTarget", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("大分類を作成して返す", async () => {
-    vi.mocked(prisma.target.findUnique).mockResolvedValue(null);
+  it("no を自動採番して大分類を作成する", async () => {
+    vi.mocked(prisma.target.findFirst).mockResolvedValue({ no: 2 } as never);
     vi.mocked(prisma.target.create).mockResolvedValue({ id: 3, name: "new", no: 3 } as never);
 
-    const result = await createTarget({ name: "new", no: 3 });
+    const result = await createTarget({ name: "new" });
 
+    expect(prisma.target.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { name: "new", no: 3 } }),
+    );
     expect(result).toEqual({ id: 3, name: "new", no: 3 });
   });
 
-  it("同じ no が存在する場合は ConflictError をスロー", async () => {
-    vi.mocked(prisma.target.findUnique).mockResolvedValue(mockTargets[0] as never);
+  it("大分類が存在しない場合は no=1 で作成する", async () => {
+    vi.mocked(prisma.target.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.target.create).mockResolvedValue({ id: 1, name: "first", no: 1 } as never);
 
-    await expect(createTarget({ name: "dup", no: 1 })).rejects.toThrow(ConflictError);
+    await createTarget({ name: "first" });
+
+    expect(prisma.target.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { name: "first", no: 1 } }),
+    );
   });
 });
 
@@ -90,6 +104,26 @@ describe("updateTarget", () => {
 
     await expect(updateTarget(1, { name: "renamed" })).resolves.not.toThrow();
     expect(prisma.target.findUnique).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("reorderTargets", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("2ステップで no を更新する", async () => {
+    vi.mocked(prisma.target.update).mockResolvedValue({} as never);
+
+    await reorderTargets([
+      { id: 1, no: 2 },
+      { id: 2, no: 1 },
+    ]);
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(prisma.target.update).toHaveBeenCalledTimes(4);
+    expect(prisma.target.update).toHaveBeenNthCalledWith(1, { where: { id: 1 }, data: { no: 100002 } });
+    expect(prisma.target.update).toHaveBeenNthCalledWith(2, { where: { id: 2 }, data: { no: 100001 } });
+    expect(prisma.target.update).toHaveBeenNthCalledWith(3, { where: { id: 1 }, data: { no: 2 } });
+    expect(prisma.target.update).toHaveBeenNthCalledWith(4, { where: { id: 2 }, data: { no: 1 } });
   });
 });
 

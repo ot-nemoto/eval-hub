@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   deleteCategoryAction,
   updateCategoryAction,
@@ -10,6 +11,7 @@ type Category = { id: number; targetId: number; name: string; no: number };
 type Props = { category: Category; canDelete: boolean };
 
 export function CategoryActions({ category, canDelete }: Props) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: category.name, no: String(category.no) });
@@ -24,6 +26,7 @@ export function CategoryActions({ category, canDelete }: Props) {
       });
       if (!result.error) {
         setEditing(false);
+        router.refresh();
       } else {
         alert(result.error);
       }
@@ -39,7 +42,9 @@ export function CategoryActions({ category, canDelete }: Props) {
     setLoading(true);
     try {
       const result = await deleteCategoryAction(category.id);
-      if (result.error) {
+      if (!result.error) {
+        router.refresh();
+      } else {
         alert(result.error);
       }
     } catch {
@@ -72,7 +77,7 @@ export function CategoryActions({ category, canDelete }: Props) {
         <button
           type="submit"
           disabled={loading}
-          className="rounded border border-blue-400 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+          className="rounded border border-zinc-400 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
         >
           保存
         </button>

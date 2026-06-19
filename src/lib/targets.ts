@@ -9,13 +9,16 @@ export async function getTargets() {
   });
 }
 
-export async function createTarget(data: { name: string; no: number }) {
-  const existing = await prisma.target.findUnique({ where: { no: data.no } });
-  if (existing) throw new ConflictError("同じ no の大分類がすでに存在します");
+export async function createTarget(data: { name: string }) {
+  const max = await prisma.target.findFirst({
+    orderBy: { no: "desc" },
+    select: { no: true },
+  });
+  const no = (max?.no ?? 0) + 1;
 
   try {
     return await prisma.target.create({
-      data: { name: data.name, no: data.no },
+      data: { name: data.name, no },
       select: { id: true, name: true, no: true },
     });
   } catch (e) {
@@ -44,6 +47,26 @@ export async function updateTarget(id: number, data: { name?: string; no?: numbe
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       throw new ConflictError("同じ no の大分類がすでに存在します");
+    }
+    throw e;
+  }
+}
+
+export async function reorderTargets(orders: { id: number; no: number }[]) {
+  const OFFSET = 100000;
+  try {
+    await prisma.$transaction(async (tx) => {
+      for (const { id, no } of orders) {
+        await tx.target.update({ where: { id }, data: { no: no + OFFSET } });
+      }
+      for (const { id, no } of orders) {
+        await tx.target.update({ where: { id }, data: { no } });
+      }
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2025") throw new NotFoundError("並び替え対象の大分類が見つかりません");
+      if (e.code === "P2002") throw new ConflictError("並び替え中に一意制約違反が発生しました");
     }
     throw e;
   }
