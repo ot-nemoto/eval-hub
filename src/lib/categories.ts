@@ -11,26 +11,21 @@ export async function getCategories(targetId?: number) {
   });
 }
 
-export async function createCategory(data: { targetId: number; name: string; no: number }) {
+export async function createCategory(data: { targetId: number; name: string }) {
   const target = await prisma.target.findUnique({ where: { id: data.targetId } });
   if (!target) throw new NotFoundError("大分類が見つかりません");
 
-  const existing = await prisma.category.findUnique({
-    where: { targetId_no: { targetId: data.targetId, no: data.no } },
+  const max = await prisma.category.findFirst({
+    where: { targetId: data.targetId },
+    orderBy: { no: "desc" },
+    select: { no: true },
   });
-  if (existing) throw new ConflictError("同じ targetId と no の中分類がすでに存在します");
+  const no = (max?.no ?? 0) + 1;
 
-  try {
-    return await prisma.category.create({
-      data: { targetId: data.targetId, name: data.name, no: data.no },
-      select: { id: true, targetId: true, name: true, no: true },
-    });
-  } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      throw new ConflictError("同じ targetId と no の中分類がすでに存在します");
-    }
-    throw e;
-  }
+  return prisma.category.create({
+    data: { targetId: data.targetId, name: data.name, no },
+    select: { id: true, targetId: true, name: true, no: true },
+  });
 }
 
 export async function updateCategory(id: number, data: { name?: string; no?: number }) {
@@ -56,6 +51,18 @@ export async function updateCategory(id: number, data: { name?: string; no?: num
     }
     throw e;
   }
+}
+
+export async function reorderCategories(orders: { id: number; no: number }[]) {
+  const OFFSET = 100000;
+  await prisma.$transaction(async (tx) => {
+    for (const { id, no } of orders) {
+      await tx.category.update({ where: { id }, data: { no: no + OFFSET } });
+    }
+    for (const { id, no } of orders) {
+      await tx.category.update({ where: { id }, data: { no } });
+    }
+  });
 }
 
 export async function deleteCategory(id: number) {

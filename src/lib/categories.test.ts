@@ -8,6 +8,7 @@ vi.mock("@/lib/prisma", () => ({
     target: { findUnique: vi.fn() },
     category: {
       findMany: vi.fn(),
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
@@ -57,9 +58,9 @@ describe("getCategories", () => {
 describe("createCategory", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("中分類を作成して返す", async () => {
+  it("no を自動採番して中分類を作成する", async () => {
     vi.mocked(prisma.target.findUnique).mockResolvedValue(mockTarget as never);
-    vi.mocked(prisma.category.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.category.findFirst).mockResolvedValue({ no: 2 } as never);
     vi.mocked(prisma.category.create).mockResolvedValue({
       id: 3,
       targetId: 1,
@@ -67,26 +68,35 @@ describe("createCategory", () => {
       no: 3,
     } as never);
 
-    const result = await createCategory({ targetId: 1, name: "new", no: 3 });
+    const result = await createCategory({ targetId: 1, name: "new" });
 
+    expect(prisma.category.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { targetId: 1, name: "new", no: 3 } }),
+    );
     expect(result).toEqual({ id: 3, targetId: 1, name: "new", no: 3 });
+  });
+
+  it("中分類が存在しない場合は no=1 で作成する", async () => {
+    vi.mocked(prisma.target.findUnique).mockResolvedValue(mockTarget as never);
+    vi.mocked(prisma.category.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.category.create).mockResolvedValue({
+      id: 1,
+      targetId: 1,
+      name: "first",
+      no: 1,
+    } as never);
+
+    await createCategory({ targetId: 1, name: "first" });
+
+    expect(prisma.category.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { targetId: 1, name: "first", no: 1 } }),
+    );
   });
 
   it("大分類が存在しない場合は NotFoundError をスロー", async () => {
     vi.mocked(prisma.target.findUnique).mockResolvedValue(null);
 
-    await expect(createCategory({ targetId: 99, name: "x", no: 1 })).rejects.toThrow(
-      NotFoundError,
-    );
-  });
-
-  it("同じ targetId と no が存在する場合は ConflictError をスロー", async () => {
-    vi.mocked(prisma.target.findUnique).mockResolvedValue(mockTarget as never);
-    vi.mocked(prisma.category.findUnique).mockResolvedValue(mockCategories[0] as never);
-
-    await expect(createCategory({ targetId: 1, name: "dup", no: 1 })).rejects.toThrow(
-      ConflictError,
-    );
+    await expect(createCategory({ targetId: 99, name: "x" })).rejects.toThrow(NotFoundError);
   });
 });
 

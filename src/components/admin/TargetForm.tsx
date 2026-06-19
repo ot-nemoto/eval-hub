@@ -1,21 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createTargetAction } from "@/app/(dashboard)/admin/targets/actions";
 
 export function TargetForm() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", no: "" });
+  const [name, setName] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
-      const result = await createTargetAction({ name: form.name, no: Number(form.no) });
+      const result = await createTargetAction({ name });
       if (!result.error) {
         setOpen(false);
-        setForm({ name: "", no: "" });
+        setName("");
+        router.refresh();
       } else {
         alert(result.error);
       }
@@ -41,21 +44,6 @@ export function TargetForm() {
   return (
     <form onSubmit={handleSubmit} className="flex items-end gap-2">
       <div>
-        <label htmlFor="target-no" className="mb-1 block text-xs font-medium text-gray-700">
-          No
-        </label>
-        <input
-          id="target-no"
-          type="number"
-          min={1}
-          required
-          value={form.no}
-          onChange={(e) => setForm((p) => ({ ...p, no: e.target.value }))}
-          className="w-16 rounded border border-gray-300 px-2 py-1.5 text-sm focus:border-zinc-400 focus:outline-none"
-          placeholder="1"
-        />
-      </div>
-      <div>
         <label htmlFor="target-name" className="mb-1 block text-xs font-medium text-gray-700">
           名称
         </label>
@@ -63,8 +51,8 @@ export function TargetForm() {
           id="target-name"
           type="text"
           required
-          value={form.name}
-          onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           className="rounded border border-gray-300 px-2 py-1.5 text-sm focus:border-zinc-400 focus:outline-none"
           placeholder="大分類名"
         />
@@ -80,7 +68,7 @@ export function TargetForm() {
         type="button"
         onClick={() => {
           setOpen(false);
-          setForm({ name: "", no: "" });
+          setName("");
         }}
         disabled={loading}
         className="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"

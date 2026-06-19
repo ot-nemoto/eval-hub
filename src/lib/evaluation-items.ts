@@ -96,6 +96,18 @@ export async function updateEvaluationItem(
   });
 }
 
+export async function reorderEvaluationItems(orders: { id: number; no: number }[]) {
+  const OFFSET = 100000;
+  await prisma.$transaction(async (tx) => {
+    for (const { id, no } of orders) {
+      await tx.evaluationItem.update({ where: { id }, data: { no: no + OFFSET } });
+    }
+    for (const { id, no } of orders) {
+      await tx.evaluationItem.update({ where: { id }, data: { no } });
+    }
+  });
+}
+
 export async function deleteEvaluationItem(id: number) {
   const existing = await prisma.evaluationItem.findUnique({ where: { id } });
   if (!existing) throw new NotFoundError("評価項目が見つかりません");

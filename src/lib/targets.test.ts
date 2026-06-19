@@ -7,6 +7,7 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     target: {
       findMany: vi.fn(),
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
@@ -42,19 +43,27 @@ describe("getTargets", () => {
 describe("createTarget", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("大分類を作成して返す", async () => {
-    vi.mocked(prisma.target.findUnique).mockResolvedValue(null);
+  it("no を自動採番して大分類を作成する", async () => {
+    vi.mocked(prisma.target.findFirst).mockResolvedValue({ no: 2 } as never);
     vi.mocked(prisma.target.create).mockResolvedValue({ id: 3, name: "new", no: 3 } as never);
 
-    const result = await createTarget({ name: "new", no: 3 });
+    const result = await createTarget({ name: "new" });
 
+    expect(prisma.target.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { name: "new", no: 3 } }),
+    );
     expect(result).toEqual({ id: 3, name: "new", no: 3 });
   });
 
-  it("同じ no が存在する場合は ConflictError をスロー", async () => {
-    vi.mocked(prisma.target.findUnique).mockResolvedValue(mockTargets[0] as never);
+  it("大分類が存在しない場合は no=1 で作成する", async () => {
+    vi.mocked(prisma.target.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.target.create).mockResolvedValue({ id: 1, name: "first", no: 1 } as never);
 
-    await expect(createTarget({ name: "dup", no: 1 })).rejects.toThrow(ConflictError);
+    await createTarget({ name: "first" });
+
+    expect(prisma.target.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { name: "first", no: 1 } }),
+    );
   });
 });
 
