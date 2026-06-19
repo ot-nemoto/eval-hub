@@ -66,6 +66,34 @@
 
 ---
 
+### `generateMyApiKeyAction()`
+
+ログインユーザー自身の API キーを生成または再生成する。
+
+**引数:** なし
+
+**戻り値:** `{ apiKey: string }` | `{ error: string }`
+
+| エラー | 条件 |
+|--------|------|
+| `"ユーザーが見つかりません"` | セッションユーザーが DB に存在しない（NotFoundError） |
+
+---
+
+### `revokeMyApiKeyAction()`
+
+ログインユーザー自身の API キーを失効する。
+
+**引数:** なし
+
+**戻り値:** `{}` | `{ error: string }`
+
+| エラー | 条件 |
+|--------|------|
+| `"ユーザーが見つかりません"` | セッションユーザーが DB に存在しない（NotFoundError） |
+
+---
+
 ## 大分類・中分類（`src/app/(dashboard)/admin/targets/actions.ts`）
 
 ### `createTargetAction(data)`
@@ -359,6 +387,34 @@
 | `"自分自身は削除できません"` | 自分自身の操作（ForbiddenError） |
 | `"ユーザーが見つかりません"` | 指定 id が存在しない（NotFoundError） |
 | `"評価データまたはアサインデータが存在するため削除できません"` | 紐づきデータあり（ConflictError） |
+
+---
+
+### `generateApiKeyAction(id)`
+
+指定ユーザーの API キーを生成または再生成する。ADMIN のみ実行可能。
+
+**引数:** `id: string`
+
+**戻り値:** `{ apiKey: string }` | `{ error: string }`
+
+| エラー | 条件 |
+|--------|------|
+| `"ユーザーが見つかりません"` | 指定 id が存在しない（NotFoundError） |
+
+---
+
+### `revokeApiKeyAction(id)`
+
+指定ユーザーの API キーを失効する。ADMIN のみ実行可能。
+
+**引数:** `id: string`
+
+**戻り値:** `{}` | `{ error: string }`
+
+| エラー | 条件 |
+|--------|------|
+| `"ユーザーが見つかりません"` | 指定 id が存在しない（NotFoundError） |
 
 ---
 
