@@ -26,7 +26,12 @@ export async function createTargetAction(data: {
   if (typeof data.name !== "string" || !data.name.trim())
     return { error: "name は必須です" };
 
-  await createTarget(data);
+  try {
+    await createTarget(data);
+  } catch (e) {
+    if (e instanceof ConflictError) return { error: e.message };
+    throw e;
+  }
 
   revalidatePath("/admin/targets");
   return {};
