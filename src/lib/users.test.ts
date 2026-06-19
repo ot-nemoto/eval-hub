@@ -189,49 +189,45 @@ describe("generateApiKey", () => {
 
   it("API キーを生成して返す", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never);
-    vi.mocked(prisma.user.update).mockResolvedValue({
-      id: "user-1",
-      name: "テストユーザー",
-      apiKey: "generated-uuid",
-    } as never);
+    vi.mocked(prisma.user.update).mockResolvedValue({ id: "user-1" } as never);
 
-    const result = await generateApiKey("user-1");
+    const result = await generateApiKey({ id: "user-1" });
 
-    expect(prisma.user.update).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "user-1" }, data: { apiKey: expect.any(String) } }),
+    expect(result.apiKey).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
     );
-    expect(result.apiKey).toBe("generated-uuid");
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { apiKey: result.apiKey },
+    });
   });
 
   it("存在しない id の場合は NotFoundError をスロー", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
-    await expect(generateApiKey("unknown")).rejects.toThrow(NotFoundError);
+    await expect(generateApiKey({ id: "unknown" })).rejects.toThrow(NotFoundError);
+    expect(prisma.user.update).not.toHaveBeenCalled();
   });
 });
 
 describe("revokeApiKey", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("API キーを null にして返す", async () => {
+  it("API キーを null に更新する", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never);
-    vi.mocked(prisma.user.update).mockResolvedValue({
-      id: "user-1",
-      name: "テストユーザー",
-      apiKey: null,
-    } as never);
+    vi.mocked(prisma.user.update).mockResolvedValue({ id: "user-1" } as never);
 
-    const result = await revokeApiKey("user-1");
-
-    expect(prisma.user.update).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "user-1" }, data: { apiKey: null } }),
-    );
-    expect(result.apiKey).toBeNull();
+    await expect(revokeApiKey({ id: "user-1" })).resolves.toBeUndefined();
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { apiKey: null },
+    });
   });
 
   it("存在しない id の場合は NotFoundError をスロー", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
-    await expect(revokeApiKey("unknown")).rejects.toThrow(NotFoundError);
+    await expect(revokeApiKey({ id: "unknown" })).rejects.toThrow(NotFoundError);
+    expect(prisma.user.update).not.toHaveBeenCalled();
   });
 });

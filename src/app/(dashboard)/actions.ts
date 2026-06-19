@@ -43,9 +43,9 @@ export async function generateMyApiKeyAction(): Promise<{ apiKey?: string; error
   if (!session) redirect("/login");
 
   try {
-    const result = await generateApiKey(session.user.id);
+    const result = await generateApiKey({ id: session.user.id });
     revalidatePath("/", "layout");
-    return { apiKey: result.apiKey ?? undefined };
+    return { apiKey: result.apiKey };
   } catch (e) {
     if (e instanceof NotFoundError) return { error: e.message };
     throw e;
@@ -57,7 +57,7 @@ export async function revokeMyApiKeyAction(): Promise<{ error?: string }> {
   if (!session) redirect("/login");
 
   try {
-    await revokeApiKey(session.user.id);
+    await revokeApiKey({ id: session.user.id });
     revalidatePath("/", "layout");
     return {};
   } catch (e) {

@@ -37,9 +37,9 @@ export async function generateApiKeyAction(id: string): Promise<{ apiKey?: strin
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
   try {
-    const result = await generateApiKey(id);
+    const result = await generateApiKey({ id });
     revalidatePath("/admin/users");
-    return { apiKey: result.apiKey ?? undefined };
+    return { apiKey: result.apiKey };
   } catch (e) {
     if (e instanceof NotFoundError) return { error: e.message };
     throw e;
@@ -52,7 +52,7 @@ export async function revokeApiKeyAction(id: string): Promise<{ error?: string }
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
   try {
-    await revokeApiKey(id);
+    await revokeApiKey({ id });
   } catch (e) {
     if (e instanceof NotFoundError) return { error: e.message };
     throw e;

@@ -58,27 +58,22 @@ export async function updateUserName(userId: string, name: string) {
   });
 }
 
-export async function generateApiKey(id: string) {
-  const target = await prisma.user.findUnique({ where: { id } });
-  if (!target) throw new NotFoundError("ユーザーが見つかりません");
+export async function generateApiKey(input: { id: string }): Promise<{ apiKey: string }> {
+  const { id } = input;
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) throw new NotFoundError("ユーザーが見つかりません");
 
   const apiKey = crypto.randomUUID();
-  return prisma.user.update({
-    where: { id },
-    data: { apiKey },
-    select: { id: true, name: true, apiKey: true },
-  });
+  await prisma.user.update({ where: { id }, data: { apiKey } });
+  return { apiKey };
 }
 
-export async function revokeApiKey(id: string) {
-  const target = await prisma.user.findUnique({ where: { id } });
-  if (!target) throw new NotFoundError("ユーザーが見つかりません");
+export async function revokeApiKey(input: { id: string }): Promise<void> {
+  const { id } = input;
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) throw new NotFoundError("ユーザーが見つかりません");
 
-  return prisma.user.update({
-    where: { id },
-    data: { apiKey: null },
-    select: { id: true, name: true, apiKey: true },
-  });
+  await prisma.user.update({ where: { id }, data: { apiKey: null } });
 }
 
 export async function deleteUser(id: string, currentUserId: string) {
