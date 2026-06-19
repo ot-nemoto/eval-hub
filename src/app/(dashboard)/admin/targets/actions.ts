@@ -205,7 +205,7 @@ export async function reorderEvaluationItemsAction(
   try {
     await reorderEvaluationItems(orders);
   } catch (e) {
-    if (e instanceof NotFoundError) return { error: e.message };
+    if (e instanceof NotFoundError || e instanceof ConflictError) return { error: e.message };
     throw e;
   }
 
