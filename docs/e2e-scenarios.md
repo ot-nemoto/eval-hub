@@ -179,7 +179,9 @@ PlaywrightMCP が E2E テストを実施するためのシナリオ集。
 
 | # | ユーザー | 手順 | 確認観点 | 期待値 |
 |---|---------|------|---------|-------|
-| 1 | `bonjiri@example.com` | `/admin/evaluation-items` にアクセスする | 旧 URL リダイレクト | `/admin/targets` にリダイレクトされる |
+| 1 | 未ログイン | `/admin/evaluation-items` にアクセスする | 旧 URL の未認証アクセス制御 | `/login` にリダイレクトされる |
+| 2 | `tebasaki@example.com` | `/admin/evaluation-items` にアクセスする | 旧 URL の MEMBER アクセス制限 | `/evaluations` にリダイレクトされる |
+| 3 | `bonjiri@example.com` | `/admin/evaluation-items` にアクセスする | 旧 URL リダイレクト | `/admin/targets` にリダイレクトされる |
 
 ---
 
