@@ -142,7 +142,7 @@ function SortableCategory({ category, targetId }: { category: Category; targetId
   return (
     <div ref={setNodeRef} style={style} className="border-b last:border-b-0">
       <div className="flex items-center gap-2 px-2 py-2 bg-gray-50/50">
-        <button type="button" {...attributes} {...listeners} className="cursor-grab touch-none shrink-0">
+        <button type="button" aria-label="並び替え" {...attributes} {...listeners} className="cursor-grab touch-none shrink-0">
           <DragHandle />
         </button>
         <button
