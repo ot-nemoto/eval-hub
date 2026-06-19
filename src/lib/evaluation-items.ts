@@ -98,14 +98,22 @@ export async function updateEvaluationItem(
 
 export async function reorderEvaluationItems(orders: { id: number; no: number }[]) {
   const OFFSET = 100000;
-  await prisma.$transaction(async (tx) => {
-    for (const { id, no } of orders) {
-      await tx.evaluationItem.update({ where: { id }, data: { no: no + OFFSET } });
+  try {
+    await prisma.$transaction(async (tx) => {
+      for (const { id, no } of orders) {
+        await tx.evaluationItem.update({ where: { id }, data: { no: no + OFFSET } });
+      }
+      for (const { id, no } of orders) {
+        await tx.evaluationItem.update({ where: { id }, data: { no } });
+      }
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2025") throw new NotFoundError("並び替え対象の評価項目が見つかりません");
+      if (e.code === "P2002") throw new ConflictError("並び替え中に一意制約違反が発生しました");
     }
-    for (const { id, no } of orders) {
-      await tx.evaluationItem.update({ where: { id }, data: { no } });
-    }
-  });
+    throw e;
+  }
 }
 
 export async function deleteEvaluationItem(id: number) {
