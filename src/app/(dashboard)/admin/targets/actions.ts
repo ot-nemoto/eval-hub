@@ -187,7 +187,7 @@ export async function reorderCategoriesAction(
   try {
     await reorderCategories(orders);
   } catch (e) {
-    if (e instanceof NotFoundError) return { error: e.message };
+    if (e instanceof NotFoundError || e instanceof ConflictError) return { error: e.message };
     throw e;
   }
 
