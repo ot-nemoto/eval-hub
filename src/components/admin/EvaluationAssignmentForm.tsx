@@ -48,7 +48,7 @@ export function EvaluationAssignmentForm({ fiscalYear, users }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded border border-blue-400 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50"
+        className="rounded border border-zinc-400 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50"
       >
         ＋ アサインを追加
       </button>
@@ -70,7 +70,7 @@ export function EvaluationAssignmentForm({ fiscalYear, users }: Props) {
             required
             value={evaluateeId}
             onChange={(e) => setEvaluateeId(e.target.value)}
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
+            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-zinc-400 focus:outline-none"
           >
             <option value="">選択してください</option>
             {users.map((u) => (
@@ -89,7 +89,7 @@ export function EvaluationAssignmentForm({ fiscalYear, users }: Props) {
             required
             value={evaluatorId}
             onChange={(e) => setEvaluatorId(e.target.value)}
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
+            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-zinc-400 focus:outline-none"
           >
             <option value="">選択してください</option>
             {users.map((u) => (
@@ -104,7 +104,7 @@ export function EvaluationAssignmentForm({ fiscalYear, users }: Props) {
         <button
           type="submit"
           disabled={loading}
-          className="rounded bg-blue-600 px-4 py-1.5 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded bg-zinc-700 px-4 py-1.5 text-sm text-white hover:bg-zinc-800 disabled:opacity-50"
         >
           追加
         </button>

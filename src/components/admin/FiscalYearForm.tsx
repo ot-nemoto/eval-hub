@@ -52,7 +52,7 @@ export function FiscalYearForm() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded border border-blue-400 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50"
+        className="rounded border border-zinc-400 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50"
       >
         ＋ 年度を追加
       </button>
@@ -74,7 +74,7 @@ export function FiscalYearForm() {
             required
             value={form.year}
             onChange={handleChange}
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
+            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-zinc-400 focus:outline-none"
             placeholder="2028"
           />
         </div>
@@ -89,7 +89,7 @@ export function FiscalYearForm() {
             required
             value={form.name}
             onChange={handleChange}
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
+            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-zinc-400 focus:outline-none"
             placeholder="2028年度"
           />
         </div>
@@ -104,7 +104,7 @@ export function FiscalYearForm() {
             required
             value={form.startDate}
             onChange={handleChange}
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
+            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-zinc-400 focus:outline-none"
           />
         </div>
         <div>
@@ -118,7 +118,7 @@ export function FiscalYearForm() {
             required
             value={form.endDate}
             onChange={handleChange}
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
+            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-zinc-400 focus:outline-none"
           />
         </div>
       </div>
@@ -126,7 +126,7 @@ export function FiscalYearForm() {
         <button
           type="submit"
           disabled={loading}
-          className="rounded bg-blue-600 px-4 py-1.5 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded bg-zinc-700 px-4 py-1.5 text-sm text-white hover:bg-zinc-800 disabled:opacity-50"
         >
           追加
         </button>

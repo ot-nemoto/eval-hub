@@ -32,7 +32,7 @@ export default async function UserEvaluationSettingsPage({
   return (
     <div>
       <div className="mb-6">
-        <Link href="/admin/users" className="text-sm text-blue-600 hover:underline">
+        <Link href="/admin/users" className="text-sm text-zinc-700 hover:underline">
           ← ユーザー管理に戻る
         </Link>
         <h2 className="mt-2 text-xl font-bold text-gray-900">自己評価要否設定</h2>

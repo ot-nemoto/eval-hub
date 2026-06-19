@@ -33,7 +33,7 @@ export function EvaluationSettingToggle({ userId, fiscalYear, enabled }: Props) 
       onClick={handleToggle}
       disabled={loading}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${
-        enabled ? "bg-blue-600" : "bg-gray-300"
+        enabled ? "bg-zinc-700" : "bg-gray-300"
       }`}
     >
       <span

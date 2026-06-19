@@ -37,7 +37,7 @@ export function CategoryForm({ targetId }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded border border-blue-300 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50"
+        className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50"
       >
         ＋ 中分類を追加
       </button>
@@ -60,7 +60,7 @@ export function CategoryForm({ targetId }: Props) {
           required
           value={form.no}
           onChange={(e) => setForm((p) => ({ ...p, no: e.target.value }))}
-          className="w-16 rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:outline-none"
+          className="w-16 rounded border border-gray-300 px-2 py-1 text-xs focus:border-zinc-400 focus:outline-none"
           placeholder="1"
         />
       </div>
@@ -77,14 +77,14 @@ export function CategoryForm({ targetId }: Props) {
           required
           value={form.name}
           onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-          className="rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:outline-none"
+          className="rounded border border-gray-300 px-2 py-1 text-xs focus:border-zinc-400 focus:outline-none"
           placeholder="engagement"
         />
       </div>
       <button
         type="submit"
         disabled={loading}
-        className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700 disabled:opacity-50"
+        className="rounded bg-zinc-700 px-3 py-1 text-xs text-white hover:bg-zinc-800 disabled:opacity-50"
       >
         追加
       </button>
