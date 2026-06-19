@@ -132,7 +132,11 @@ function SortableCategory({ category, targetId }: { category: Category; targetId
       no: idx + 1,
     }));
     setItems(reordered);
-    await reorderEvaluationItemsAction(reordered.map(({ id, no }) => ({ id, no })));
+    const result = await reorderEvaluationItemsAction(reordered.map(({ id, no }) => ({ id, no })));
+    if (result.error) {
+      setItems(category.items);
+      alert(result.error);
+    }
   }
 
   return (
