@@ -12,9 +12,12 @@
 | `createCategoryAction` | 中分類作成 | `src/app/(dashboard)/admin/targets/actions.ts` |
 | `updateCategoryAction` | 中分類更新 | `src/app/(dashboard)/admin/targets/actions.ts` |
 | `deleteCategoryAction` | 中分類削除 | `src/app/(dashboard)/admin/targets/actions.ts` |
-| `createEvaluationItemAction` | 評価項目作成 | `src/app/(dashboard)/admin/evaluation-items/actions.ts` |
-| `updateEvaluationItemAction` | 評価項目更新 | `src/app/(dashboard)/admin/evaluation-items/actions.ts` |
-| `deleteEvaluationItemAction` | 評価項目削除 | `src/app/(dashboard)/admin/evaluation-items/actions.ts` |
+| `reorderTargetsAction` | 大分類並び替え | `src/app/(dashboard)/admin/targets/actions.ts` |
+| `reorderCategoriesAction` | 中分類並び替え | `src/app/(dashboard)/admin/targets/actions.ts` |
+| `createEvaluationItemAction` | 評価項目作成 | `src/app/(dashboard)/admin/targets/actions.ts` |
+| `updateEvaluationItemAction` | 評価項目更新 | `src/app/(dashboard)/admin/targets/actions.ts` |
+| `deleteEvaluationItemAction` | 評価項目削除 | `src/app/(dashboard)/admin/targets/actions.ts` |
+| `reorderEvaluationItemsAction` | 評価項目並び替え | `src/app/(dashboard)/admin/targets/actions.ts` |
 | `createFiscalYearAction` | 年度作成 | `src/app/(dashboard)/admin/fiscal-years/actions.ts` |
 | `updateFiscalYearAction` | 年度更新 | `src/app/(dashboard)/admin/fiscal-years/actions.ts` |
 | `toggleFiscalYearLockAction` | 年度のロック状態を切り替え | `src/app/(dashboard)/admin/fiscal-years/actions.ts` |
@@ -94,21 +97,20 @@
 
 ---
 
-## 大分類・中分類（`src/app/(dashboard)/admin/targets/actions.ts`）
+## 大分類・中分類・評価項目（`src/app/(dashboard)/admin/targets/actions.ts`）
 
 ### `createTargetAction(data)`
 
-大分類を作成する。
+大分類を作成する。No は自動採番（既存最大値 + 1）。
 
-**引数:** `{ name: string; no: number }`
+**引数:** `{ name: string }`
 
 **戻り値:** `{}` | `{ error: string }`
 
 | エラー | 条件 |
 |--------|------|
 | `"name は必須です"` | name が空文字 |
-| `"no は 1 以上の整数で指定してください"` | no が不正値 |
-| `"同一の no が既に存在します"` | no 重複（ConflictError） |
+| `"同じ no の大分類がすでに存在します"` | no 重複（ConflictError） |
 
 ---
 
@@ -149,9 +151,9 @@
 
 ### `createCategoryAction(data)`
 
-中分類を作成する。
+中分類を作成する。No は自動採番（同一大分類内の最大値 + 1）。
 
-**引数:** `{ targetId: number; name: string; no: number }`
+**引数:** `{ targetId: number; name: string }`
 
 **戻り値:** `{}` | `{ error: string }`
 
@@ -159,9 +161,8 @@
 |--------|------|
 | `"targetId は 1 以上の整数で指定してください"` | targetId が不正値 |
 | `"name は必須です"` | name が空文字 |
-| `"no は 1 以上の整数で指定してください"` | no が不正値 |
 | `"大分類が見つかりません"` | 指定 targetId が存在しない（NotFoundError） |
-| 重複エラーメッセージ | 同一大分類内で no が重複（ConflictError） |
+| `"同じ targetId と no の中分類がすでに存在します"` | no 重複（ConflictError） |
 
 ---
 
@@ -200,11 +201,39 @@
 
 ---
 
-## 評価項目（`src/app/(dashboard)/admin/evaluation-items/actions.ts`）
+### `reorderTargetsAction(orders)`
+
+大分類の並び順を変更する。
+
+**引数:** `orders: { id: number; no: number }[]`
+
+**戻り値:** `{}` | `{ error: string }`
+
+| エラー | 条件 |
+|--------|------|
+| `"並び替え対象の大分類が見つかりません"` | 指定 id が存在しない（NotFoundError） |
+| `"並び替え中に一意制約違反が発生しました"` | 一意制約違反（ConflictError） |
+
+---
+
+### `reorderCategoriesAction(orders)`
+
+中分類の並び順を変更する。
+
+**引数:** `orders: { id: number; no: number }[]`
+
+**戻り値:** `{}` | `{ error: string }`
+
+| エラー | 条件 |
+|--------|------|
+| `"並び替え対象の中分類が見つかりません"` | 指定 id が存在しない（NotFoundError） |
+| `"並び替え中に一意制約違反が発生しました"` | 一意制約違反（ConflictError） |
+
+---
 
 ### `createEvaluationItemAction(data)`
 
-評価項目を作成する。
+評価項目を作成する。No は自動採番（同一中分類内の最大値 + 1）。
 
 **引数:** `{ targetId: number; categoryId: number; name: string; description?: string | null; evalCriteria?: string | null }`
 
@@ -217,6 +246,7 @@
 | `"name は必須です"` | name が空文字 |
 | `"大分類が見つかりません"` / `"中分類が見つかりません"` | 指定 ID が存在しない（NotFoundError） |
 | バリデーションエラーメッセージ | その他不正入力（BadRequestError） |
+| 重複エラーメッセージ | no 重複（ConflictError） |
 
 ---
 
@@ -250,6 +280,21 @@
 | `"id は 1 以上の整数で指定してください"` | id が不正値 |
 | `"評価項目が見つかりません"` | 指定 id が存在しない（NotFoundError） |
 | 紐づきデータに関するエラーメッセージ | 評価レコードが存在する（ConflictError） |
+
+---
+
+### `reorderEvaluationItemsAction(orders)`
+
+評価項目の並び順を変更する。
+
+**引数:** `orders: { id: number; no: number }[]`
+
+**戻り値:** `{}` | `{ error: string }`
+
+| エラー | 条件 |
+|--------|------|
+| `"並び替え対象の評価項目が見つかりません"` | 指定 id が存在しない（NotFoundError） |
+| `"並び替え中に一意制約違反が発生しました"` | 一意制約違反（ConflictError） |
 
 ---
 

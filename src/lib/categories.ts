@@ -11,18 +11,20 @@ export async function getCategories(targetId?: number) {
   });
 }
 
-export async function createCategory(data: { targetId: number; name: string; no: number }) {
+export async function createCategory(data: { targetId: number; name: string }) {
   const target = await prisma.target.findUnique({ where: { id: data.targetId } });
   if (!target) throw new NotFoundError("大分類が見つかりません");
 
-  const existing = await prisma.category.findUnique({
-    where: { targetId_no: { targetId: data.targetId, no: data.no } },
+  const max = await prisma.category.findFirst({
+    where: { targetId: data.targetId },
+    orderBy: { no: "desc" },
+    select: { no: true },
   });
-  if (existing) throw new ConflictError("同じ targetId と no の中分類がすでに存在します");
+  const no = (max?.no ?? 0) + 1;
 
   try {
     return await prisma.category.create({
-      data: { targetId: data.targetId, name: data.name, no: data.no },
+      data: { targetId: data.targetId, name: data.name, no },
       select: { id: true, targetId: true, name: true, no: true },
     });
   } catch (e) {
@@ -53,6 +55,26 @@ export async function updateCategory(id: number, data: { name?: string; no?: num
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       throw new ConflictError("同じ targetId と no の中分類がすでに存在します");
+    }
+    throw e;
+  }
+}
+
+export async function reorderCategories(orders: { id: number; no: number }[]) {
+  const OFFSET = 100000;
+  try {
+    await prisma.$transaction(async (tx) => {
+      for (const { id, no } of orders) {
+        await tx.category.update({ where: { id }, data: { no: no + OFFSET } });
+      }
+      for (const { id, no } of orders) {
+        await tx.category.update({ where: { id }, data: { no } });
+      }
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2025") throw new NotFoundError("並び替え対象の中分類が見つかりません");
+      if (e.code === "P2002") throw new ConflictError("並び替え中に一意制約違反が発生しました");
     }
     throw e;
   }
