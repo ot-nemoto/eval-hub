@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { FiscalYearSelector } from "@/components/FiscalYearSelector";
 import { LogoutButton } from "@/components/LogoutButton";
 import { NavLinks } from "@/components/NavLinks";
-import { ProfileNameEditor } from "@/components/ProfileNameEditor";
+import { SettingsModalTrigger } from "@/components/SettingsModalTrigger";
 import { getSession } from "@/lib/auth";
 import { APP_NAME } from "@/lib/constants";
 import { getCurrentFiscalYear } from "@/lib/fiscal-year";
@@ -27,7 +27,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/login");
   }
 
-  const [years, currentYear] = await Promise.all([getFiscalYears(), getCurrentFiscalYear()]);
+  const [years, currentYear, dbUser] = await Promise.all([
+    getFiscalYears(),
+    getCurrentFiscalYear(),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true, apiKey: true },
+    }),
+  ]);
 
   return (
     <div className="min-h-screen bg-zinc-50">
@@ -49,7 +56,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
           <div className="flex items-center gap-4">
             <FiscalYearSelector years={years} currentYear={currentYear} />
-            <ProfileNameEditor name={session.user.name} />
+            <SettingsModalTrigger
+              name={session.user.name}
+              email={dbUser?.email ?? ""}
+              hasInitialApiKey={dbUser?.apiKey != null}
+            />
             <LogoutButton />
           </div>
         </div>

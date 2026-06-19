@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "./errors";
-import { deleteUser, getUsers, updateUserName, updateUser } from "./users";
+import { deleteUser, generateApiKey, getUsers, revokeApiKey, updateUser, updateUserName } from "./users";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -181,5 +181,53 @@ describe("deleteUser", () => {
     vi.mocked(prisma.evaluationSetting.count).mockResolvedValue(1);
 
     await expect(deleteUser("user-1", "current-user")).rejects.toThrow(ConflictError);
+  });
+});
+
+describe("generateApiKey", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("API キーを生成して返す", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never);
+    vi.mocked(prisma.user.update).mockResolvedValue({ id: "user-1" } as never);
+
+    const result = await generateApiKey({ id: "user-1" });
+
+    expect(result.apiKey).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { apiKey: result.apiKey },
+    });
+  });
+
+  it("存在しない id の場合は NotFoundError をスロー", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+    await expect(generateApiKey({ id: "unknown" })).rejects.toThrow(NotFoundError);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("revokeApiKey", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("API キーを null に更新する", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never);
+    vi.mocked(prisma.user.update).mockResolvedValue({ id: "user-1" } as never);
+
+    await expect(revokeApiKey({ id: "user-1" })).resolves.toBeUndefined();
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { apiKey: null },
+    });
+  });
+
+  it("存在しない id の場合は NotFoundError をスロー", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+    await expect(revokeApiKey({ id: "unknown" })).rejects.toThrow(NotFoundError);
+    expect(prisma.user.update).not.toHaveBeenCalled();
   });
 });

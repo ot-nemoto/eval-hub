@@ -125,6 +125,7 @@ erDiagram
 | role | ENUM | NOT NULL | `ADMIN` / `MEMBER` |
 | wants_president_meeting | BOOLEAN | DEFAULT false | 社長面談希望 |
 | is_active | BOOLEAN | DEFAULT true | 有効フラグ（false: ログイン不可） |
+| api_key | VARCHAR(255) | UNIQUE, NULLABLE | 外部 API 認証用キー（UUID v4）。ユーザー自身が個人設定モーダルから発行・失効する |
 | created_at | TIMESTAMP | DEFAULT now() | |
 | updated_at | TIMESTAMP | | |
 
