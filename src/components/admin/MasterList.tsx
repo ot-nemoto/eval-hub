@@ -225,7 +225,11 @@ function SortableTarget({ target }: { target: Target }) {
       no: idx + 1,
     }));
     setCategories(reordered);
-    await reorderCategoriesAction(reordered.map(({ id, no }) => ({ id, no })));
+    const result = await reorderCategoriesAction(reordered.map(({ id, no }) => ({ id, no })));
+    if (result.error) {
+      setCategories(target.categories);
+      alert(result.error);
+    }
   }
 
   return (
