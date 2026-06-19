@@ -235,7 +235,7 @@ function SortableTarget({ target }: { target: Target }) {
   return (
     <div ref={setNodeRef} style={style} className="overflow-hidden rounded-lg border bg-white">
       <div className="flex items-center gap-2 border-b bg-gray-50 px-2 py-3">
-        <button type="button" {...attributes} {...listeners} className="cursor-grab touch-none shrink-0">
+        <button type="button" aria-label="並び替え" {...attributes} {...listeners} className="cursor-grab touch-none shrink-0">
           <DragHandle />
         </button>
         <span className="text-xs font-medium text-gray-400 w-6 shrink-0">No.{target.no}</span>
