@@ -236,7 +236,7 @@ export async function createEvaluationItemAction(data: {
   try {
     await createEvaluationItem(data);
   } catch (e) {
-    if (e instanceof NotFoundError || e instanceof BadRequestError) return { error: e.message };
+    if (e instanceof NotFoundError || e instanceof BadRequestError || e instanceof ConflictError) return { error: e.message };
     throw e;
   }
 
