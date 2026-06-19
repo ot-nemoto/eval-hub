@@ -92,45 +92,49 @@ export async function POST(req: NextRequest) {
 
   const created: { targetNo: number; categoryNo: number; itemNo: number; name: string }[] = [];
 
-  for (const targetInput of body as TargetInput[]) {
-    const target = await prisma.target.upsert({
-      where: { no: targetInput.no },
-      update: { name: targetInput.name },
-      create: { no: targetInput.no, name: targetInput.name },
-    });
-
-    for (const categoryInput of targetInput.categories) {
-      const category = await prisma.category.upsert({
-        where: { targetId_no: { targetId: target.id, no: categoryInput.no } },
-        update: { name: categoryInput.name },
-        create: { targetId: target.id, no: categoryInput.no, name: categoryInput.name },
+  try {
+    for (const targetInput of body as TargetInput[]) {
+      const target = await prisma.target.upsert({
+        where: { no: targetInput.no },
+        update: { name: targetInput.name },
+        create: { no: targetInput.no, name: targetInput.name },
       });
 
-      for (const itemInput of categoryInput.items) {
-        await prisma.evaluationItem.upsert({
-          where: { categoryId_no: { categoryId: category.id, no: itemInput.no } },
-          update: {
-            name: itemInput.name,
-            description: itemInput.description ?? null,
-            evalCriteria: itemInput.evalCriteria ?? null,
-          },
-          create: {
-            targetId: target.id,
-            categoryId: category.id,
-            no: itemInput.no,
-            name: itemInput.name,
-            description: itemInput.description ?? null,
-            evalCriteria: itemInput.evalCriteria ?? null,
-          },
+      for (const categoryInput of targetInput.categories) {
+        const category = await prisma.category.upsert({
+          where: { targetId_no: { targetId: target.id, no: categoryInput.no } },
+          update: { name: categoryInput.name },
+          create: { targetId: target.id, no: categoryInput.no, name: categoryInput.name },
         });
-        created.push({
-          targetNo: target.no,
-          categoryNo: category.no,
-          itemNo: itemInput.no,
-          name: itemInput.name,
-        });
+
+        for (const itemInput of categoryInput.items) {
+          await prisma.evaluationItem.upsert({
+            where: { categoryId_no: { categoryId: category.id, no: itemInput.no } },
+            update: {
+              name: itemInput.name,
+              description: itemInput.description ?? null,
+              evalCriteria: itemInput.evalCriteria ?? null,
+            },
+            create: {
+              targetId: target.id,
+              categoryId: category.id,
+              no: itemInput.no,
+              name: itemInput.name,
+              description: itemInput.description ?? null,
+              evalCriteria: itemInput.evalCriteria ?? null,
+            },
+          });
+          created.push({
+            targetNo: target.no,
+            categoryNo: category.no,
+            itemNo: itemInput.no,
+            name: itemInput.name,
+          });
+        }
       }
     }
+  } catch {
+    return errorResponse("INTERNAL_SERVER_ERROR", "サーバーエラーが発生しました", 500);
   }
 
   return successResponse({ upserted: created.length }, { items: created }, 200);
