@@ -16,10 +16,17 @@ export async function createTarget(data: { name: string }) {
   });
   const no = (max?.no ?? 0) + 1;
 
-  return prisma.target.create({
-    data: { name: data.name, no },
-    select: { id: true, name: true, no: true },
-  });
+  try {
+    return await prisma.target.create({
+      data: { name: data.name, no },
+      select: { id: true, name: true, no: true },
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new ConflictError("同じ no の大分類がすでに存在します");
+    }
+    throw e;
+  }
 }
 
 export async function updateTarget(id: number, data: { name?: string; no?: number }) {
