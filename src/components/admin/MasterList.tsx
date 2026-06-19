@@ -299,7 +299,11 @@ export function MasterList({ targets: initialTargets }: Props) {
       no: idx + 1,
     }));
     setTargets(reordered);
-    await reorderTargetsAction(reordered.map(({ id, no }) => ({ id, no })));
+    const result = await reorderTargetsAction(reordered.map(({ id, no }) => ({ id, no })));
+    if (result.error) {
+      setTargets(initialTargets);
+      alert(result.error);
+    }
   }
 
   return (
