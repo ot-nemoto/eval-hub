@@ -54,14 +54,22 @@ export async function updateTarget(id: number, data: { name?: string; no?: numbe
 
 export async function reorderTargets(orders: { id: number; no: number }[]) {
   const OFFSET = 100000;
-  await prisma.$transaction(async (tx) => {
-    for (const { id, no } of orders) {
-      await tx.target.update({ where: { id }, data: { no: no + OFFSET } });
+  try {
+    await prisma.$transaction(async (tx) => {
+      for (const { id, no } of orders) {
+        await tx.target.update({ where: { id }, data: { no: no + OFFSET } });
+      }
+      for (const { id, no } of orders) {
+        await tx.target.update({ where: { id }, data: { no } });
+      }
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2025") throw new NotFoundError("並び替え対象の大分類が見つかりません");
+      if (e.code === "P2002") throw new ConflictError("並び替え中に一意制約違反が発生しました");
     }
-    for (const { id, no } of orders) {
-      await tx.target.update({ where: { id }, data: { no } });
-    }
-  });
+    throw e;
+  }
 }
 
 export async function deleteTarget(id: number) {
