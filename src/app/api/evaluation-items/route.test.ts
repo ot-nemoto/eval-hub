@@ -10,6 +10,13 @@ vi.mock("@/lib/prisma", () => ({
     evaluationItem: { findMany: vi.fn(), upsert: vi.fn() },
     target: { upsert: vi.fn() },
     category: { upsert: vi.fn() },
+    $transaction: vi.fn((cb: (tx: unknown) => Promise<unknown>) =>
+      cb({
+        target: { upsert: vi.mocked(prisma.target.upsert) },
+        category: { upsert: vi.mocked(prisma.category.upsert) },
+        evaluationItem: { upsert: vi.mocked(prisma.evaluationItem.upsert) },
+      }),
+    ),
   },
 }));
 
