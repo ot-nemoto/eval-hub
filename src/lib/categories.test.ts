@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ConflictError, NotFoundError } from "./errors";
-import { createCategory, deleteCategory, getCategories, updateCategory } from "./categories";
+import { createCategory, deleteCategory, getCategories, reorderCategories, updateCategory } from "./categories";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -15,6 +15,11 @@ vi.mock("@/lib/prisma", () => ({
       delete: vi.fn(),
     },
     evaluationItem: { count: vi.fn() },
+    $transaction: vi.fn((cb: (tx: unknown) => Promise<unknown>) =>
+      cb({
+        category: { update: vi.mocked(prisma.category.update) },
+      }),
+    ),
   },
 }));
 
@@ -142,6 +147,26 @@ describe("updateCategory", () => {
 
     await expect(updateCategory(1, { name: "renamed" })).resolves.not.toThrow();
     expect(prisma.category.findUnique).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("reorderCategories", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("2ステップで no を更新する", async () => {
+    vi.mocked(prisma.category.update).mockResolvedValue({} as never);
+
+    await reorderCategories([
+      { id: 1, no: 2 },
+      { id: 2, no: 1 },
+    ]);
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(prisma.category.update).toHaveBeenCalledTimes(4);
+    expect(prisma.category.update).toHaveBeenNthCalledWith(1, { where: { id: 1 }, data: { no: 100002 } });
+    expect(prisma.category.update).toHaveBeenNthCalledWith(2, { where: { id: 2 }, data: { no: 100001 } });
+    expect(prisma.category.update).toHaveBeenNthCalledWith(3, { where: { id: 1 }, data: { no: 2 } });
+    expect(prisma.category.update).toHaveBeenNthCalledWith(4, { where: { id: 2 }, data: { no: 1 } });
   });
 });
 
