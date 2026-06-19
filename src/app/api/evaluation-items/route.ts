@@ -18,12 +18,15 @@ export async function GET(req: NextRequest) {
   if (!user) return errorResponse("UNAUTHORIZED", "API キーが無効です", 401);
   if (user.role !== "ADMIN") return errorResponse("FORBIDDEN", "権限がありません", 403);
 
-  const items = await prisma.evaluationItem.findMany({
-    orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
-    select: itemSelect,
-  });
-
-  return successResponse(items, { total: items.length });
+  try {
+    const items = await prisma.evaluationItem.findMany({
+      orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
+      select: itemSelect,
+    });
+    return successResponse(items, { total: items.length });
+  } catch {
+    return errorResponse("INTERNAL_SERVER_ERROR", "サーバーエラーが発生しました", 500);
+  }
 }
 
 type ItemInput = {
