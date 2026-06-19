@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { FISCAL_YEAR_COOKIE } from "@/lib/fiscal-year";
-import { BadRequestError } from "@/lib/errors";
-import { updateUserName } from "@/lib/users";
+import { BadRequestError, NotFoundError } from "@/lib/errors";
+import { generateApiKey, revokeApiKey, updateUserName } from "@/lib/users";
 
 export async function setFiscalYearAction(
   year: number,
@@ -36,4 +36,32 @@ export async function updateNameAction(name: string): Promise<{ error?: string }
 
   revalidatePath("/", "layout");
   return {};
+}
+
+export async function generateMyApiKeyAction(): Promise<{ apiKey?: string; error?: string }> {
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  try {
+    const result = await generateApiKey(session.user.id);
+    revalidatePath("/", "layout");
+    return { apiKey: result.apiKey ?? undefined };
+  } catch (e) {
+    if (e instanceof NotFoundError) return { error: e.message };
+    throw e;
+  }
+}
+
+export async function revokeMyApiKeyAction(): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  try {
+    await revokeApiKey(session.user.id);
+    revalidatePath("/", "layout");
+    return {};
+  } catch (e) {
+    if (e instanceof NotFoundError) return { error: e.message };
+    throw e;
+  }
 }

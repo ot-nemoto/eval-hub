@@ -58,6 +58,29 @@ export async function updateUserName(userId: string, name: string) {
   });
 }
 
+export async function generateApiKey(id: string) {
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (!target) throw new NotFoundError("ユーザーが見つかりません");
+
+  const apiKey = crypto.randomUUID();
+  return prisma.user.update({
+    where: { id },
+    data: { apiKey },
+    select: { id: true, name: true, apiKey: true },
+  });
+}
+
+export async function revokeApiKey(id: string) {
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (!target) throw new NotFoundError("ユーザーが見つかりません");
+
+  return prisma.user.update({
+    where: { id },
+    data: { apiKey: null },
+    select: { id: true, name: true, apiKey: true },
+  });
+}
+
 export async function deleteUser(id: string, currentUserId: string) {
   if (id === currentUserId) throw new ForbiddenError("自分自身は削除できません");
 
