@@ -84,7 +84,7 @@ function SortableEvaluationItem({ item }: { item: EvaluationItem }) {
   return (
     <tr ref={setNodeRef} style={style} className="hover:bg-gray-50">
       <td className="py-2 pl-2 pr-1 w-6">
-        <button type="button" {...attributes} {...listeners} className="cursor-grab touch-none">
+        <button type="button" aria-label="並び替え" {...attributes} {...listeners} className="cursor-grab touch-none">
           <DragHandle />
         </button>
       </td>
