@@ -62,7 +62,7 @@ export default async function FiscalYearsPage() {
               </tr>
             ) : (
               fiscalYears.map((fy) => (
-                <tr key={fy.year} className={fy.isCurrent ? "bg-blue-50" : "hover:bg-gray-50"}>
+                <tr key={fy.year} className={fy.isCurrent ? "bg-zinc-50" : "hover:bg-gray-50"}>
                   <td className="px-4 py-3 font-medium text-gray-900">{fy.year}</td>
                   <td className="px-4 py-3 text-gray-700">{fy.name}</td>
                   <td className="px-4 py-3 text-gray-500">
@@ -73,7 +73,7 @@ export default async function FiscalYearsPage() {
                   </td>
                   <td className="px-4 py-3">
                     {fy.isCurrent ? (
-                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700">
                         現在
                       </span>
                     ) : (

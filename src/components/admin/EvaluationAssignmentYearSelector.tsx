@@ -25,7 +25,7 @@ export function EvaluationAssignmentYearSelector({ fiscalYears, selectedYear }: 
         id="year-selector"
         value={selectedYear ?? ""}
         onChange={handleChange}
-        className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
+        className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-zinc-400 focus:outline-none"
       >
         {fiscalYears.length === 0 && <option value="">年度が登録されていません</option>}
         {fiscalYears.map((fy) => (

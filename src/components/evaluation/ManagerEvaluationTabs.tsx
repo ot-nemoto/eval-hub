@@ -207,7 +207,7 @@ export default function ManagerEvaluationTabs({
             onClick={() => setActiveCategory(cat)}
             className={`whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors ${
               activeCategory === cat
-                ? "border-b-2 border-blue-600 text-blue-600"
+                ? "border-b-2 border-zinc-700 text-zinc-700"
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
@@ -266,7 +266,7 @@ export default function ManagerEvaluationTabs({
                           onClick={() => setFinalScores((s) => ({ ...s, [item.uid]: score }))}
                           className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                             finalScores[item.uid] === score
-                              ? "bg-blue-600 text-white"
+                              ? "bg-zinc-700 text-white"
                               : "border border-gray-300 text-gray-700 hover:bg-gray-50"
                           }`}
                         >
@@ -351,7 +351,7 @@ export default function ManagerEvaluationTabs({
                       {isEditing ? (
                         <div className="mt-2 space-y-2">
                           <textarea
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
                             rows={3}
                             value={editReason[cm.id] ?? ""}
                             onChange={(e) =>
@@ -390,10 +390,10 @@ export default function ManagerEvaluationTabs({
 
               {/* コメント追加フォーム（readOnly / isLocked 時は非表示） */}
               {!effectiveReadOnly && adding[item.uid] ? (
-                <div className="space-y-2 rounded-md border border-blue-200 bg-blue-50 p-3">
+                <div className="space-y-2 rounded-md border border-zinc-200 bg-zinc-50 p-3">
                   <p className="text-sm font-medium text-gray-700">コメントを追加</p>
                   <textarea
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
                     rows={3}
                     placeholder="コメント・採点理由（任意）"
                     value={newReason[item.uid] ?? ""}

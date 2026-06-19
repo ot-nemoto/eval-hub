@@ -100,7 +100,7 @@ export default function EvaluationTabs({ items, fiscalYear, isLocked = false }: 
             onClick={() => setActiveCategory(cat)}
             className={`whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors ${
               activeCategory === cat
-                ? "border-b-2 border-blue-600 text-blue-600"
+                ? "border-b-2 border-zinc-700 text-zinc-700"
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
@@ -139,7 +139,7 @@ export default function EvaluationTabs({ items, fiscalYear, isLocked = false }: 
                         onClick={() => setScores((s) => ({ ...s, [item.uid]: score }))}
                         className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                           scores[item.uid] === score
-                            ? "bg-blue-600 text-white"
+                            ? "bg-zinc-700 text-white"
                             : "border border-gray-300 text-gray-700 hover:bg-gray-50"
                         }`}
                       >
@@ -167,7 +167,7 @@ export default function EvaluationTabs({ items, fiscalYear, isLocked = false }: 
                     </label>
                     <textarea
                       id={`reason-${item.uid}`}
-                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
                       rows={3}
                       value={reasons[item.uid] ?? ""}
                       onChange={(e) => setReasons((r) => ({ ...r, [item.uid]: e.target.value }))}

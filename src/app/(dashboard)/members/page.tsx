@@ -86,7 +86,7 @@ export default async function MembersPage() {
                   <td className="px-4 py-3 font-medium text-gray-900">{member.name}</td>
                   <td className="px-4 py-3 text-gray-500">{member.division ?? "—"}</td>
                   <td className="px-4 py-3 text-right">
-                    <Link href={getLinkHref(member.id)} className="text-blue-600 hover:underline">
+                    <Link href={getLinkHref(member.id)} className="text-zinc-700 hover:underline">
                       {getLinkLabel(member.id)}
                     </Link>
                   </td>

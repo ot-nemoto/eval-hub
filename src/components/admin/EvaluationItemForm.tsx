@@ -66,7 +66,7 @@ export function EvaluationItemForm({ targets, categories }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded border border-blue-400 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50"
+        className="rounded border border-zinc-400 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50"
       >
         ＋ 評価項目を追加
       </button>
@@ -87,7 +87,7 @@ export function EvaluationItemForm({ targets, categories }: Props) {
             required
             value={form.targetId}
             onChange={handleChange}
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
+            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-zinc-400 focus:outline-none"
           >
             <option value="">選択してください</option>
             {targets.map((t) => (
@@ -108,7 +108,7 @@ export function EvaluationItemForm({ targets, categories }: Props) {
             value={form.categoryId}
             onChange={handleChange}
             disabled={!form.targetId}
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none disabled:bg-gray-50 disabled:text-gray-400"
+            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-zinc-400 focus:outline-none disabled:bg-gray-50 disabled:text-gray-400"
           >
             <option value="">選択してください</option>
             {filteredCategories.map((c) => (
@@ -129,7 +129,7 @@ export function EvaluationItemForm({ targets, categories }: Props) {
             required
             value={form.name}
             onChange={handleChange}
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
+            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-zinc-400 focus:outline-none"
           />
         </div>
         <div className="col-span-2">
@@ -142,7 +142,7 @@ export function EvaluationItemForm({ targets, categories }: Props) {
             value={form.description}
             onChange={handleChange}
             rows={2}
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
+            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-zinc-400 focus:outline-none"
           />
         </div>
         <div className="col-span-2">
@@ -155,7 +155,7 @@ export function EvaluationItemForm({ targets, categories }: Props) {
             value={form.evalCriteria}
             onChange={handleChange}
             rows={2}
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
+            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-zinc-400 focus:outline-none"
           />
         </div>
       </div>
@@ -163,7 +163,7 @@ export function EvaluationItemForm({ targets, categories }: Props) {
         <button
           type="submit"
           disabled={loading}
-          className="rounded bg-blue-600 px-4 py-1.5 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded bg-zinc-700 px-4 py-1.5 text-sm text-white hover:bg-zinc-800 disabled:opacity-50"
         >
           追加
         </button>

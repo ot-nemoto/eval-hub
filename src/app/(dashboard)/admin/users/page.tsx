@@ -77,7 +77,7 @@ export default async function AdminUsersPage() {
                   <td className="px-4 py-3">
                     <Link
                       href={`/admin/users/${user.id}/evaluation-settings`}
-                      className="text-blue-600 hover:underline text-xs"
+                      className="text-zinc-700 hover:underline text-xs"
                     >
                       設定 →
                     </Link>

@@ -33,7 +33,7 @@ export function AdminUserFilter({ basePath, users, selectedUserId }: Props) {
         id="user-filter"
         value={selectedUserId ?? ""}
         onChange={handleChange}
-        className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
+        className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-zinc-400 focus:outline-none"
       >
         <option value="">全員</option>
         {users.map((u) => (

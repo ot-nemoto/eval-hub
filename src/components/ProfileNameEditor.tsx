@@ -67,14 +67,14 @@ export function ProfileNameEditor({ name }: { name: string }) {
         onKeyDown={handleKeyDown}
         aria-label="プロフィール名"
         disabled={isPending}
-        className="rounded border border-gray-300 px-2 py-0.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
+        className="rounded border border-gray-300 px-2 py-0.5 text-sm text-gray-900 focus:border-zinc-500 focus:outline-none"
         style={{ width: `${Math.max(value.length, 4) + 4}ch` }}
       />
       <button
         type="button"
         onClick={save}
         disabled={isPending}
-        className="rounded bg-blue-600 px-2 py-0.5 text-xs text-white hover:bg-blue-700 disabled:opacity-50"
+        className="rounded bg-zinc-700 px-2 py-0.5 text-xs text-white hover:bg-zinc-800 disabled:opacity-50"
       >
         保存
       </button>
