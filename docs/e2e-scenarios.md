@@ -28,14 +28,13 @@ PlaywrightMCP が E2E テストを実施するためのシナリオ集。
 | 4 | 自己評価 | MEMBER | 採点データを変更する。リロードで永続化を確認 |
 | 5 | メンバー一覧 | MEMBER / ADMIN | 副作用なし |
 | 6 | メンバー別評価 | MEMBER / ADMIN | スコア・コメントを変更する |
-| 7 | 管理：全ユーザー上長評価一覧 | ADMIN | 副作用なし |
+| 7 | 管理：評価一覧（マトリクス） | ADMIN | 副作用なし |
 | 8 | 管理：評価進捗ダッシュボード | ADMIN | 副作用なし |
-| 9 | 管理：全ユーザー自己評価一覧 | ADMIN | 副作用なし |
-| 10 | 管理：評価者アサイン管理 | ADMIN | アサインデータを追加。**ユーザー管理 #9 の前に実施** |
-| 11 | 管理：大分類・中分類・評価項目マスタ | ADMIN | テスト用データを追加・削除・並び替えする |
-| 12 | 管理：ユーザー管理 | ADMIN | ロール変更・削除あり。**#9（torikawa 削除）は最後に実施** |
-| 13 | 管理：年度管理 | ADMIN | 年度追加・削除・ロック変更あり。**最後に復元手順まで実施** |
-| 14 | ユーザー分離 | MEMBER / ADMIN | 副作用なし |
+| 9 | 管理：評価者アサイン管理 | ADMIN | アサインデータを追加。**ユーザー管理 #8 の前に実施** |
+| 10 | 管理：大分類・中分類・評価項目マスタ | ADMIN | テスト用データを追加・削除・並び替えする |
+| 11 | 管理：ユーザー管理 | ADMIN | ロール変更・削除あり。**#8（torikawa 削除）は最後に実施** |
+| 12 | 管理：年度管理 | ADMIN | 年度追加・削除・ロック変更あり。**最後に復元手順まで実施** |
+| 13 | ユーザー分離 | MEMBER / ADMIN | 副作用なし |
 
 > **注意：** ユーザー管理 #9（torikawa 削除）の後、評価者アサイン管理で torikawa を使うシナリオは失敗する。評価者アサイン管理はユーザー管理 #9 の **前** に実施すること。
 
@@ -185,18 +184,20 @@ PlaywrightMCP が E2E テストを実施するためのシナリオ集。
 
 ---
 
-## 管理：全ユーザー上長評価一覧（`/admin/manager-evaluations`）
+## 管理：評価一覧（`/admin/evaluations`）
 
 | # | ユーザー | 手順 | 確認観点 | 期待値 |
 |---|---------|------|---------|-------|
-| 1 | `bonjiri@example.com` | `/admin/manager-evaluations` にアクセスする | 上長評価一覧表示 | 全ユーザーの上長評価一覧が表示される |
-| 2 | `tebasaki@example.com` | `/admin/manager-evaluations` に直アクセスする | MEMBER のアクセス制限 | `/evaluations` にリダイレクトされる |
+| 1 | `bonjiri@example.com` | `/admin/evaluations` にアクセスする | マトリクス表示 | 縦軸: UID + 評価項目、横軸: 全社員のマトリクスが表示される |
+| 2 | `tebasaki@example.com` | `/admin/evaluations` に直アクセスする | MEMBER のアクセス制限 | `/evaluations` にリダイレクトされる |
 | 3 | `bonjiri@example.com` | 年度セレクターで 2025 に切り替える | 年度切り替え | 2025 年度のデータに切り替わる |
-| 4 | `bonjiri@example.com` | ユーザーフィルターで「tebasaki」を選択する | ユーザー絞り込み | tebasaki のデータのみ表示される |
-| 5 | `bonjiri@example.com` | URL に `?year=abc` を付けてアクセスする | 不正クエリパラメータのフォールバック | 500 にならず現在年度にフォールバックされる |
-| 6 | `bonjiri@example.com` | 上長採点が入力済みの行を確認する | 採点ラベル表示 | スコアラベル（なし/可/良/優）が表示される |
-| 7 | `bonjiri@example.com` | 上長採点が未入力の行を確認する | 未入力表示 | 「未入力」と表示される |
-| 8 | `bonjiri@example.com` | コメントがない行の上長採点理由・評価者名欄を確認する | コメントなし表示 | 「—」が表示される |
+| 4 | `bonjiri@example.com` | 「上長採点」トグルをクリックする | トグル切り替え | ページリロードなしで上長採点に切り替わる |
+| 5 | `bonjiri@example.com` | 「自己採点」トグルをクリックする | トグル切り替え | 自己採点に戻る |
+| 6 | `bonjiri@example.com` | URL に `?year=abc` を付けてアクセスする | 不正クエリパラメータのフォールバック | 500 にならず現在年度にフォールバックされる |
+| 7 | `bonjiri@example.com` | 採点値が入力済みのセルを確認する | 採点ラベル表示 | スコアラベル（なし/可/良/優）が表示される |
+| 8 | `bonjiri@example.com` | 採点値が未入力のセルを確認する | 未入力表示 | `-` が表示される |
+| 9 | `bonjiri@example.com` | `/admin/self-evaluations` にアクセスする | 旧 URL リダイレクト | `/admin/evaluations` にリダイレクトされる |
+| 10 | `bonjiri@example.com` | `/admin/manager-evaluations` にアクセスする | 旧 URL リダイレクト | `/admin/evaluations` にリダイレクトされる |
 
 ---
 
@@ -287,16 +288,6 @@ PlaywrightMCP が E2E テストを実施するためのシナリオ集。
 | 9 | `bonjiri@example.com` | 警告ダイアログで「キャンセル」をクリックする | 削除キャンセル | ダイアログが閉じ、アサインは残ったまま |
 
 ---
-
-## 管理：全ユーザー自己評価一覧（`/admin/self-evaluations`）
-
-| # | ユーザー | 手順 | 確認観点 | 期待値 |
-|---|---------|------|---------|-------|
-| 1 | `bonjiri@example.com` | `/admin/self-evaluations` にアクセスする | 自己評価一覧表示 | 全ユーザーの自己評価一覧が表示される |
-| 2 | `tebasaki@example.com` | `/admin/self-evaluations` に直アクセスする | MEMBER のアクセス制限 | `/evaluations` にリダイレクトされる |
-| 3 | `bonjiri@example.com` | 年度セレクターで 2025 に切り替える | 年度切り替え | 2025 年度のデータに切り替わる |
-| 4 | `bonjiri@example.com` | ユーザーフィルターで「nankotsu」を選択する | ユーザー絞り込み | nankotsu のデータのみ表示される |
-| 5 | `bonjiri@example.com` | URL に `?year=abc` を付けてアクセスする | 不正クエリパラメータのフォールバック | 500 にならず現在年度にフォールバックされる |
 
 ---
 

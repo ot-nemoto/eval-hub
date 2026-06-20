@@ -146,6 +146,62 @@ export async function getAllSelfEvaluations(
   }));
 }
 
+export async function getEvaluationMatrix(fiscalYear: number) {
+  if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
+    throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
+
+  const [users, items, evaluations] = await Promise.all([
+    prisma.user.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.evaluationItem.findMany({
+      where: { fiscalYearItems: { some: { fiscalYear } } },
+      select: {
+        id: true,
+        no: true,
+        name: true,
+        target: { select: { no: true } },
+        category: { select: { no: true } },
+      },
+      orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
+    }),
+    prisma.evaluation.findMany({
+      where: { fiscalYear, evaluatee: { isActive: true } },
+      select: {
+        evaluateeId: true,
+        evalItemId: true,
+        selfScore: true,
+        managerScore: true,
+      },
+    }),
+  ]);
+
+  const scoreMap = new Map<string, { selfScore: Score | null; managerScore: Score | null }>();
+  for (const e of evaluations) {
+    scoreMap.set(`${e.evaluateeId}:${e.evalItemId}`, {
+      selfScore: e.selfScore,
+      managerScore: e.managerScore,
+    });
+  }
+
+  const rows = items.map((item) => ({
+    uid: `${item.target.no}-${item.category.no}-${item.no}`,
+    name: item.name,
+    scores: users.map((user) => {
+      const key = `${user.id}:${item.id}`;
+      const entry = scoreMap.get(key);
+      return {
+        selfScore: entry?.selfScore ?? null,
+        managerScore: entry?.managerScore ?? null,
+      };
+    }),
+  }));
+
+  return { users, rows };
+}
+
 export async function getEvaluations(evaluateeId: string, fiscalYear: number) {
   if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
     throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
