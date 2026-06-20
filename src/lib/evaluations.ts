@@ -150,7 +150,7 @@ export async function getEvaluationMatrix(fiscalYear: number) {
   if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
     throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
 
-  const [users, items, evaluations] = await Promise.all([
+  const [users, items] = await Promise.all([
     prisma.user.findMany({
       where: { isActive: true },
       select: { id: true, name: true },
@@ -167,16 +167,21 @@ export async function getEvaluationMatrix(fiscalYear: number) {
       },
       orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
     }),
-    prisma.evaluation.findMany({
-      where: { fiscalYear, evaluatee: { isActive: true } },
-      select: {
-        evaluateeId: true,
-        evalItemId: true,
-        selfScore: true,
-        managerScore: true,
-      },
-    }),
   ]);
+
+  const evaluations = await prisma.evaluation.findMany({
+    where: {
+      fiscalYear,
+      evaluatee: { isActive: true },
+      evalItemId: { in: items.map((i) => i.id) },
+    },
+    select: {
+      evaluateeId: true,
+      evalItemId: true,
+      selfScore: true,
+      managerScore: true,
+    },
+  });
 
   const scoreMap = new Map<string, { selfScore: Score | null; managerScore: Score | null }>();
   for (const e of evaluations) {
