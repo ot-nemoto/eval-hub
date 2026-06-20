@@ -125,11 +125,15 @@ export function FiscalYearItemMatrix({
 
     setError(null);
     startCopyTransition(async () => {
-      const result = await copyFiscalYearItemsAction(year, previousYear);
-      if (result.error) {
-        setError(result.error);
-      } else {
-        router.refresh();
+      try {
+        const result = await copyFiscalYearItemsAction(year, previousYear);
+        if (result.error) {
+          setError(result.error);
+        } else {
+          router.refresh();
+        }
+      } catch {
+        alert("通信エラーが発生しました");
       }
     });
   }
