@@ -18,7 +18,7 @@ export async function getSession(): Promise<Session | null> {
         where: { id: process.env.MOCK_USER_ID },
         select: { id: true, name: true, role: true, isActive: true },
       });
-      if (!user || !user.isActive) return null;
+      if (!user?.isActive) return null;
       return { user: { id: user.id, name: user.name, role: user.role } };
     }
     if (process.env.MOCK_USER_EMAIL) {
@@ -26,7 +26,7 @@ export async function getSession(): Promise<Session | null> {
         where: { email: process.env.MOCK_USER_EMAIL },
         select: { id: true, name: true, role: true, isActive: true },
       });
-      if (!user || !user.isActive) return null;
+      if (!user?.isActive) return null;
       return { user: { id: user.id, name: user.name, role: user.role } };
     }
   }
@@ -76,7 +76,7 @@ export async function getSession(): Promise<Session | null> {
           where: { email },
           select: { id: true, name: true, role: true, isActive: true },
         });
-        if (!user || !user.isActive) return null;
+        if (!user?.isActive) return null;
         return { user: { id: user.id, name: user.name, role: user.role } };
       }
       throw e;
@@ -100,7 +100,7 @@ export async function getSession(): Promise<Session | null> {
       where: { email },
       select: { id: true, name: true, role: true, isActive: true },
     });
-    if (!user || !user.isActive) return null;
+    if (!user?.isActive) return null;
     return { user: { id: user.id, name: user.name, role: user.role } };
   }
 

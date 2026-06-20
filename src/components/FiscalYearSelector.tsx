@@ -17,7 +17,7 @@ export function FiscalYearSelector({ years, currentYear }: Props) {
       value={selectedYear ?? ""}
       onChange={(e) => {
         const year = parseInt(e.target.value, 10);
-        if (!isNaN(year)) {
+        if (!Number.isNaN(year)) {
           setSelectedYear(year);
           setFiscalYearAction(year);
         }

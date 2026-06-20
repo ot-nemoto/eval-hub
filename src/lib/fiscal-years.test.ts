@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BadRequestError, ConflictError, NotFoundError } from "./errors";
 import {
   addFiscalYearItem,
+  copyFiscalYearItems,
   createFiscalYear,
   deleteFiscalYear,
   getFiscalYearItems,
@@ -38,17 +39,20 @@ vi.mock("@/lib/prisma", () => ({
     evaluationAssignment: { count: vi.fn() },
     evaluation: { count: vi.fn() },
     evaluationSetting: { count: vi.fn() },
-    $transaction: vi.fn((fn: (tx: unknown) => unknown) => fn({
-      fiscalYear: {
-        create: vi.fn(),
-        update: vi.fn(),
-        updateMany: vi.fn(),
-      },
-      fiscalYearItem: {
-        findMany: vi.fn(),
-        createMany: vi.fn(),
-      },
-    })),
+    $transaction: vi.fn((fn: (tx: unknown) => unknown) =>
+      fn({
+        fiscalYear: {
+          create: vi.fn(),
+          update: vi.fn(),
+          updateMany: vi.fn(),
+        },
+        fiscalYearItem: {
+          findMany: vi.fn(),
+          createMany: vi.fn(),
+          deleteMany: vi.fn(),
+        },
+      }),
+    ),
   },
 }));
 
@@ -88,7 +92,11 @@ describe("createFiscalYear", () => {
     vi.mocked(prisma.fiscalYear.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
       const tx = {
-        fiscalYear: { create: vi.fn().mockResolvedValue(mockFy), updateMany: vi.fn(), update: vi.fn() },
+        fiscalYear: {
+          create: vi.fn().mockResolvedValue(mockFy),
+          updateMany: vi.fn(),
+          update: vi.fn(),
+        },
         fiscalYearItem: { findMany: vi.fn().mockResolvedValue([]), createMany: vi.fn() },
       };
       return fn(tx);
@@ -140,7 +148,10 @@ describe("createFiscalYear", () => {
     vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.fiscalYear.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.$transaction).mockRejectedValue(
-      new Prisma.PrismaClientKnownRequestError("Unique constraint", { code: "P2002", clientVersion: "5" }),
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+        code: "P2002",
+        clientVersion: "5",
+      }),
     );
 
     await expect(
@@ -154,7 +165,11 @@ describe("createFiscalYear", () => {
     const mockCreateMany = vi.fn();
     vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
       const tx = {
-        fiscalYear: { create: vi.fn().mockResolvedValue(mockFy), updateMany: vi.fn(), update: vi.fn() },
+        fiscalYear: {
+          create: vi.fn().mockResolvedValue(mockFy),
+          updateMany: vi.fn(),
+          update: vi.fn(),
+        },
         fiscalYearItem: {
           findMany: vi.fn().mockResolvedValue([{ evaluationItemId: 1 }]),
           createMany: mockCreateMany,
@@ -223,9 +238,9 @@ describe("updateFiscalYear", () => {
   it("startDate > endDate の場合は BadRequestError をスロー", async () => {
     vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
 
-    await expect(
-      updateFiscalYear(2024, { startDate: "2030-01-01" }),
-    ).rejects.toThrow(BadRequestError);
+    await expect(updateFiscalYear(2024, { startDate: "2030-01-01" })).rejects.toThrow(
+      BadRequestError,
+    );
   });
 });
 
@@ -332,7 +347,10 @@ describe("addFiscalYearItem", () => {
     vi.mocked(prisma.evaluationItem.findUnique).mockResolvedValue(mockItem as never);
     vi.mocked(prisma.fiscalYearItem.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.fiscalYearItem.create).mockRejectedValue(
-      new Prisma.PrismaClientKnownRequestError("Unique constraint", { code: "P2002", clientVersion: "5" }),
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+        code: "P2002",
+        clientVersion: "5",
+      }),
     );
 
     await expect(addFiscalYearItem(2024, 1)).rejects.toThrow(ConflictError);
@@ -380,7 +398,10 @@ describe("toggleFiscalYearLock", () => {
   });
 
   it("年度のロックを解除する", async () => {
-    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue({ ...mockFy, isLocked: true } as never);
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue({
+      ...mockFy,
+      isLocked: true,
+    } as never);
     vi.mocked(prisma.fiscalYear.update).mockResolvedValue({ ...mockFy, isLocked: false } as never);
 
     const result = await toggleFiscalYearLock(2024, false);
@@ -395,5 +416,89 @@ describe("toggleFiscalYearLock", () => {
     vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(null);
 
     await expect(toggleFiscalYearLock(9999, true)).rejects.toThrow(NotFoundError);
+  });
+});
+
+describe("copyFiscalYearItems", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("コピー元の評価項目をコピー先にコピーする", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique)
+      .mockResolvedValueOnce({ year: 2025, isLocked: false } as never)
+      .mockResolvedValueOnce({ year: 2024 } as never);
+
+    const mockDeleteMany = vi.fn();
+    const mockCreateMany = vi.fn();
+    vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
+      const tx = {
+        fiscalYear: { create: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+        fiscalYearItem: {
+          findMany: vi.fn(),
+          createMany: mockCreateMany,
+          deleteMany: mockDeleteMany,
+        },
+      };
+      return fn(tx);
+    });
+    vi.mocked(prisma.fiscalYearItem.findMany).mockResolvedValue([
+      { evaluationItemId: 1 },
+      { evaluationItemId: 2 },
+    ] as never);
+
+    const result = await copyFiscalYearItems(2025, 2024);
+
+    expect(result).toEqual({ copiedCount: 2 });
+    expect(mockDeleteMany).toHaveBeenCalledWith({ where: { fiscalYear: 2025 } });
+    expect(mockCreateMany).toHaveBeenCalledWith({
+      data: [
+        { fiscalYear: 2025, evaluationItemId: 1 },
+        { fiscalYear: 2025, evaluationItemId: 2 },
+      ],
+    });
+  });
+
+  it("targetYear が範囲外の場合は BadRequestError をスロー", async () => {
+    await expect(copyFiscalYearItems(1800, 2024)).rejects.toThrow(BadRequestError);
+  });
+
+  it("sourceYear が範囲外の場合は BadRequestError をスロー", async () => {
+    await expect(copyFiscalYearItems(2025, 10000)).rejects.toThrow(BadRequestError);
+  });
+
+  it("同じ年度を指定した場合は BadRequestError をスロー", async () => {
+    await expect(copyFiscalYearItems(2024, 2024)).rejects.toThrow(BadRequestError);
+  });
+
+  it("コピー先の年度が存在しない場合は NotFoundError をスロー", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ year: 2024 } as never);
+
+    await expect(copyFiscalYearItems(9999, 2024)).rejects.toThrow(NotFoundError);
+  });
+
+  it("コピー先がロック済みの場合は ConflictError をスロー", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique)
+      .mockResolvedValueOnce({ year: 2025, isLocked: true } as never)
+      .mockResolvedValueOnce({ year: 2024 } as never);
+
+    await expect(copyFiscalYearItems(2025, 2024)).rejects.toThrow(ConflictError);
+  });
+
+  it("コピー元の年度が存在しない場合は NotFoundError をスロー", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique)
+      .mockResolvedValueOnce({ year: 2025, isLocked: false } as never)
+      .mockResolvedValueOnce(null);
+
+    await expect(copyFiscalYearItems(2025, 9999)).rejects.toThrow(NotFoundError);
+  });
+
+  it("コピー元に評価項目がない場合は BadRequestError をスロー", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique)
+      .mockResolvedValueOnce({ year: 2025, isLocked: false } as never)
+      .mockResolvedValueOnce({ year: 2024 } as never);
+    vi.mocked(prisma.fiscalYearItem.findMany).mockResolvedValue([]);
+
+    await expect(copyFiscalYearItems(2025, 2024)).rejects.toThrow(BadRequestError);
   });
 });
