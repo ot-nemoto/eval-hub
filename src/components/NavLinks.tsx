@@ -14,6 +14,7 @@ const adminLinks = [
   { href: "/admin/evaluations", label: "評価一覧" },
   { href: "/admin/progress", label: "評価進捗" },
   { href: "/admin/targets", label: "マスタ管理" },
+  { href: "/admin/fiscal-year-items", label: "年度別項目" },
   { href: "/admin/fiscal-years", label: "年度管理" },
 ];
 

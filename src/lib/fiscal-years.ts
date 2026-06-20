@@ -225,3 +225,39 @@ export async function removeFiscalYearItem(year: number, itemId: number) {
     where: { fiscalYear_evaluationItemId: { fiscalYear: year, evaluationItemId: itemId } },
   });
 }
+
+export async function copyFiscalYearItems(targetYear: number, sourceYear: number) {
+  if (!Number.isInteger(targetYear) || targetYear < 1900 || targetYear > 9999)
+    throw new BadRequestError("targetYear は 1900〜9999 の整数で指定してください");
+  if (!Number.isInteger(sourceYear) || sourceYear < 1900 || sourceYear > 9999)
+    throw new BadRequestError("sourceYear は 1900〜9999 の整数で指定してください");
+  if (targetYear === sourceYear)
+    throw new BadRequestError("コピー元とコピー先は異なる年度を指定してください");
+
+  const [target, source] = await Promise.all([
+    prisma.fiscalYear.findUnique({ where: { year: targetYear }, select: { year: true, isLocked: true } }),
+    prisma.fiscalYear.findUnique({ where: { year: sourceYear }, select: { year: true } }),
+  ]);
+  if (!target) throw new NotFoundError("コピー先の年度が見つかりません");
+  if (target.isLocked) throw new ConflictError("コピー先の年度はロックされているため編集できません");
+  if (!source) throw new NotFoundError("コピー元の年度が見つかりません");
+
+  const sourceItems = await prisma.fiscalYearItem.findMany({
+    where: { fiscalYear: sourceYear },
+    select: { evaluationItemId: true },
+  });
+
+  if (sourceItems.length === 0)
+    throw new BadRequestError("コピー元の年度に評価項目が設定されていません");
+
+  return prisma.$transaction(async (tx) => {
+    await tx.fiscalYearItem.deleteMany({ where: { fiscalYear: targetYear } });
+    await tx.fiscalYearItem.createMany({
+      data: sourceItems.map((item) => ({
+        fiscalYear: targetYear,
+        evaluationItemId: item.evaluationItemId,
+      })),
+    });
+    return { copiedCount: sourceItems.length };
+  });
+}
