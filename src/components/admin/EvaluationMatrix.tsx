@@ -1,6 +1,6 @@
 "use client";
 
-import { Score } from "@prisma/client";
+import type { Score } from "@prisma/client";
 import { useState } from "react";
 
 const SCORE_LABEL: Record<Score, string> = {
