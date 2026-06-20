@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 
 import { getSession } from "@/lib/auth";
 import { BadRequestError, ConflictError, NotFoundError } from "@/lib/errors";
-import { addFiscalYearItem, copyFiscalYearItems, removeFiscalYearItem } from "@/lib/fiscal-years";
+import {
+  addFiscalYearItem,
+  assertFiscalYearUnlocked,
+  copyFiscalYearItems,
+  removeFiscalYearItem,
+} from "@/lib/fiscal-years";
 
 export async function toggleFiscalYearItemAction(
   year: number,
@@ -20,6 +25,9 @@ export async function toggleFiscalYearItemAction(
     return { error: "year は 1900〜9999 の整数で指定してください" };
   if (!Number.isInteger(itemId) || itemId < 1)
     return { error: "itemId は正の整数で指定してください" };
+
+  const lockCheck = await assertFiscalYearUnlocked(year);
+  if (lockCheck) return lockCheck;
 
   try {
     if (checked) {
