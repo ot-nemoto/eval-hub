@@ -79,6 +79,7 @@ export function EvaluationMatrix({ users, rows }: Props) {
         </button>
         <button
           type="button"
+          aria-pressed={mode === "both"}
           onClick={() => setMode("both")}
           className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
             mode === "both"
