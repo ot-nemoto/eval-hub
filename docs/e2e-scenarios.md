@@ -192,12 +192,13 @@ PlaywrightMCP が E2E テストを実施するためのシナリオ集。
 | 2 | `tebasaki@example.com` | `/admin/evaluations` に直アクセスする | MEMBER のアクセス制限 | `/evaluations` にリダイレクトされる |
 | 3 | `bonjiri@example.com` | 年度セレクターで 2025 に切り替える | 年度切り替え | 2025 年度のデータに切り替わる |
 | 4 | `bonjiri@example.com` | 「上長採点」トグルをクリックする | トグル切り替え | ページリロードなしで上長採点に切り替わる |
-| 5 | `bonjiri@example.com` | 「自己採点」トグルをクリックする | トグル切り替え | 自己採点に戻る |
-| 6 | `bonjiri@example.com` | URL に `?year=abc` を付けてアクセスする | 不正クエリパラメータのフォールバック | 500 にならず現在年度にフォールバックされる |
-| 7 | `bonjiri@example.com` | 採点値が入力済みのセルを確認する | 採点ラベル表示 | スコアラベル（なし/可/良/優）が表示される |
-| 8 | `bonjiri@example.com` | 採点値が未入力のセルを確認する | 未入力表示 | `-` が表示される |
-| 9 | `bonjiri@example.com` | `/admin/self-evaluations` にアクセスする | 旧 URL リダイレクト | `/admin/evaluations` にリダイレクトされる |
-| 10 | `bonjiri@example.com` | `/admin/manager-evaluations` にアクセスする | 旧 URL リダイレクト | `/admin/evaluations` にリダイレクトされる |
+| 5 | `bonjiri@example.com` | 「両方」トグルをクリックする | 両方モード表示 | セルが `自己 / 上長` の `/` 区切りで表示される |
+| 6 | `bonjiri@example.com` | 「自己採点」トグルをクリックする | トグル切り替え | 自己採点に戻る |
+| 7 | `bonjiri@example.com` | URL に `?year=abc` を付けてアクセスする | 不正クエリパラメータのフォールバック | 500 にならず現在年度にフォールバックされる |
+| 8 | `bonjiri@example.com` | 採点値が入力済みのセルを確認する | 採点ラベル表示 | スコアラベル（なし/可/良/優）が表示される |
+| 9 | `bonjiri@example.com` | 採点値が未入力のセルを確認する | 未入力表示 | `-` が表示される |
+| 10 | `bonjiri@example.com` | `/admin/self-evaluations` にアクセスする | 旧 URL リダイレクト | `/admin/evaluations` にリダイレクトされる |
+| 11 | `bonjiri@example.com` | `/admin/manager-evaluations` にアクセスする | 旧 URL リダイレクト | `/admin/evaluations` にリダイレクトされる |
 
 ---
 
