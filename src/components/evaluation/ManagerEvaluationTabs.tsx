@@ -253,7 +253,7 @@ export default function ManagerEvaluationTabs({
                 <p className="text-sm font-medium text-gray-700">最終評価スコア</p>
                 {effectiveReadOnly ? (
                   <span className="inline-block rounded-md border bg-white px-3 py-1.5 text-sm font-medium text-gray-700">
-                    {finalScores[item.uid] != null ? SCORE_LABELS[finalScores[item.uid] as Score] : "未設定"}
+                    {(() => { const s = finalScores[item.uid]; return s != null ? SCORE_LABELS[s] : "未設定"; })()}
                   </span>
                 ) : (
                   <>
