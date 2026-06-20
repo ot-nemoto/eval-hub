@@ -79,24 +79,38 @@ export function FiscalYearItemMatrix({
   async function handleToggle(itemId: number, checked: boolean) {
     setError(null);
     setSavingIds((prev) => new Set(prev).add(itemId));
-
-    const optimistic = new Set(checkedIds);
-    if (checked) optimistic.add(itemId);
-    else optimistic.delete(itemId);
-    setCheckedIds(optimistic);
-
-    const result = await toggleFiscalYearItemAction(year, itemId, checked);
-    setSavingIds((prev) => {
+    setCheckedIds((prev) => {
       const next = new Set(prev);
-      next.delete(itemId);
+      if (checked) next.add(itemId);
+      else next.delete(itemId);
       return next;
     });
 
-    if (result.error) {
-      setError(result.error);
-      if (checked) optimistic.delete(itemId);
-      else optimistic.add(itemId);
-      setCheckedIds(new Set(optimistic));
+    try {
+      const result = await toggleFiscalYearItemAction(year, itemId, checked);
+      if (result.error) {
+        setError(result.error);
+        setCheckedIds((prev) => {
+          const next = new Set(prev);
+          if (checked) next.delete(itemId);
+          else next.add(itemId);
+          return next;
+        });
+      }
+    } catch {
+      alert("通信エラーが発生しました");
+      setCheckedIds((prev) => {
+        const next = new Set(prev);
+        if (checked) next.delete(itemId);
+        else next.add(itemId);
+        return next;
+      });
+    } finally {
+      setSavingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(itemId);
+        return next;
+      });
     }
   }
 
