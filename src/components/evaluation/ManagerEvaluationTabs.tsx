@@ -131,7 +131,8 @@ export default function ManagerEvaluationTabs({
       if (result.error) {
         setErrors((e) => ({ ...e, [`add-${uid}`]: result.error ?? "保存に失敗しました" }));
       } else if (result.comment) {
-        setComments((c) => ({ ...c, [uid]: [...(c[uid] ?? []), result.comment!] }));
+        const newComment = result.comment;
+        setComments((c) => ({ ...c, [uid]: [...(c[uid] ?? []), newComment] }));
         setAdding((a) => ({ ...a, [uid]: false }));
         setNewReason((r) => ({ ...r, [uid]: "" }));
       }
@@ -152,9 +153,10 @@ export default function ManagerEvaluationTabs({
       if (result.error) {
         setErrors((e) => ({ ...e, [commentId]: result.error ?? "保存に失敗しました" }));
       } else if (result.comment) {
+        const updated = result.comment;
         setComments((c) => ({
           ...c,
-          [uid]: c[uid].map((cm) => (cm.id === commentId ? result.comment! : cm)),
+          [uid]: c[uid].map((cm) => (cm.id === commentId ? updated : cm)),
         }));
         setEditing((ed) => ({ ...ed, [commentId]: false }));
       }
@@ -251,7 +253,7 @@ export default function ManagerEvaluationTabs({
                 <p className="text-sm font-medium text-gray-700">最終評価スコア</p>
                 {effectiveReadOnly ? (
                   <span className="inline-block rounded-md border bg-white px-3 py-1.5 text-sm font-medium text-gray-700">
-                    {finalScores[item.uid] != null ? SCORE_LABELS[finalScores[item.uid]!] : "未設定"}
+                    {(() => { const s = finalScores[item.uid]; return s != null ? SCORE_LABELS[s] : "未設定"; })()}
                   </span>
                 ) : (
                   <>

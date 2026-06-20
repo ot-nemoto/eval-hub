@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   DndContext,
-  DragEndEvent,
+  type DragEndEvent,
   KeyboardSensor,
   PointerSensor,
   closestCenter,
