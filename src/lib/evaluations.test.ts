@@ -6,6 +6,7 @@ import {
   deleteManagerComment,
   getAllManagerEvaluations,
   getAllSelfEvaluations,
+  getEvaluationMatrix,
   getEvaluationProgress,
   getEvaluations,
   updateManagerComment,
@@ -22,6 +23,9 @@ vi.mock("@/lib/prisma", () => ({
     evaluationAssignment: {
       findMany: vi.fn(),
     },
+    evaluationItem: {
+      findMany: vi.fn(),
+    },
     fiscalYearItem: {
       findMany: vi.fn(),
     },
@@ -29,6 +33,9 @@ vi.mock("@/lib/prisma", () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+    },
+    user: {
+      findMany: vi.fn(),
     },
   },
 }));
@@ -546,5 +553,84 @@ describe("getAllManagerEvaluations", () => {
 
   it("fiscalYear が整数でない場合は BadRequestError をスロー", async () => {
     await expect(getAllManagerEvaluations(2026.5)).rejects.toThrow(BadRequestError);
+  });
+});
+
+describe("getEvaluationMatrix", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("正常系: ユーザー × 評価項目のマトリクスを返す", async () => {
+    vi.mocked(prisma.user.findMany).mockResolvedValue([
+      { id: "user-1", name: "田中" },
+      { id: "user-2", name: "鈴木" },
+    ] as never);
+    vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue([
+      { id: 1, no: 1, name: "項目A", target: { no: 1 }, category: { no: 1 } },
+      { id: 2, no: 2, name: "項目B", target: { no: 1 }, category: { no: 1 } },
+    ] as never);
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue([
+      { evaluateeId: "user-1", evalItemId: 1, selfScore: "ryo", managerScore: "yu" },
+      { evaluateeId: "user-2", evalItemId: 2, selfScore: "ka", managerScore: null },
+    ] as never);
+
+    const result = await getEvaluationMatrix(2026);
+
+    expect(result.users).toEqual([
+      { id: "user-1", name: "田中" },
+      { id: "user-2", name: "鈴木" },
+    ]);
+    expect(result.rows).toEqual([
+      {
+        uid: "1-1-1",
+        name: "項目A",
+        scores: [
+          { selfScore: "ryo", managerScore: "yu" },
+          { selfScore: null, managerScore: null },
+        ],
+      },
+      {
+        uid: "1-1-2",
+        name: "項目B",
+        scores: [
+          { selfScore: null, managerScore: null },
+          { selfScore: "ka", managerScore: null },
+        ],
+      },
+    ]);
+  });
+
+  it("評価データがない場合は全セルが null になる", async () => {
+    vi.mocked(prisma.user.findMany).mockResolvedValue([
+      { id: "user-1", name: "田中" },
+    ] as never);
+    vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue([
+      { id: 1, no: 1, name: "項目A", target: { no: 1 }, category: { no: 1 } },
+    ] as never);
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue([] as never);
+
+    const result = await getEvaluationMatrix(2026);
+
+    expect(result.rows[0].scores).toEqual([{ selfScore: null, managerScore: null }]);
+  });
+
+  it("ユーザーがいない場合は scores が空配列になる", async () => {
+    vi.mocked(prisma.user.findMany).mockResolvedValue([] as never);
+    vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue([
+      { id: 1, no: 1, name: "項目A", target: { no: 1 }, category: { no: 1 } },
+    ] as never);
+    vi.mocked(prisma.evaluation.findMany).mockResolvedValue([] as never);
+
+    const result = await getEvaluationMatrix(2026);
+
+    expect(result.users).toEqual([]);
+    expect(result.rows[0].scores).toEqual([]);
+  });
+
+  it("fiscalYear が範囲外の場合は BadRequestError をスロー", async () => {
+    await expect(getEvaluationMatrix(1800)).rejects.toThrow(BadRequestError);
+  });
+
+  it("fiscalYear が整数でない場合は BadRequestError をスロー", async () => {
+    await expect(getEvaluationMatrix(2026.5)).rejects.toThrow(BadRequestError);
   });
 });
