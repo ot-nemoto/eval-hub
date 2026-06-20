@@ -55,6 +55,7 @@ export function EvaluationMatrix({ users, rows }: Props) {
       <div className="mb-4 flex items-center gap-1 rounded-lg border bg-gray-100 p-1 w-fit">
         <button
           type="button"
+          aria-pressed={mode === "self"}
           onClick={() => setMode("self")}
           className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
             mode === "self"
