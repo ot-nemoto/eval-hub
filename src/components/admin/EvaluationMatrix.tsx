@@ -89,7 +89,7 @@ export function EvaluationMatrix({ users, rows }: Props) {
         </button>
       </div>
 
-      <div className="overflow-auto rounded-lg border bg-white max-h-[70vh]">
+      <div className="relative z-0 overflow-auto rounded-lg border bg-white max-h-[70vh]">
         <table className="w-full text-sm">
           <thead className="sticky top-0 z-20 bg-gray-50">
             <tr className="border-b">
