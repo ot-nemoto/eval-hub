@@ -24,6 +24,8 @@
 | `deleteFiscalYearAction` | 年度削除 | `src/app/(dashboard)/admin/fiscal-years/actions.ts` |
 | `addFiscalYearItemAction` | 年度に評価項目を追加 | `src/app/(dashboard)/admin/fiscal-years/actions.ts` |
 | `removeFiscalYearItemAction` | 年度から評価項目を除外 | `src/app/(dashboard)/admin/fiscal-years/actions.ts` |
+| `toggleFiscalYearItemAction` | 年度の評価項目を有効/無効切り替え | `src/app/(dashboard)/admin/fiscal-year-items/actions.ts` |
+| `copyFiscalYearItemsAction` | 前年度の評価項目設定をコピー | `src/app/(dashboard)/admin/fiscal-year-items/actions.ts` |
 | `updateUserAction` | ユーザー情報更新 | `src/app/(dashboard)/admin/users/actions.ts` |
 | `deleteUserAction` | ユーザー削除 | `src/app/(dashboard)/admin/users/actions.ts` |
 | `upsertEvaluationSettingAction` | 評価設定を登録・更新 | `src/app/(dashboard)/admin/users/[id]/evaluation-settings/actions.ts` |
@@ -398,6 +400,44 @@
 | `"itemId は正の整数で指定してください"` | itemId が不正値 |
 | `"年度が見つかりません"` / `"評価項目が見つかりません"` | 指定 ID が存在しない（NotFoundError） |
 | バリデーションエラーメッセージ | その他不正入力（BadRequestError） |
+
+---
+
+## 年度別評価項目設定（`src/app/(dashboard)/admin/fiscal-year-items/actions.ts`）
+
+### `toggleFiscalYearItemAction(year, itemId, checked)`
+
+年度の評価項目を有効/無効に切り替える。checked=true で追加、false で削除。
+
+**引数:** `year: number`, `itemId: number`, `checked: boolean`
+
+**戻り値:** `{}` | `{ error: string }`
+
+| エラー | 条件 |
+|--------|------|
+| `"year は 1900〜9999 の整数で指定してください"` | year が範囲外または非整数 |
+| `"itemId は正の整数で指定してください"` | itemId が不正値 |
+| 各種 NotFoundError / ConflictError メッセージ | 年度・評価項目が存在しない、ロック済み、既に追加済み等 |
+
+---
+
+### `copyFiscalYearItemsAction(targetYear, sourceYear)`
+
+コピー元年度の有効評価項目をコピー先年度に一括コピーする。コピー先の既存設定は上書きされる。
+
+**引数:** `targetYear: number`, `sourceYear: number`
+
+**戻り値:** `{ copiedCount: number }` | `{ error: string }`
+
+| エラー | 条件 |
+|--------|------|
+| `"targetYear は 1900〜9999 の整数で指定してください"` | targetYear が範囲外 |
+| `"sourceYear は 1900〜9999 の整数で指定してください"` | sourceYear が範囲外 |
+| `"コピー元とコピー先は異なる年度を指定してください"` | 同一年度指定 |
+| `"コピー先の年度が見つかりません"` | コピー先年度が存在しない |
+| `"コピー先の年度はロックされているため編集できません"` | コピー先がロック済み |
+| `"コピー元の年度が見つかりません"` | コピー元年度が存在しない |
+| `"コピー元の年度に評価項目が設定されていません"` | コピー元に項目がない |
 
 ---
 
