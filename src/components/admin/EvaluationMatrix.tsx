@@ -1,8 +1,7 @@
 "use client";
 
+import { Score } from "@prisma/client";
 import { useState } from "react";
-
-type Score = "none" | "ka" | "ryo" | "yu";
 
 const SCORE_LABEL: Record<Score, string> = {
   none: "なし",
