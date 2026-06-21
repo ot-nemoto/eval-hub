@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import type { NextRequest } from "next/server";
 import { errorResponse, successResponse } from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
@@ -148,7 +149,10 @@ export async function POST(req: NextRequest) {
 
       return result;
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      return errorResponse("BAD_REQUEST", "no が重複しています", 400);
+    }
     return errorResponse("INTERNAL_SERVER_ERROR", "サーバーエラーが発生しました", 500);
   }
 

@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/apiAuth", () => ({
@@ -12,9 +13,18 @@ vi.mock("@/lib/prisma", () => ({
     category: { create: vi.fn(), deleteMany: vi.fn() },
     $transaction: vi.fn((cb: (tx: unknown) => Promise<unknown>) =>
       cb({
-        target: { create: vi.mocked(prisma.target.create), deleteMany: vi.mocked(prisma.target.deleteMany) },
-        category: { create: vi.mocked(prisma.category.create), deleteMany: vi.mocked(prisma.category.deleteMany) },
-        evaluationItem: { create: vi.mocked(prisma.evaluationItem.create), deleteMany: vi.mocked(prisma.evaluationItem.deleteMany) },
+        target: {
+          create: vi.mocked(prisma.target.create),
+          deleteMany: vi.mocked(prisma.target.deleteMany),
+        },
+        category: {
+          create: vi.mocked(prisma.category.create),
+          deleteMany: vi.mocked(prisma.category.deleteMany),
+        },
+        evaluationItem: {
+          create: vi.mocked(prisma.evaluationItem.create),
+          deleteMany: vi.mocked(prisma.evaluationItem.deleteMany),
+        },
       }),
     ),
   },
@@ -180,5 +190,21 @@ describe("POST /api/evaluation-items", () => {
 
     const res = await POST(req);
     expect(res.status).toBe(400);
+  });
+
+  it("no 重複（P2002）は 400 を返す", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    vi.mocked(prisma.target.create).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+        code: "P2002",
+        clientVersion: "5.0.0",
+      }),
+    );
+
+    const res = await POST(makeRequest(validBody));
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error.message).toBe("no が重複しています");
   });
 });
