@@ -109,29 +109,25 @@ export async function POST(req: NextRequest) {
     created = await prisma.$transaction(async (tx) => {
       const result: typeof created = [];
 
+      // 全削除（FK順: 評価項目→中分類→大分類）
+      await tx.evaluationItem.deleteMany({});
+      await tx.category.deleteMany({});
+      await tx.target.deleteMany({});
+
+      // 再挿入（大分類→中分類→評価項目）
       for (const targetInput of body as TargetInput[]) {
-        const target = await tx.target.upsert({
-          where: { no: targetInput.no },
-          update: { name: targetInput.name },
-          create: { no: targetInput.no, name: targetInput.name },
+        const target = await tx.target.create({
+          data: { no: targetInput.no, name: targetInput.name },
         });
 
         for (const categoryInput of targetInput.categories) {
-          const category = await tx.category.upsert({
-            where: { targetId_no: { targetId: target.id, no: categoryInput.no } },
-            update: { name: categoryInput.name },
-            create: { targetId: target.id, no: categoryInput.no, name: categoryInput.name },
+          const category = await tx.category.create({
+            data: { targetId: target.id, no: categoryInput.no, name: categoryInput.name },
           });
 
           for (const itemInput of categoryInput.items) {
-            await tx.evaluationItem.upsert({
-              where: { categoryId_no: { categoryId: category.id, no: itemInput.no } },
-              update: {
-                name: itemInput.name,
-                description: itemInput.description ?? null,
-                evalCriteria: itemInput.evalCriteria ?? null,
-              },
-              create: {
+            await tx.evaluationItem.create({
+              data: {
                 targetId: target.id,
                 categoryId: category.id,
                 no: itemInput.no,
@@ -156,5 +152,5 @@ export async function POST(req: NextRequest) {
     return errorResponse("INTERNAL_SERVER_ERROR", "サーバーエラーが発生しました", 500);
   }
 
-  return successResponse({ upserted: created.length }, { items: created }, 200);
+  return successResponse({ created: created.length }, { items: created }, 200);
 }
