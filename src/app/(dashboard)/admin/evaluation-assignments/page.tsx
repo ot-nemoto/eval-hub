@@ -20,8 +20,7 @@ export default async function EvaluationAssignmentsPage({
   const { year: yearParam } = await searchParams;
 
   const fiscalYears = await getFiscalYears();
-  const currentFiscalYear =
-    fiscalYears.find((fy) => fy.isCurrent) ?? fiscalYears[0] ?? null;
+  const currentFiscalYear = fiscalYears.find((fy) => fy.isCurrent) ?? fiscalYears[0] ?? null;
 
   const parsedYear = yearParam !== undefined ? Number(yearParam) : null;
   const selectedYear =

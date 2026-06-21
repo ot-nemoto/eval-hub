@@ -68,7 +68,10 @@ export default function EvaluationTabs({ items, fiscalYear, isLocked = false }: 
       } else {
         setSaved((s) => ({ ...s, [uid]: true }));
         clearTimeout(savedTimers.current[uid]);
-        savedTimers.current[uid] = setTimeout(() => setSaved((s) => ({ ...s, [uid]: false })), 2000);
+        savedTimers.current[uid] = setTimeout(
+          () => setSaved((s) => ({ ...s, [uid]: false })),
+          2000,
+        );
       }
     } catch {
       setErrors((e) => ({ ...e, [uid]: "保存に失敗しました" }));
@@ -178,7 +181,11 @@ export default function EvaluationTabs({ items, fiscalYear, isLocked = false }: 
 
               {!isLocked && (
                 <div className="flex items-center gap-3">
-                  <Button size="sm" onClick={() => handleSave(item.uid)} disabled={saving[item.uid]}>
+                  <Button
+                    size="sm"
+                    onClick={() => handleSave(item.uid)}
+                    disabled={saving[item.uid]}
+                  >
                     {saving[item.uid] ? "保存中..." : "保存"}
                   </Button>
                   {saved[item.uid] && <span className="text-sm text-green-600">保存しました</span>}

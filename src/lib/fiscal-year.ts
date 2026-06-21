@@ -12,10 +12,7 @@ export const FISCAL_YEAR_COOKIE = "fiscal_year";
 export async function getCurrentFiscalYear(): Promise<number | null> {
   const cookieStore = await cookies();
   const cookieValue = cookieStore.get(FISCAL_YEAR_COOKIE)?.value;
-  const cookieYear =
-    cookieValue && /^\d{4}$/.test(cookieValue)
-      ? parseInt(cookieValue, 10)
-      : null;
+  const cookieYear = cookieValue && /^\d{4}$/.test(cookieValue) ? parseInt(cookieValue, 10) : null;
 
   if (cookieYear) {
     const fy = await prisma.fiscalYear.findUnique({

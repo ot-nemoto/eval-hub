@@ -66,20 +66,33 @@ export async function POST(req: NextRequest) {
 
   for (const t of body as TargetInput[]) {
     if (!Number.isInteger(t.no) || t.no < 1 || typeof t.name !== "string" || !t.name.trim()) {
-      return errorResponse("BAD_REQUEST", "大項目に no（1以上の整数）と name（文字列）は必須です", 400);
+      return errorResponse(
+        "BAD_REQUEST",
+        "大項目に no（1以上の整数）と name（文字列）は必須です",
+        400,
+      );
     }
     if (!Array.isArray(t.categories)) {
       return errorResponse("BAD_REQUEST", "大項目に categories 配列は必須です", 400);
     }
     for (const c of t.categories) {
       if (!Number.isInteger(c.no) || c.no < 1 || typeof c.name !== "string" || !c.name.trim()) {
-        return errorResponse("BAD_REQUEST", "中項目に no（1以上の整数）と name（文字列）は必須です", 400);
+        return errorResponse(
+          "BAD_REQUEST",
+          "中項目に no（1以上の整数）と name（文字列）は必須です",
+          400,
+        );
       }
       if (!Array.isArray(c.items)) {
         return errorResponse("BAD_REQUEST", "中項目に items 配列は必須です", 400);
       }
       for (const item of c.items) {
-        if (!Number.isInteger(item.no) || item.no < 1 || typeof item.name !== "string" || !item.name.trim()) {
+        if (
+          !Number.isInteger(item.no) ||
+          item.no < 1 ||
+          typeof item.name !== "string" ||
+          !item.name.trim()
+        ) {
           return errorResponse(
             "BAD_REQUEST",
             "評価項目に no（1以上の整数）と name（文字列）は必須です",

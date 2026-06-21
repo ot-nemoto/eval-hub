@@ -1,9 +1,8 @@
 "use server";
 
+import type { Score } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-
-import type { Score } from "@prisma/client";
 import { getSession } from "@/lib/auth";
 import { BadRequestError, ForbiddenError } from "@/lib/errors";
 import {
@@ -51,8 +50,7 @@ export async function upsertManagerScoreAction(
         },
       },
     });
-    if (!assignment)
-      return { error: "評価者としてアサインされていません" };
+    if (!assignment) return { error: "評価者としてアサインされていません" };
   }
 
   try {
@@ -94,8 +92,7 @@ export async function addManagerCommentAction(
         },
       },
     });
-    if (!assignment)
-      return { error: "評価者としてアサインされていません" };
+    if (!assignment) return { error: "評価者としてアサインされていません" };
   }
 
   let created: Awaited<ReturnType<typeof addManagerComment>>;

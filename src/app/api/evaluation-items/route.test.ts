@@ -20,8 +20,8 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
+import { prisma } from "@/lib/prisma";
 import { GET, POST } from "./route";
 
 const adminUser = { id: "u1", role: "ADMIN" as const, isActive: true };
@@ -150,7 +150,9 @@ describe("POST /api/evaluation-items", () => {
   it("中項目に no がない場合は 400 を返す", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
 
-    const res = await POST(makeRequest([{ no: 1, name: "T", categories: [{ name: "C", items: [] }] }]));
+    const res = await POST(
+      makeRequest([{ no: 1, name: "T", categories: [{ name: "C", items: [] }] }]),
+    );
     expect(res.status).toBe(400);
   });
 
@@ -158,9 +160,7 @@ describe("POST /api/evaluation-items", () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
 
     const res = await POST(
-      makeRequest([
-        { no: 1, name: "T", categories: [{ no: 1, name: "C", items: [{ no: 1 }] }] },
-      ]),
+      makeRequest([{ no: 1, name: "T", categories: [{ no: 1, name: "C", items: [{ no: 1 }] }] }]),
     );
     expect(res.status).toBe(400);
   });

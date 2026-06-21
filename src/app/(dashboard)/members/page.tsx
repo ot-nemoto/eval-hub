@@ -38,9 +38,7 @@ export default async function MembersPage() {
     evaluateeMap.set(a.evaluateeId, a.evaluatee);
   }
 
-  const members = [...evaluateeMap.values()].sort((a, b) =>
-    a.name.localeCompare(b.name, "ja"),
-  );
+  const members = [...evaluateeMap.values()].sort((a, b) => a.name.localeCompare(b.name, "ja"));
 
   // 現在ユーザーが評価者としてアサインされている被評価者 ID
   const assignedEvaluateeIds = new Set(

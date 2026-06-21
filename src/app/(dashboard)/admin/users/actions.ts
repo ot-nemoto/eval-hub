@@ -18,11 +18,7 @@ export async function updateUserAction(
   try {
     await updateUser(id, data, session.user.id);
   } catch (e) {
-    if (
-      e instanceof ForbiddenError ||
-      e instanceof BadRequestError ||
-      e instanceof NotFoundError
-    )
+    if (e instanceof ForbiddenError || e instanceof BadRequestError || e instanceof NotFoundError)
       return { error: e.message };
     throw e;
   }
@@ -31,7 +27,9 @@ export async function updateUserAction(
   return {};
 }
 
-export async function generateApiKeyAction(id: string): Promise<{ apiKey?: string; error?: string }> {
+export async function generateApiKeyAction(
+  id: string,
+): Promise<{ apiKey?: string; error?: string }> {
   const session = await getSession();
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
@@ -70,11 +68,7 @@ export async function deleteUserAction(id: string): Promise<{ error?: string }> 
   try {
     await deleteUser(id, session.user.id);
   } catch (e) {
-    if (
-      e instanceof ForbiddenError ||
-      e instanceof NotFoundError ||
-      e instanceof ConflictError
-    )
+    if (e instanceof ForbiddenError || e instanceof NotFoundError || e instanceof ConflictError)
       return { error: e.message };
     throw e;
   }

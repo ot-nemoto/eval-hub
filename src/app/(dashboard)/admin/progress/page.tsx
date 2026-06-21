@@ -21,10 +21,7 @@ export default async function AdminProgressPage({
 
   const parsedYear = yearParam !== undefined ? Number(yearParam) : null;
   const selectedYear =
-    parsedYear !== null &&
-    Number.isInteger(parsedYear) &&
-    parsedYear >= 1900 &&
-    parsedYear <= 9999
+    parsedYear !== null && Number.isInteger(parsedYear) && parsedYear >= 1900 && parsedYear <= 9999
       ? parsedYear
       : (currentFiscalYear?.year ?? null);
 
@@ -59,21 +56,15 @@ export default async function AdminProgressPage({
             {rows.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                  {selectedYear !== null
-                    ? "評価データがありません。"
-                    : "年度を選択してください。"}
+                  {selectedYear !== null ? "評価データがありません。" : "年度を選択してください。"}
                 </td>
               </tr>
             ) : (
               rows.map((row) => {
                 const selfPct =
-                  row.totalItems > 0
-                    ? Math.round((row.selfScored / row.totalItems) * 100)
-                    : 0;
+                  row.totalItems > 0 ? Math.round((row.selfScored / row.totalItems) * 100) : 0;
                 const managerPct =
-                  row.totalItems > 0
-                    ? Math.round((row.managerScored / row.totalItems) * 100)
-                    : 0;
+                  row.totalItems > 0 ? Math.round((row.managerScored / row.totalItems) * 100) : 0;
                 return (
                   <tr key={row.evaluateeId} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium text-gray-900">{row.name}</td>
@@ -81,12 +72,18 @@ export default async function AdminProgressPage({
                       <ProgressCell scored={row.selfScored} total={row.totalItems} pct={selfPct} />
                     </td>
                     <td className="px-4 py-3 text-gray-700">
-                      <ProgressCell scored={row.managerScored} total={row.totalItems} pct={managerPct} />
+                      <ProgressCell
+                        scored={row.managerScored}
+                        total={row.totalItems}
+                        pct={managerPct}
+                      />
                     </td>
                     <td className="px-4 py-3 text-gray-500" suppressHydrationWarning>
-                      {row.lastUpdatedAt
-                        ? row.lastUpdatedAt.toLocaleString("ja-JP")
-                        : <span className="text-gray-400">—</span>}
+                      {row.lastUpdatedAt ? (
+                        row.lastUpdatedAt.toLocaleString("ja-JP")
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
                   </tr>
                 );
@@ -96,9 +93,7 @@ export default async function AdminProgressPage({
         </table>
       </div>
 
-      {rows.length > 0 && (
-        <p className="mt-2 text-xs text-gray-400">{rows.length} 件</p>
-      )}
+      {rows.length > 0 && <p className="mt-2 text-xs text-gray-400">{rows.length} 件</p>}
     </div>
   );
 }

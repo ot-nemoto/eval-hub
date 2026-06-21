@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { deleteTargetAction, updateTargetAction } from "@/app/(dashboard)/admin/targets/actions";
 
 type Target = { id: number; name: string; no: number };

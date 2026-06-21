@@ -227,7 +227,9 @@ export default function ManagerEvaluationTabs({
               <div className="mb-4">
                 <span className="text-xs font-medium text-gray-400">{item.uid}</span>
                 <h3 className="text-base font-semibold text-gray-900">{item.name}</h3>
-                {item.description && <p className="mt-1 text-sm text-gray-600">{item.description}</p>}
+                {item.description && (
+                  <p className="mt-1 text-sm text-gray-600">{item.description}</p>
+                )}
                 {item.evalCriteria && (
                   <p className="mt-1 text-xs text-gray-400">評価基準: {item.evalCriteria}</p>
                 )}
@@ -253,11 +255,18 @@ export default function ManagerEvaluationTabs({
                 <p className="text-sm font-medium text-gray-700">最終評価スコア</p>
                 {effectiveReadOnly ? (
                   <span className="inline-block rounded-md border bg-white px-3 py-1.5 text-sm font-medium text-gray-700">
-                    {(() => { const s = finalScores[item.uid]; return s != null ? SCORE_LABELS[s] : "未設定"; })()}
+                    {(() => {
+                      const s = finalScores[item.uid];
+                      return s != null ? SCORE_LABELS[s] : "未設定";
+                    })()}
                   </span>
                 ) : (
                   <>
-                    <div role="radiogroup" aria-label="最終評価スコア" className="flex flex-wrap gap-2">
+                    <div
+                      role="radiogroup"
+                      aria-label="最終評価スコア"
+                      className="flex flex-wrap gap-2"
+                    >
                       {(["none", "ka", "ryo", "yu"] as Score[]).map((score) => (
                         // biome-ignore lint/a11y/useSemanticElements: カスタムラジオボタン実装（スタイル制御のため button を使用）
                         <button
@@ -319,7 +328,9 @@ export default function ManagerEvaluationTabs({
                     <div key={cm.id} className="rounded-md border bg-gray-50 p-3">
                       <div className="mb-1 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-gray-700">{cm.evaluatorName}</span>
+                          <span className="text-xs font-medium text-gray-700">
+                            {cm.evaluatorName}
+                          </span>
                           <span className="text-xs text-gray-400" suppressHydrationWarning>
                             {new Date(cm.createdAt).toLocaleString("ja-JP")}
                           </span>
@@ -360,9 +371,7 @@ export default function ManagerEvaluationTabs({
                               setEditReason((r) => ({ ...r, [cm.id]: e.target.value }))
                             }
                           />
-                          {errors[cm.id] && (
-                            <p className="text-xs text-red-600">{errors[cm.id]}</p>
-                          )}
+                          {errors[cm.id] && <p className="text-xs text-red-600">{errors[cm.id]}</p>}
                           <div className="flex gap-2">
                             <Button
                               size="sm"
@@ -399,9 +408,7 @@ export default function ManagerEvaluationTabs({
                     rows={3}
                     placeholder="コメント・採点理由（任意）"
                     value={newReason[item.uid] ?? ""}
-                    onChange={(e) =>
-                      setNewReason((r) => ({ ...r, [item.uid]: e.target.value }))
-                    }
+                    onChange={(e) => setNewReason((r) => ({ ...r, [item.uid]: e.target.value }))}
                   />
                   {errors[`add-${item.uid}`] && (
                     <p className="text-xs text-red-600">{errors[`add-${item.uid}`]}</p>

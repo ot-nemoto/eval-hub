@@ -70,7 +70,9 @@ async function main() {
   await prisma.evaluationItem.deleteMany({});
   await prisma.category.deleteMany({});
   await prisma.target.deleteMany({});
-  console.log("all data cleared (evaluations / fiscal_year_items / assignments / settings / items / categories / targets)");
+  console.log(
+    "all data cleared (evaluations / fiscal_year_items / assignments / settings / items / categories / targets)",
+  );
 
   // =========================================================================
   // 0-2. 旧 seed ユーザーのクリーンアップ（旧メールアドレスのユーザーを DB・Clerk から削除）
@@ -332,7 +334,9 @@ async function main() {
       evalCriteria: item.eval_criteria ?? null,
     })),
   });
-  console.log(`evaluation_items: ${deduplicatedItems.length} created (${evaluationItemsData.length - deduplicatedItems.length} duplicates skipped)`);
+  console.log(
+    `evaluation_items: ${deduplicatedItems.length} created (${evaluationItemsData.length - deduplicatedItems.length} duplicates skipped)`,
+  );
 
   // =========================================================================
   // 8. fiscal_year_items（年度と評価項目の紐付け）
@@ -462,7 +466,9 @@ async function main() {
       selfReason: null,
     })),
   });
-  console.log(`evaluations: ${evaluationsData.length} created (tebasaki/nankotsu 2026), tsukune 2025: ${allItems.length}件・全件入力済み（100% 確認用）`);
+  console.log(
+    `evaluations: ${evaluationsData.length} created (tebasaki/nankotsu 2026), tsukune 2025: ${allItems.length}件・全件入力済み（100% 確認用）`,
+  );
 
   // =========================================================================
   // 10. 評価者コメント（manager_comments）+ 最終スコア（manager_score）
@@ -486,9 +492,7 @@ async function main() {
       evalItemId: { in: [seedItems[0].id, seedItems[1].id, seedItems[2].id] },
     },
   });
-  const tebasakiEvalMap = Object.fromEntries(
-    tebasakiEvals.map((e) => [e.evalItemId, e.id]),
-  );
+  const tebasakiEvalMap = Object.fromEntries(tebasakiEvals.map((e) => [e.evalItemId, e.id]));
 
   // nankotsu の評価 MAP
   const nankotsuEvals = await prisma.evaluation.findMany({
@@ -498,9 +502,7 @@ async function main() {
       evalItemId: { in: [seedItems[0].id] },
     },
   });
-  const nankotsuEvalMap = Object.fromEntries(
-    nankotsuEvals.map((e) => [e.evalItemId, e.id]),
-  );
+  const nankotsuEvalMap = Object.fromEntries(nankotsuEvals.map((e) => [e.evalItemId, e.id]));
 
   const managerCommentsData = [
     // tebasaki item[0]: bonjiri + tsukune の2人がコメント（複数評価者ケース）
