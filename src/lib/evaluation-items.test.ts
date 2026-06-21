@@ -22,7 +22,7 @@ vi.mock("@/lib/prisma", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
-    fiscalYearItem: { count: vi.fn() },
+    evalItemVersionDetail: { count: vi.fn() },
     $transaction: vi.fn((cb: (tx: unknown) => Promise<unknown>) =>
       cb({
         evaluationItem: { update: vi.mocked(prisma.evaluationItem.update) },
@@ -120,24 +120,24 @@ describe("createEvaluationItem", () => {
   it("大分類が存在しない場合は NotFoundError をスロー", async () => {
     vi.mocked(prisma.target.findUnique).mockResolvedValue(null);
 
-    await expect(
-      createEvaluationItem({ targetId: 99, categoryId: 1, name: "x" }),
-    ).rejects.toThrow(NotFoundError);
+    await expect(createEvaluationItem({ targetId: 99, categoryId: 1, name: "x" })).rejects.toThrow(
+      NotFoundError,
+    );
   });
 
   it("中分類が存在しない場合は NotFoundError をスロー", async () => {
     vi.mocked(prisma.target.findUnique).mockResolvedValue(mockTarget as never);
     vi.mocked(prisma.category.findUnique).mockResolvedValue(null);
 
-    await expect(
-      createEvaluationItem({ targetId: 1, categoryId: 99, name: "x" }),
-    ).rejects.toThrow(NotFoundError);
+    await expect(createEvaluationItem({ targetId: 1, categoryId: 99, name: "x" })).rejects.toThrow(
+      NotFoundError,
+    );
   });
 
   it("name が空の場合は BadRequestError をスロー", async () => {
-    await expect(
-      createEvaluationItem({ targetId: 1, categoryId: 1, name: "  " }),
-    ).rejects.toThrow(BadRequestError);
+    await expect(createEvaluationItem({ targetId: 1, categoryId: 1, name: "  " })).rejects.toThrow(
+      BadRequestError,
+    );
   });
 
   it("categoryId が targetId と一致しない場合は BadRequestError をスロー", async () => {
@@ -147,9 +147,9 @@ describe("createEvaluationItem", () => {
       targetId: 2,
     } as never);
 
-    await expect(
-      createEvaluationItem({ targetId: 1, categoryId: 1, name: "x" }),
-    ).rejects.toThrow(BadRequestError);
+    await expect(createEvaluationItem({ targetId: 1, categoryId: 1, name: "x" })).rejects.toThrow(
+      BadRequestError,
+    );
   });
 
   it("DB の一意制約違反（P2002）の場合は ConflictError をスロー", async () => {
@@ -157,12 +157,18 @@ describe("createEvaluationItem", () => {
     vi.mocked(prisma.category.findUnique).mockResolvedValue(mockCategory as never);
     vi.mocked(prisma.evaluationItem.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.evaluationItem.create).mockRejectedValue(
-      Object.assign(new Prisma.PrismaClientKnownRequestError("Unique constraint", { code: "P2002", clientVersion: "5" }), {}),
+      Object.assign(
+        new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+          code: "P2002",
+          clientVersion: "5",
+        }),
+        {},
+      ),
     );
 
-    await expect(
-      createEvaluationItem({ targetId: 1, categoryId: 1, name: "dup" }),
-    ).rejects.toThrow(ConflictError);
+    await expect(createEvaluationItem({ targetId: 1, categoryId: 1, name: "dup" })).rejects.toThrow(
+      ConflictError,
+    );
   });
 });
 
@@ -213,10 +219,22 @@ describe("reorderEvaluationItems", () => {
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(prisma.evaluationItem.update).toHaveBeenCalledTimes(4);
-    expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(1, { where: { id: 1 }, data: { no: 100002 } });
-    expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(2, { where: { id: 2 }, data: { no: 100001 } });
-    expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(3, { where: { id: 1 }, data: { no: 2 } });
-    expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(4, { where: { id: 2 }, data: { no: 1 } });
+    expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(1, {
+      where: { id: 1 },
+      data: { no: 100002 },
+    });
+    expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(2, {
+      where: { id: 2 },
+      data: { no: 100001 },
+    });
+    expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(3, {
+      where: { id: 1 },
+      data: { no: 2 },
+    });
+    expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(4, {
+      where: { id: 2 },
+      data: { no: 1 },
+    });
   });
 });
 
@@ -225,7 +243,7 @@ describe("deleteEvaluationItem", () => {
 
   it("評価項目を削除する", async () => {
     vi.mocked(prisma.evaluationItem.findUnique).mockResolvedValue(mockItem as never);
-    vi.mocked(prisma.fiscalYearItem.count).mockResolvedValue(0);
+    vi.mocked(prisma.evalItemVersionDetail.count).mockResolvedValue(0);
     vi.mocked(prisma.evaluationItem.delete).mockResolvedValue(mockItem as never);
 
     await expect(deleteEvaluationItem(1)).resolves.not.toThrow();
@@ -240,16 +258,22 @@ describe("deleteEvaluationItem", () => {
 
   it("年度に紐づく項目が存在する場合は ConflictError をスロー", async () => {
     vi.mocked(prisma.evaluationItem.findUnique).mockResolvedValue(mockItem as never);
-    vi.mocked(prisma.fiscalYearItem.count).mockResolvedValue(2);
+    vi.mocked(prisma.evalItemVersionDetail.count).mockResolvedValue(2);
 
     await expect(deleteEvaluationItem(1)).rejects.toThrow(ConflictError);
   });
 
   it("DB の外部キー制約違反（P2003）の場合は ConflictError をスロー", async () => {
     vi.mocked(prisma.evaluationItem.findUnique).mockResolvedValue(mockItem as never);
-    vi.mocked(prisma.fiscalYearItem.count).mockResolvedValue(0);
+    vi.mocked(prisma.evalItemVersionDetail.count).mockResolvedValue(0);
     vi.mocked(prisma.evaluationItem.delete).mockRejectedValue(
-      Object.assign(new Prisma.PrismaClientKnownRequestError("Foreign key constraint", { code: "P2003", clientVersion: "5" }), {}),
+      Object.assign(
+        new Prisma.PrismaClientKnownRequestError("Foreign key constraint", {
+          code: "P2003",
+          clientVersion: "5",
+        }),
+        {},
+      ),
     );
 
     await expect(deleteEvaluationItem(1)).rejects.toThrow(ConflictError);

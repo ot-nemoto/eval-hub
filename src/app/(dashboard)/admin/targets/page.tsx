@@ -1,13 +1,18 @@
 import { redirect } from "next/navigation";
 import { MasterList } from "@/components/admin/MasterList";
 import { TargetForm } from "@/components/admin/TargetForm";
+import { VersionList } from "@/components/admin/VersionList";
+import { VersionSaveForm } from "@/components/admin/VersionSaveForm";
 import { getSession } from "@/lib/auth";
+import { getEvalItemVersions } from "@/lib/eval-item-versions";
 import { prisma } from "@/lib/prisma";
 
 export default async function TargetsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
+
+  const versions = await getEvalItemVersions();
 
   const targets = await prisma.target.findMany({
     orderBy: { no: "asc" },
@@ -25,7 +30,6 @@ export default async function TargetsPage() {
               name: true,
               description: true,
               evalCriteria: true,
-              _count: { select: { fiscalYearItems: true } },
             },
           },
         },
@@ -50,7 +54,7 @@ export default async function TargetsPage() {
         name: item.name,
         description: item.description,
         evalCriteria: item.evalCriteria,
-        hasEvaluations: item._count.fiscalYearItems > 0,
+        hasEvaluations: false,
       })),
     })),
   }));
@@ -59,7 +63,9 @@ export default async function TargetsPage() {
     <div>
       <div className="mb-6">
         <h2 className="text-xl font-bold text-gray-900">マスタ管理</h2>
-        <p className="text-sm text-gray-500">大分類・中分類・評価項目の追加・編集・削除、並び替えを行います。</p>
+        <p className="text-sm text-gray-500">
+          大分類・中分類・評価項目の追加・編集・削除、並び替えを行います。
+        </p>
       </div>
 
       {data.length === 0 ? (
@@ -72,6 +78,22 @@ export default async function TargetsPage() {
 
       <div className="mt-6">
         <TargetForm />
+      </div>
+
+      <div className="mt-6">
+        <VersionSaveForm />
+      </div>
+
+      <div className="mt-6">
+        <VersionList
+          versions={versions.map((v) => ({
+            id: v.id,
+            name: v.name,
+            createdAt: v.createdAt.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+            detailCount: v._count.details,
+            fiscalYearCount: v._count.fiscalYears,
+          }))}
+        />
       </div>
     </div>
   );

@@ -4,8 +4,18 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getSession } from "@/lib/auth";
+import {
+  createCategory,
+  deleteCategory,
+  reorderCategories,
+  updateCategory,
+} from "@/lib/categories";
 import { BadRequestError, ConflictError, NotFoundError } from "@/lib/errors";
-import { createCategory, deleteCategory, reorderCategories, updateCategory } from "@/lib/categories";
+import {
+  createEvalItemVersion,
+  deleteEvalItemVersion,
+  restoreEvalItemVersion,
+} from "@/lib/eval-item-versions";
 import {
   createEvaluationItem,
   deleteEvaluationItem,
@@ -14,17 +24,67 @@ import {
 } from "@/lib/evaluation-items";
 import { createTarget, deleteTarget, reorderTargets, updateTarget } from "@/lib/targets";
 
-// ---- 大分類 ----
+// ---- バージョン保存 ----
 
-export async function createTargetAction(data: {
-  name: string;
-}): Promise<{ error?: string }> {
+export async function createEvalItemVersionAction(name: string): Promise<{ error?: string }> {
   const session = await getSession();
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
-  if (typeof data.name !== "string" || !data.name.trim())
-    return { error: "name は必須です" };
+  if (typeof name !== "string" || !name.trim()) return { error: "バージョン名は必須です" };
+
+  await createEvalItemVersion(name.trim());
+
+  revalidatePath("/admin/targets");
+  return {};
+}
+
+export async function restoreVersionAction(versionId: number): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (session.user.role !== "ADMIN") redirect("/evaluations");
+
+  if (!Number.isInteger(versionId) || versionId < 1)
+    return { error: "versionId は正の整数で指定してください" };
+
+  try {
+    await restoreEvalItemVersion(versionId);
+  } catch (e) {
+    if (e instanceof BadRequestError || e instanceof NotFoundError) return { error: e.message };
+    throw e;
+  }
+
+  revalidatePath("/admin/targets");
+  return {};
+}
+
+export async function deleteEvalItemVersionAction(versionId: number): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (session.user.role !== "ADMIN") redirect("/evaluations");
+
+  if (!Number.isInteger(versionId) || versionId < 1)
+    return { error: "versionId は正の整数で指定してください" };
+
+  try {
+    await deleteEvalItemVersion(versionId);
+  } catch (e) {
+    if (e instanceof NotFoundError || e instanceof ConflictError) return { error: e.message };
+    throw e;
+  }
+
+  revalidatePath("/admin/targets");
+  return {};
+}
+
+// ---- 大分類 ----
+
+export async function createTargetAction(data: { name: string }): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (session.user.role !== "ADMIN") redirect("/evaluations");
+
+  if (typeof data.name !== "string" || !data.name.trim()) return { error: "name は必須です" };
 
   try {
     await createTarget(data);
@@ -45,8 +105,7 @@ export async function updateTargetAction(
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
-  if (!Number.isInteger(id) || id < 1)
-    return { error: "id は 1 以上の整数で指定してください" };
+  if (!Number.isInteger(id) || id < 1) return { error: "id は 1 以上の整数で指定してください" };
   if (data.name !== undefined && (typeof data.name !== "string" || !data.name.trim()))
     return { error: "name が不正です" };
   if (data.no !== undefined && (!Number.isInteger(data.no) || data.no < 1))
@@ -70,8 +129,7 @@ export async function deleteTargetAction(id: number): Promise<{ error?: string }
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
-  if (!Number.isInteger(id) || id < 1)
-    return { error: "id は 1 以上の整数で指定してください" };
+  if (!Number.isInteger(id) || id < 1) return { error: "id は 1 以上の整数で指定してください" };
 
   try {
     await deleteTarget(id);
@@ -96,8 +154,7 @@ export async function createCategoryAction(data: {
 
   if (!Number.isInteger(data.targetId) || data.targetId < 1)
     return { error: "targetId は 1 以上の整数で指定してください" };
-  if (typeof data.name !== "string" || !data.name.trim())
-    return { error: "name は必須です" };
+  if (typeof data.name !== "string" || !data.name.trim()) return { error: "name は必須です" };
 
   try {
     await createCategory(data);
@@ -118,8 +175,7 @@ export async function updateCategoryAction(
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
-  if (!Number.isInteger(id) || id < 1)
-    return { error: "id は 1 以上の整数で指定してください" };
+  if (!Number.isInteger(id) || id < 1) return { error: "id は 1 以上の整数で指定してください" };
   if (data.name !== undefined && (typeof data.name !== "string" || !data.name.trim()))
     return { error: "name が不正です" };
   if (data.no !== undefined && (!Number.isInteger(data.no) || data.no < 1))
@@ -143,8 +199,7 @@ export async function deleteCategoryAction(id: number): Promise<{ error?: string
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
-  if (!Number.isInteger(id) || id < 1)
-    return { error: "id は 1 以上の整数で指定してください" };
+  if (!Number.isInteger(id) || id < 1) return { error: "id は 1 以上の整数で指定してください" };
 
   try {
     await deleteCategory(id);
@@ -230,13 +285,13 @@ export async function createEvaluationItemAction(data: {
     return { error: "targetId は 1 以上の整数で指定してください" };
   if (!Number.isInteger(data.categoryId) || data.categoryId < 1)
     return { error: "categoryId は 1 以上の整数で指定してください" };
-  if (typeof data.name !== "string" || !data.name.trim())
-    return { error: "name は必須です" };
+  if (typeof data.name !== "string" || !data.name.trim()) return { error: "name は必須です" };
 
   try {
     await createEvaluationItem(data);
   } catch (e) {
-    if (e instanceof NotFoundError || e instanceof BadRequestError || e instanceof ConflictError) return { error: e.message };
+    if (e instanceof NotFoundError || e instanceof BadRequestError || e instanceof ConflictError)
+      return { error: e.message };
     throw e;
   }
 
@@ -252,8 +307,7 @@ export async function updateEvaluationItemAction(
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
-  if (!Number.isInteger(id) || id < 1)
-    return { error: "id は 1 以上の整数で指定してください" };
+  if (!Number.isInteger(id) || id < 1) return { error: "id は 1 以上の整数で指定してください" };
   if (data.name !== undefined && (typeof data.name !== "string" || !data.name.trim()))
     return { error: "name は空にできません" };
   if (data.name === undefined && !("description" in data) && !("evalCriteria" in data))
@@ -275,8 +329,7 @@ export async function deleteEvaluationItemAction(id: number): Promise<{ error?: 
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
-  if (!Number.isInteger(id) || id < 1)
-    return { error: "id は 1 以上の整数で指定してください" };
+  if (!Number.isInteger(id) || id < 1) return { error: "id は 1 以上の整数で指定してください" };
 
   try {
     await deleteEvaluationItem(id);

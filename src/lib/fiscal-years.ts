@@ -9,6 +9,7 @@ const fiscalYearSelect = {
   endDate: true,
   isCurrent: true,
   isLocked: true,
+  evalItemVersionId: true,
 } as const;
 
 export async function getFiscalYears() {
@@ -41,32 +42,19 @@ export async function createFiscalYear(data: {
   const latestFy = await prisma.fiscalYear.findFirst({
     where: { year: { lt: data.year } },
     orderBy: { year: "desc" },
-    select: { year: true },
+    select: { year: true, evalItemVersionId: true },
   });
 
   try {
-    return await prisma.$transaction(async (tx) => {
-      const fy = await tx.fiscalYear.create({
-        data: { year: data.year, name: data.name, startDate, endDate },
-        select: fiscalYearSelect,
-      });
-
-      if (latestFy) {
-        const sourceItems = await tx.fiscalYearItem.findMany({
-          where: { fiscalYear: latestFy.year },
-          select: { evaluationItemId: true },
-        });
-        if (sourceItems.length > 0) {
-          await tx.fiscalYearItem.createMany({
-            data: sourceItems.map((item) => ({
-              fiscalYear: data.year,
-              evaluationItemId: item.evaluationItemId,
-            })),
-          });
-        }
-      }
-
-      return fy;
+    return await prisma.fiscalYear.create({
+      data: {
+        year: data.year,
+        name: data.name,
+        startDate,
+        endDate,
+        evalItemVersionId: latestFy?.evalItemVersionId ?? null,
+      },
+      select: fiscalYearSelect,
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
@@ -130,7 +118,9 @@ export async function updateFiscalYear(
   });
 }
 
-export async function assertFiscalYearUnlocked(fiscalYear: number): Promise<{ error: string } | null> {
+export async function assertFiscalYearUnlocked(
+  fiscalYear: number,
+): Promise<{ error: string } | null> {
   const fy = await prisma.fiscalYear.findUnique({
     where: { year: fiscalYear },
     select: { isLocked: true },
@@ -154,110 +144,14 @@ export async function deleteFiscalYear(year: number) {
   const target = await prisma.fiscalYear.findUnique({ where: { year } });
   if (!target) throw new NotFoundError("年度が見つかりません");
 
-  const [assignmentCount, evaluationCount, settingCount, itemCount] = await Promise.all([
+  const [assignmentCount, evaluationCount, settingCount] = await Promise.all([
     prisma.evaluationAssignment.count({ where: { fiscalYear: year } }),
     prisma.evaluation.count({ where: { fiscalYear: year } }),
     prisma.evaluationSetting.count({ where: { fiscalYear: year } }),
-    prisma.fiscalYearItem.count({ where: { fiscalYear: year } }),
   ]);
 
-  if (assignmentCount > 0 || evaluationCount > 0 || settingCount > 0 || itemCount > 0)
+  if (assignmentCount > 0 || evaluationCount > 0 || settingCount > 0)
     throw new ConflictError("紐づくデータが存在するため削除できません");
 
   await prisma.fiscalYear.delete({ where: { year } });
-}
-
-export async function getFiscalYearItems(year: number) {
-  const fiscalYear = await prisma.fiscalYear.findUnique({ where: { year } });
-  if (!fiscalYear) throw new NotFoundError("年度が見つかりません");
-
-  const items = await prisma.fiscalYearItem.findMany({
-    where: { fiscalYear: year },
-    include: {
-      evaluationItem: {
-        select: { id: true, targetId: true, categoryId: true, no: true, name: true },
-      },
-    },
-    orderBy: { evaluationItem: { no: "asc" } },
-  });
-
-  return items.map((i) => i.evaluationItem);
-}
-
-export async function addFiscalYearItem(year: number, itemId: number) {
-  if (!Number.isInteger(itemId) || itemId < 1)
-    throw new BadRequestError("evaluationItemId は正の整数で指定してください");
-
-  const fiscalYear = await prisma.fiscalYear.findUnique({ where: { year } });
-  if (!fiscalYear) throw new NotFoundError("年度が見つかりません");
-
-  const item = await prisma.evaluationItem.findUnique({ where: { id: itemId } });
-  if (!item) throw new NotFoundError("評価項目が見つかりません");
-
-  const existing = await prisma.fiscalYearItem.findUnique({
-    where: { fiscalYear_evaluationItemId: { fiscalYear: year, evaluationItemId: itemId } },
-  });
-  if (existing) throw new ConflictError("すでに紐づいています");
-
-  try {
-    return await prisma.fiscalYearItem.create({
-      data: { fiscalYear: year, evaluationItemId: itemId },
-      select: { fiscalYear: true, evaluationItemId: true },
-    });
-  } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      throw new ConflictError("すでに紐づいています");
-    }
-    throw e;
-  }
-}
-
-export async function removeFiscalYearItem(year: number, itemId: number) {
-  if (!Number.isInteger(itemId) || itemId < 1)
-    throw new BadRequestError("itemId は正の整数で指定してください");
-
-  const existing = await prisma.fiscalYearItem.findUnique({
-    where: { fiscalYear_evaluationItemId: { fiscalYear: year, evaluationItemId: itemId } },
-  });
-  if (!existing) throw new NotFoundError("紐づきが見つかりません");
-
-  await prisma.fiscalYearItem.delete({
-    where: { fiscalYear_evaluationItemId: { fiscalYear: year, evaluationItemId: itemId } },
-  });
-}
-
-export async function copyFiscalYearItems(targetYear: number, sourceYear: number) {
-  if (!Number.isInteger(targetYear) || targetYear < 1900 || targetYear > 9999)
-    throw new BadRequestError("targetYear は 1900〜9999 の整数で指定してください");
-  if (!Number.isInteger(sourceYear) || sourceYear < 1900 || sourceYear > 9999)
-    throw new BadRequestError("sourceYear は 1900〜9999 の整数で指定してください");
-  if (targetYear === sourceYear)
-    throw new BadRequestError("コピー元とコピー先は異なる年度を指定してください");
-
-  const [target, source] = await Promise.all([
-    prisma.fiscalYear.findUnique({ where: { year: targetYear }, select: { year: true, isLocked: true } }),
-    prisma.fiscalYear.findUnique({ where: { year: sourceYear }, select: { year: true } }),
-  ]);
-  if (!target) throw new NotFoundError("コピー先の年度が見つかりません");
-  if (target.isLocked) throw new ConflictError("コピー先の年度はロックされているため編集できません");
-  if (!source) throw new NotFoundError("コピー元の年度が見つかりません");
-
-  const sourceItems = await prisma.fiscalYearItem.findMany({
-    where: { fiscalYear: sourceYear },
-    select: { evaluationItemId: true },
-  });
-
-  if (sourceItems.length === 0)
-    throw new BadRequestError("コピー元の年度に評価項目が設定されていません");
-
-  return prisma.$transaction(async (tx) => {
-    await tx.fiscalYearItem.deleteMany({ where: { fiscalYear: targetYear } });
-    await tx.fiscalYearItem.createMany({
-      data: sourceItems.map((item) => ({
-        fiscalYear: targetYear,
-        evaluationItemId: item.evaluationItemId,
-      })),
-    });
-    return { copiedCount: sourceItems.length };
-  });
 }
