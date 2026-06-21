@@ -35,7 +35,7 @@ export async function upsertSelfEvaluationAction(
     await upsertEvaluation({
       fiscalYear,
       evaluateeId: session.user.id,
-      evalItemId,
+      evalItemVersionDetailId: evalItemId,
       selfScore: data.selfScore,
       selfReason: data.selfReason,
     });
