@@ -8,7 +8,7 @@ vi.mock("@/lib/apiAuth", () => ({
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    evaluationItem: { findMany: vi.fn(), create: vi.fn(), deleteMany: vi.fn() },
+    evaluationItem: { findMany: vi.fn(), createMany: vi.fn(), deleteMany: vi.fn() },
     target: { create: vi.fn(), deleteMany: vi.fn() },
     category: { create: vi.fn(), deleteMany: vi.fn() },
     $transaction: vi.fn((cb: (tx: unknown) => Promise<unknown>) =>
@@ -22,7 +22,7 @@ vi.mock("@/lib/prisma", () => ({
           deleteMany: vi.mocked(prisma.category.deleteMany),
         },
         evaluationItem: {
-          create: vi.mocked(prisma.evaluationItem.create),
+          createMany: vi.mocked(prisma.evaluationItem.createMany),
           deleteMany: vi.mocked(prisma.evaluationItem.deleteMany),
         },
       }),
@@ -111,7 +111,7 @@ describe("POST /api/evaluation-items", () => {
       no: 1,
       name: "エンゲージメント",
     } as never);
-    vi.mocked(prisma.evaluationItem.create).mockResolvedValue(mockItem as never);
+    vi.mocked(prisma.evaluationItem.createMany).mockResolvedValue({ count: 1 } as never);
 
     const res = await POST(makeRequest(validBody));
     const body = await res.json();
@@ -123,7 +123,8 @@ describe("POST /api/evaluation-items", () => {
     expect(prisma.target.deleteMany).toHaveBeenCalledTimes(1);
     expect(prisma.target.create).toHaveBeenCalledTimes(1);
     expect(prisma.category.create).toHaveBeenCalledTimes(1);
-    expect(prisma.evaluationItem.create).toHaveBeenCalledTimes(1);
+    expect(prisma.evaluationItem.createMany).toHaveBeenCalledTimes(1);
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 30000 });
   });
 
   it("API キーが無効な場合は 401 を返す", async () => {
