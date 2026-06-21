@@ -33,7 +33,12 @@ export async function createEvalItemVersionAction(name: string): Promise<{ error
 
   if (typeof name !== "string" || !name.trim()) return { error: "バージョン名は必須です" };
 
-  await createEvalItemVersion(name.trim());
+  try {
+    await createEvalItemVersion(name.trim());
+  } catch (e) {
+    if (e instanceof BadRequestError) return { error: e.message };
+    throw e;
+  }
 
   revalidatePath("/admin/targets");
   return {};
