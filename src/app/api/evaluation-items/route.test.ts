@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/apiAuth", () => ({
@@ -7,14 +8,23 @@ vi.mock("@/lib/apiAuth", () => ({
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    evaluationItem: { findMany: vi.fn(), upsert: vi.fn() },
-    target: { upsert: vi.fn() },
-    category: { upsert: vi.fn() },
+    evaluationItem: { findMany: vi.fn(), create: vi.fn(), deleteMany: vi.fn() },
+    target: { create: vi.fn(), deleteMany: vi.fn() },
+    category: { create: vi.fn(), deleteMany: vi.fn() },
     $transaction: vi.fn((cb: (tx: unknown) => Promise<unknown>) =>
       cb({
-        target: { upsert: vi.mocked(prisma.target.upsert) },
-        category: { upsert: vi.mocked(prisma.category.upsert) },
-        evaluationItem: { upsert: vi.mocked(prisma.evaluationItem.upsert) },
+        target: {
+          create: vi.mocked(prisma.target.create),
+          deleteMany: vi.mocked(prisma.target.deleteMany),
+        },
+        category: {
+          create: vi.mocked(prisma.category.create),
+          deleteMany: vi.mocked(prisma.category.deleteMany),
+        },
+        evaluationItem: {
+          create: vi.mocked(prisma.evaluationItem.create),
+          deleteMany: vi.mocked(prisma.evaluationItem.deleteMany),
+        },
       }),
     ),
   },
@@ -92,24 +102,28 @@ describe("POST /api/evaluation-items", () => {
     },
   ];
 
-  it("有効なリクエストで upsert を実行して結果を返す", async () => {
+  it("有効なリクエストで全削除→INSERT を実行して結果を返す", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
-    vi.mocked(prisma.target.upsert).mockResolvedValue({ id: 1, no: 1, name: "社員" } as never);
-    vi.mocked(prisma.category.upsert).mockResolvedValue({
+    vi.mocked(prisma.target.create).mockResolvedValue({ id: 1, no: 1, name: "社員" } as never);
+    vi.mocked(prisma.category.create).mockResolvedValue({
       id: 1,
+      targetId: 1,
       no: 1,
       name: "エンゲージメント",
     } as never);
-    vi.mocked(prisma.evaluationItem.upsert).mockResolvedValue(mockItem as never);
+    vi.mocked(prisma.evaluationItem.create).mockResolvedValue(mockItem as never);
 
     const res = await POST(makeRequest(validBody));
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.data.upserted).toBe(1);
-    expect(prisma.target.upsert).toHaveBeenCalledTimes(1);
-    expect(prisma.category.upsert).toHaveBeenCalledTimes(1);
-    expect(prisma.evaluationItem.upsert).toHaveBeenCalledTimes(1);
+    expect(body.data.created).toBe(1);
+    expect(prisma.evaluationItem.deleteMany).toHaveBeenCalledTimes(1);
+    expect(prisma.category.deleteMany).toHaveBeenCalledTimes(1);
+    expect(prisma.target.deleteMany).toHaveBeenCalledTimes(1);
+    expect(prisma.target.create).toHaveBeenCalledTimes(1);
+    expect(prisma.category.create).toHaveBeenCalledTimes(1);
+    expect(prisma.evaluationItem.create).toHaveBeenCalledTimes(1);
   });
 
   it("API キーが無効な場合は 401 を返す", async () => {
@@ -176,5 +190,21 @@ describe("POST /api/evaluation-items", () => {
 
     const res = await POST(req);
     expect(res.status).toBe(400);
+  });
+
+  it("no 重複（P2002）は 400 を返す", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    vi.mocked(prisma.target.create).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+        code: "P2002",
+        clientVersion: "5.0.0",
+      }),
+    );
+
+    const res = await POST(makeRequest(validBody));
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error.message).toBe("no が重複しています");
   });
 });

@@ -22,7 +22,7 @@ Authorization: Bearer <api_key>
 | メソッド | パス | 説明 |
 |---------|------|------|
 | `GET` | `/api/evaluation-items` | 評価項目一覧の取得 |
-| `POST` | `/api/evaluation-items` | 評価項目の一括登録（upsert） |
+| `POST` | `/api/evaluation-items` | 評価項目の一括登録（全削除→INSERT） |
 
 ---
 
@@ -53,8 +53,8 @@ Authorization: Bearer <api_key>
 
 ## POST /api/evaluation-items
 
-大項目（Target）→ 中項目（Category）→ 評価項目（EvaluationItem）の階層構造で一括 upsert する。
-`no` をキーとして既存データを更新し、存在しない場合は新規作成する。
+大項目（Target）→ 中項目（Category）→ 評価項目（EvaluationItem）の階層構造で一括登録する。
+既存の作業スペースデータ（targets / categories / evaluation_items）を全削除してから INSERT する。バージョン（eval_item_versions）には影響しない。
 
 ### リクエストボディ
 
@@ -83,7 +83,7 @@ Authorization: Bearer <api_key>
 
 | フィールド | 型 | 必須 | 説明 |
 |-----------|---|------|------|
-| `no` | number | ✓ | upsert キー（大項目は全体でユニーク、中項目は大項目内でユニーク、評価項目は中項目内でユニーク） |
+| `no` | number | ✓ | 表示順番号（大項目は全体でユニーク、中項目は大項目内でユニーク、評価項目は中項目内でユニーク） |
 | `name` | string | ✓ | 名称 |
 | `description` | string \| null | — | 説明（評価項目のみ） |
 | `evalCriteria` | string \| null | — | 評価基準（評価項目のみ） |
@@ -92,7 +92,7 @@ Authorization: Bearer <api_key>
 
 ```json
 {
-  "data": { "upserted": 3 },
+  "data": { "created": 3 },
   "meta": {
     "items": [
       { "targetNo": 1, "categoryNo": 1, "itemNo": 1, "name": "評価項目A" }
