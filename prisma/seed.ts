@@ -380,9 +380,7 @@ async function main() {
   });
 
   // evaluationItemId → versionDetailId のマッピング
-  const detailByItemId = Object.fromEntries(
-    version.details.map((d) => [d.evaluationItemId, d.id]),
-  );
+  const detailByItemId = Object.fromEntries(version.details.map((d) => [d.evaluationItemId, d.id]));
 
   console.log(
     `eval_item_versions: バージョン "${version.name}" (id=${version.id}) を作成、詳細 ${version.details.length}件、全年度に割り当て`,

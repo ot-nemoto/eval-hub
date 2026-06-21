@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BadRequestError, ConflictError, NotFoundError } from "@/lib/errors";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-vi.mock("next/navigation", () => ({ redirect: vi.fn((url: string) => { throw new Error(`REDIRECT:${url}`); }) }));
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn((url: string) => {
+    throw new Error(`REDIRECT:${url}`);
+  }),
+}));
 vi.mock("@/lib/auth", () => ({ getSession: vi.fn() }));
 vi.mock("@/lib/prisma", () => ({ prisma: {} }));
 vi.mock("@/lib/categories", () => ({}));
@@ -51,14 +55,20 @@ describe("createEvalItemVersionAction", () => {
 
   it("BadRequestError を catch してエラーを返す", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
-    vi.mocked(createEvalItemVersion).mockRejectedValue(new BadRequestError("評価項目が存在しません"));
+    vi.mocked(createEvalItemVersion).mockRejectedValue(
+      new BadRequestError("評価項目が存在しません"),
+    );
     const result = await createEvalItemVersionAction("v1");
     expect(result).toEqual({ error: "評価項目が存在しません" });
   });
 
   it("正常系で空オブジェクトを返す", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
-    vi.mocked(createEvalItemVersion).mockResolvedValue({ id: 1, name: "v1", createdAt: new Date() } as never);
+    vi.mocked(createEvalItemVersion).mockResolvedValue({
+      id: 1,
+      name: "v1",
+      createdAt: new Date(),
+    } as never);
     const result = await createEvalItemVersionAction("v1");
     expect(result).toEqual({});
     expect(createEvalItemVersion).toHaveBeenCalledWith("v1");
@@ -81,7 +91,9 @@ describe("restoreVersionAction", () => {
 
   it("NotFoundError を catch してエラーを返す", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
-    vi.mocked(restoreEvalItemVersion).mockRejectedValue(new NotFoundError("バージョンが見つかりません"));
+    vi.mocked(restoreEvalItemVersion).mockRejectedValue(
+      new NotFoundError("バージョンが見つかりません"),
+    );
     const result = await restoreVersionAction(999);
     expect(result).toEqual({ error: "バージョンが見つかりません" });
   });
