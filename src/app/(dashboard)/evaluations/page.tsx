@@ -10,7 +10,18 @@ export default async function EvaluationsPage() {
   if (!session) redirect("/login");
   const userId = session.user.id;
   const fiscalYear = await getCurrentFiscalYear();
-  if (!fiscalYear) redirect("/login");
+  if (!fiscalYear) {
+    return (
+      <div>
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900">自己評価</h2>
+        </div>
+        <div className="rounded-lg border bg-white p-8 text-center text-gray-500">
+          年度が設定されていません。管理者にお問い合わせください。
+        </div>
+      </div>
+    );
+  }
 
   const [fiscalYearRecord, evaluations, setting] = await Promise.all([
     prisma.fiscalYear.findUnique({
