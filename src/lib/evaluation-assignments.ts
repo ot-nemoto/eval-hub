@@ -7,7 +7,11 @@ export async function getEvaluationAssignments(filter?: {
   evaluateeId?: string;
 }) {
   if (filter?.fiscalYear !== undefined) {
-    if (!Number.isInteger(filter.fiscalYear) || filter.fiscalYear < 1900 || filter.fiscalYear > 9999)
+    if (
+      !Number.isInteger(filter.fiscalYear) ||
+      filter.fiscalYear < 1900 ||
+      filter.fiscalYear > 9999
+    )
       throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
   }
 

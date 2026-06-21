@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import type { NextRequest } from "next/server";
 import { errorResponse, successResponse } from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
@@ -66,20 +67,33 @@ export async function POST(req: NextRequest) {
 
   for (const t of body as TargetInput[]) {
     if (!Number.isInteger(t.no) || t.no < 1 || typeof t.name !== "string" || !t.name.trim()) {
-      return errorResponse("BAD_REQUEST", "大項目に no（1以上の整数）と name（文字列）は必須です", 400);
+      return errorResponse(
+        "BAD_REQUEST",
+        "大項目に no（1以上の整数）と name（文字列）は必須です",
+        400,
+      );
     }
     if (!Array.isArray(t.categories)) {
       return errorResponse("BAD_REQUEST", "大項目に categories 配列は必須です", 400);
     }
     for (const c of t.categories) {
       if (!Number.isInteger(c.no) || c.no < 1 || typeof c.name !== "string" || !c.name.trim()) {
-        return errorResponse("BAD_REQUEST", "中項目に no（1以上の整数）と name（文字列）は必須です", 400);
+        return errorResponse(
+          "BAD_REQUEST",
+          "中項目に no（1以上の整数）と name（文字列）は必須です",
+          400,
+        );
       }
       if (!Array.isArray(c.items)) {
         return errorResponse("BAD_REQUEST", "中項目に items 配列は必須です", 400);
       }
       for (const item of c.items) {
-        if (!Number.isInteger(item.no) || item.no < 1 || typeof item.name !== "string" || !item.name.trim()) {
+        if (
+          !Number.isInteger(item.no) ||
+          item.no < 1 ||
+          typeof item.name !== "string" ||
+          !item.name.trim()
+        ) {
           return errorResponse(
             "BAD_REQUEST",
             "評価項目に no（1以上の整数）と name（文字列）は必須です",
@@ -96,29 +110,25 @@ export async function POST(req: NextRequest) {
     created = await prisma.$transaction(async (tx) => {
       const result: typeof created = [];
 
+      // 全削除（FK順: 評価項目→中分類→大分類）
+      await tx.evaluationItem.deleteMany({});
+      await tx.category.deleteMany({});
+      await tx.target.deleteMany({});
+
+      // 再挿入（大分類→中分類→評価項目）
       for (const targetInput of body as TargetInput[]) {
-        const target = await tx.target.upsert({
-          where: { no: targetInput.no },
-          update: { name: targetInput.name },
-          create: { no: targetInput.no, name: targetInput.name },
+        const target = await tx.target.create({
+          data: { no: targetInput.no, name: targetInput.name },
         });
 
         for (const categoryInput of targetInput.categories) {
-          const category = await tx.category.upsert({
-            where: { targetId_no: { targetId: target.id, no: categoryInput.no } },
-            update: { name: categoryInput.name },
-            create: { targetId: target.id, no: categoryInput.no, name: categoryInput.name },
+          const category = await tx.category.create({
+            data: { targetId: target.id, no: categoryInput.no, name: categoryInput.name },
           });
 
           for (const itemInput of categoryInput.items) {
-            await tx.evaluationItem.upsert({
-              where: { categoryId_no: { categoryId: category.id, no: itemInput.no } },
-              update: {
-                name: itemInput.name,
-                description: itemInput.description ?? null,
-                evalCriteria: itemInput.evalCriteria ?? null,
-              },
-              create: {
+            await tx.evaluationItem.create({
+              data: {
                 targetId: target.id,
                 categoryId: category.id,
                 no: itemInput.no,
@@ -139,9 +149,12 @@ export async function POST(req: NextRequest) {
 
       return result;
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      return errorResponse("BAD_REQUEST", "no が重複しています", 400);
+    }
     return errorResponse("INTERNAL_SERVER_ERROR", "サーバーエラーが発生しました", 500);
   }
 
-  return successResponse({ upserted: created.length }, { items: created }, 200);
+  return successResponse({ created: created.length }, { items: created }, 200);
 }

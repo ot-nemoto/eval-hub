@@ -11,7 +11,18 @@ export default async function MembersPage() {
   const userId = session.user.id;
   const isAdmin = session.user.role === "ADMIN";
   const fiscalYear = await getCurrentFiscalYear();
-  if (!fiscalYear) redirect("/evaluations");
+  if (!fiscalYear) {
+    return (
+      <div>
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900">社員一覧</h2>
+        </div>
+        <div className="rounded-lg border bg-white p-8 text-center text-gray-500">
+          年度が設定されていません。管理者にお問い合わせください。
+        </div>
+      </div>
+    );
+  }
 
   type Member = { id: string; name: string; division: string | null };
 
@@ -38,9 +49,7 @@ export default async function MembersPage() {
     evaluateeMap.set(a.evaluateeId, a.evaluatee);
   }
 
-  const members = [...evaluateeMap.values()].sort((a, b) =>
-    a.name.localeCompare(b.name, "ja"),
-  );
+  const members = [...evaluateeMap.values()].sort((a, b) => a.name.localeCompare(b.name, "ja"));
 
   // 現在ユーザーが評価者としてアサインされている被評価者 ID
   const assignedEvaluateeIds = new Set(

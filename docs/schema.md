@@ -33,11 +33,28 @@ erDiagram
         DATE end_date
         BOOLEAN is_current
         BOOLEAN is_locked
+        INT eval_item_version_id FK
         TIMESTAMP created_at
     }
-    fiscal_year_items {
-        INT fiscal_year PK_FK
-        INT evaluation_item_id PK_FK
+    eval_item_versions {
+        INT id PK
+        VARCHAR name
+        TIMESTAMP created_at
+    }
+    eval_item_version_details {
+        INT id PK
+        INT version_id FK
+        INT evaluation_item_id
+        INT target_id
+        INT category_id
+        INT no
+        VARCHAR name
+        TEXT description
+        TEXT eval_criteria
+        INT target_no
+        VARCHAR target_name
+        INT category_no
+        VARCHAR category_name
     }
     targets {
         INT id PK
@@ -75,7 +92,7 @@ erDiagram
         TEXT id PK
         INT fiscal_year FK
         TEXT evaluatee_id FK
-        INT eval_item_id FK
+        INT eval_item_version_detail_id FK
         ENUM self_score
         TEXT self_reason
         ENUM manager_score
@@ -96,15 +113,15 @@ erDiagram
     users ||--o{ evaluations : "evaluatee_id"
     users ||--o{ manager_comments : "evaluator_id"
     users ||--o{ evaluation_settings : "user_id"
-    fiscal_years ||--o{ fiscal_year_items : "fiscal_year"
+    fiscal_years }o--o| eval_item_versions : "eval_item_version_id"
+    eval_item_versions ||--o{ eval_item_version_details : "version_id"
+    eval_item_version_details ||--o{ evaluations : "eval_item_version_detail_id"
     fiscal_years ||--o{ evaluation_assignments : "fiscal_year"
     fiscal_years ||--o{ evaluation_settings : "fiscal_year"
     fiscal_years ||--o{ evaluations : "fiscal_year"
     targets ||--o{ categories : "target_id"
     targets ||--o{ evaluation_items : "target_id"
     categories ||--o{ evaluation_items : "category_id"
-    evaluation_items ||--o{ fiscal_year_items : "evaluation_item_id"
-    evaluation_items ||--o{ evaluations : "eval_item_id"
     evaluations ||--o{ manager_comments : "evaluation_id"
 ```
 
@@ -143,19 +160,46 @@ erDiagram
 | end_date | DATE | NOT NULL | 終了日 |
 | is_current | BOOLEAN | DEFAULT false | 現在年度フラグ（部分ユニークインデックスで true は最大1件） |
 | is_locked | BOOLEAN | DEFAULT false | ロックフラグ（true の場合、評価の作成・編集・削除を一切禁止） |
+| eval_item_version_id | INTEGER | FK → eval_item_versions.id, NULLABLE | 割り当てられた評価項目バージョン |
 | created_at | TIMESTAMP | DEFAULT now() | |
 
 ---
 
-### fiscal_year_items — 年度×評価項目の紐付け
+### eval_item_versions — 評価項目バージョン
 
 | カラム | 型 | 制約 | 説明 |
 |---|---|---|---|
-| fiscal_year | INTEGER | PK, FK → fiscal_years.year | 年度 |
-| evaluation_item_id | INTEGER | PK, FK → evaluation_items.id | 評価項目 |
+| id | INTEGER | PK, AUTOINCREMENT | バージョンID |
+| name | VARCHAR(100) | NOT NULL | バージョン名 |
+| created_at | TIMESTAMP | DEFAULT now() | 作成日時 |
 
-- 年度ごとに対象評価項目を制御する（年度によって評価項目を増減可能）
-- 複合主キーで重複防止
+- 評価項目の作業スペース（targets / categories / evaluation_items）のスナップショットを保持する
+- 年度に割り当てることで、その年度の評価対象項目を確定する
+
+---
+
+### eval_item_version_details — 評価項目バージョン詳細
+
+| カラム | 型 | 制約 | 説明 |
+|---|---|---|---|
+| id | INTEGER | PK, AUTOINCREMENT | 詳細ID |
+| version_id | INTEGER | FK → eval_item_versions.id, NOT NULL | 所属バージョン |
+| evaluation_item_id | INTEGER | NOT NULL | スナップショット元の評価項目ID（FK制約なし） |
+| target_id | INTEGER | NOT NULL | スナップショット元の大分類ID（FK制約なし） |
+| category_id | INTEGER | NOT NULL | スナップショット元の中分類ID（FK制約なし） |
+| no | INTEGER | NOT NULL | 中分類内での項目番号 |
+| name | VARCHAR(255) | NOT NULL | 評価項目名 |
+| description | TEXT | | 説明 |
+| eval_criteria | TEXT | | 評価事例・基準 |
+| target_no | INTEGER | NOT NULL | 大分類の表示順番号（スナップショット） |
+| target_name | VARCHAR(255) | NOT NULL | 大分類名（スナップショット） |
+| category_no | INTEGER | NOT NULL | 中分類の表示順番号（スナップショット） |
+| category_name | VARCHAR(255) | NOT NULL | 中分類名（スナップショット） |
+| UNIQUE | (version_id, evaluation_item_id) | | バージョン内で評価項目の重複防止 |
+
+- 作業スペース（targets / categories / evaluation_items）への FK 制約を持たない
+- バージョン復元時に作業スペースを全消し→insert するため、FK制約があると復元できない
+- target_no / target_name / category_no / category_name はスナップショット時点の値を保持する
 
 ---
 
@@ -219,12 +263,12 @@ erDiagram
 | id | TEXT | PK, DEFAULT uuid() | UUID 値を TEXT で保存 |
 | fiscal_year | INTEGER | NOT NULL | 年度 |
 | evaluatee_id | TEXT | FK → users.id | 評価される人 |
-| eval_item_id | INTEGER | FK → evaluation_items.id | 評価項目 |
+| eval_item_version_detail_id | INTEGER | FK → eval_item_version_details.id | 評価項目バージョン詳細 |
 | self_score | ENUM | | `none` / `ka` / `ryo` / `yu` |
 | self_reason | TEXT | | 自己採点理由 |
 | manager_score | ENUM | | 最終評価スコア（アサイン済み評価者・admin が上書き可、nullable） |
 | updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 最終更新日時（Prisma @updatedAt） |
-| UNIQUE | (fiscal_year, evaluatee_id, eval_item_id) | | 年度×被評価者×項目で1レコード |
+| UNIQUE | (fiscal_year, evaluatee_id, eval_item_version_detail_id) | | 年度×被評価者×バージョン詳細で1レコード |
 
 - 自己評価（`self_score / self_reason`）は本人が入力
 - `manager_score` は評価項目ごとに1つの最終スコア（複数評価者で共有・誰でも上書き可）
@@ -272,13 +316,13 @@ erDiagram
 |---|---|---|---|
 | `users` | UNIQUE | `clerk_id` | Clerk ID による検索・重複防止 |
 | `users` | UNIQUE | `email` | メールアドレスによる検索・重複防止 |
-| `fiscal_year_items` | PRIMARY KEY（複合） | `(fiscal_year, evaluation_item_id)` | 複合主キー = 重複防止 |
+| `eval_item_version_details` | UNIQUE（複合） | `(version_id, evaluation_item_id)` | バージョン内の評価項目重複防止 |
 | `evaluation_settings` | UNIQUE（複合） | `(user_id, fiscal_year)` | ユーザー×年度で1レコード |
 | `evaluation_assignments` | UNIQUE（複合） | `(fiscal_year, evaluatee_id, evaluator_id)` | 重複アサイン防止 |
 | `targets` | UNIQUE | `no` | 全体番号の重複防止 |
 | `categories` | UNIQUE（複合） | `(target_id, no)` | 大分類内番号の重複防止 |
 | `evaluation_items` | UNIQUE（複合） | `(category_id, no)` | 中分類内番号の重複防止 |
-| `evaluations` | UNIQUE（複合） | `(fiscal_year, evaluatee_id, eval_item_id)` | 年度×被評価者×評価項目で1レコード |
+| `evaluations` | UNIQUE（複合） | `(fiscal_year, evaluatee_id, eval_item_version_detail_id)` | 年度×被評価者×バージョン詳細で1レコード |
 | `fiscal_years` | PARTIAL UNIQUE | `is_current = true` | 現在年度フラグは最大1件（マイグレーションで管理） |
 
 ---

@@ -1,12 +1,6 @@
 "use client";
 
-export default function PageError({
-  error,
-  reset,
-}: {
-  error: Error;
-  reset: () => void;
-}) {
+export default function PageError({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="rounded-lg border border-red-200 bg-red-50 p-6">
       <p className="text-red-600">エラーが発生しました：{error.message}</p>

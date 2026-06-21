@@ -120,8 +120,14 @@ describe("reorderTargets", () => {
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(prisma.target.update).toHaveBeenCalledTimes(4);
-    expect(prisma.target.update).toHaveBeenNthCalledWith(1, { where: { id: 1 }, data: { no: 100002 } });
-    expect(prisma.target.update).toHaveBeenNthCalledWith(2, { where: { id: 2 }, data: { no: 100001 } });
+    expect(prisma.target.update).toHaveBeenNthCalledWith(1, {
+      where: { id: 1 },
+      data: { no: 100002 },
+    });
+    expect(prisma.target.update).toHaveBeenNthCalledWith(2, {
+      where: { id: 2 },
+      data: { no: 100001 },
+    });
     expect(prisma.target.update).toHaveBeenNthCalledWith(3, { where: { id: 1 }, data: { no: 2 } });
     expect(prisma.target.update).toHaveBeenNthCalledWith(4, { where: { id: 2 }, data: { no: 1 } });
   });

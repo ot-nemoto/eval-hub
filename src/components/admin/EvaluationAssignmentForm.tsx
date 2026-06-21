@@ -57,9 +57,7 @@ export function EvaluationAssignmentForm({ fiscalYear, users }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="rounded-lg border bg-white p-4">
-      <h3 className="mb-4 font-medium text-gray-900">
-        {fiscalYear}年度 — 新しいアサインを追加
-      </h3>
+      <h3 className="mb-4 font-medium text-gray-900">{fiscalYear}年度 — 新しいアサインを追加</h3>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="evaluateeId" className="mb-1 block text-xs font-medium text-gray-700">

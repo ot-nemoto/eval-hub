@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import EvaluationTabs from "@/components/evaluation/EvaluationTabs";
 import { getSession } from "@/lib/auth";
-import { getCurrentFiscalYear } from "@/lib/fiscal-year";
 import { getEvaluations } from "@/lib/evaluations";
+import { getCurrentFiscalYear } from "@/lib/fiscal-year";
 import { prisma } from "@/lib/prisma";
 
 export default async function EvaluationsPage() {
@@ -10,24 +10,37 @@ export default async function EvaluationsPage() {
   if (!session) redirect("/login");
   const userId = session.user.id;
   const fiscalYear = await getCurrentFiscalYear();
-  if (!fiscalYear) redirect("/login");
+  if (!fiscalYear) {
+    return (
+      <div>
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900">自己評価</h2>
+        </div>
+        <div className="rounded-lg border bg-white p-8 text-center text-gray-500">
+          年度が設定されていません。管理者にお問い合わせください。
+        </div>
+      </div>
+    );
+  }
 
-  const [items, evaluations, setting, fiscalYearRecord] = await Promise.all([
-    prisma.evaluationItem.findMany({
-      where: { fiscalYearItems: { some: { fiscalYear: fiscalYear } } },
-      orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
-      include: { target: true, category: true },
+  const [fiscalYearRecord, evaluations, setting] = await Promise.all([
+    prisma.fiscalYear.findUnique({
+      where: { year: fiscalYear },
+      select: { isLocked: true, evalItemVersionId: true },
     }),
     getEvaluations(userId, fiscalYear),
     prisma.evaluationSetting.findUnique({
       where: { userId_fiscalYear: { userId: userId, fiscalYear: fiscalYear } },
     }),
-    prisma.fiscalYear.findUnique({
-      where: { year: fiscalYear },
-      select: { isLocked: true },
-    }),
   ]);
   const isLocked = fiscalYearRecord?.isLocked ?? false;
+
+  const items = fiscalYearRecord?.evalItemVersionId
+    ? await prisma.evalItemVersionDetail.findMany({
+        where: { versionId: fiscalYearRecord.evalItemVersionId },
+        orderBy: [{ targetNo: "asc" }, { categoryNo: "asc" }, { no: "asc" }],
+      })
+    : [];
 
   const selfEvaluationEnabled = setting?.selfEvaluationEnabled ?? false;
 
@@ -45,7 +58,7 @@ export default async function EvaluationsPage() {
     );
   }
 
-  const evalMap = Object.fromEntries(evaluations.map((e) => [e.evalItemId, e]));
+  const evalMap = Object.fromEntries(evaluations.map((e) => [e.evalItemVersionDetailId, e]));
 
   const itemsWithEval = items.map((item) => {
     const ev = evalMap[item.id];
@@ -54,8 +67,8 @@ export default async function EvaluationsPage() {
       name: item.name,
       description: item.description,
       evalCriteria: item.evalCriteria,
-      category: item.category.name,
-      target: item.target.name,
+      category: item.categoryName,
+      target: item.targetName,
       selfScore: ev?.selfScore ?? null,
       selfReason: ev?.selfReason ?? null,
       managerComments: ev?.managerComments ?? [],

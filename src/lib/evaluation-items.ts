@@ -17,7 +17,10 @@ const itemSelect = {
 export async function getEvaluationItems(filter?: { targetId?: number; categoryId?: number }) {
   if (filter?.targetId !== undefined && (!Number.isInteger(filter.targetId) || filter.targetId < 1))
     throw new BadRequestError("targetId は 1 以上の整数で指定してください");
-  if (filter?.categoryId !== undefined && (!Number.isInteger(filter.categoryId) || filter.categoryId < 1))
+  if (
+    filter?.categoryId !== undefined &&
+    (!Number.isInteger(filter.categoryId) || filter.categoryId < 1)
+  )
     throw new BadRequestError("categoryId は 1 以上の整数で指定してください");
 
   const where: { targetId?: number; categoryId?: number } = {};
@@ -120,14 +123,14 @@ export async function deleteEvaluationItem(id: number) {
   const existing = await prisma.evaluationItem.findUnique({ where: { id } });
   if (!existing) throw new NotFoundError("評価項目が見つかりません");
 
-  const linked = await prisma.fiscalYearItem.count({ where: { evaluationItemId: id } });
-  if (linked > 0) throw new ConflictError("年度に紐づいているため削除できません");
+  const linked = await prisma.evalItemVersionDetail.count({ where: { evaluationItemId: id } });
+  if (linked > 0) throw new ConflictError("バージョンに紐づいているため削除できません");
 
   try {
     await prisma.evaluationItem.delete({ where: { id } });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
-      throw new ConflictError("年度に紐づいているため削除できません");
+      throw new ConflictError("バージョンに紐づいているため削除できません");
     }
     throw e;
   }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { createEvaluationItemAction } from "@/app/(dashboard)/admin/targets/actions";
 
 type Props = {
@@ -60,7 +60,10 @@ export function EvaluationItemInlineForm({ targetId, categoryId }: Props) {
   return (
     <form onSubmit={handleSubmit} className="rounded border bg-white p-3 space-y-2">
       <div>
-        <label htmlFor={`item-name-${categoryId}`} className="block text-xs font-medium text-gray-600 mb-0.5">
+        <label
+          htmlFor={`item-name-${categoryId}`}
+          className="block text-xs font-medium text-gray-600 mb-0.5"
+        >
           名称 <span className="text-red-500">*</span>
         </label>
         <input
@@ -74,7 +77,10 @@ export function EvaluationItemInlineForm({ targetId, categoryId }: Props) {
         />
       </div>
       <div>
-        <label htmlFor={`item-desc-${categoryId}`} className="block text-xs font-medium text-gray-600 mb-0.5">
+        <label
+          htmlFor={`item-desc-${categoryId}`}
+          className="block text-xs font-medium text-gray-600 mb-0.5"
+        >
           説明
         </label>
         <textarea
@@ -87,7 +93,10 @@ export function EvaluationItemInlineForm({ targetId, categoryId }: Props) {
         />
       </div>
       <div>
-        <label htmlFor={`item-criteria-${categoryId}`} className="block text-xs font-medium text-gray-600 mb-0.5">
+        <label
+          htmlFor={`item-criteria-${categoryId}`}
+          className="block text-xs font-medium text-gray-600 mb-0.5"
+        >
           評価基準
         </label>
         <textarea

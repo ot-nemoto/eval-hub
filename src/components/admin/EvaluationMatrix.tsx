@@ -111,7 +111,10 @@ export function EvaluationMatrix({ users, rows }: Props) {
           <tbody className="divide-y">
             {rows.map((row) => (
               <tr key={row.uid} className="hover:bg-gray-50">
-                <th scope="row" className="sticky left-0 z-10 bg-white px-3 py-2 whitespace-nowrap border-r text-left font-normal">
+                <th
+                  scope="row"
+                  className="sticky left-0 z-10 bg-white px-3 py-2 whitespace-nowrap border-r text-left font-normal"
+                >
                   <span className="font-mono text-xs text-gray-400 mr-2">{row.uid}</span>
                   <span className="text-gray-700">{row.name}</span>
                 </th>
@@ -124,9 +127,7 @@ export function EvaluationMatrix({ users, rows }: Props) {
                         <ScoreLabel score={score.managerScore} />
                       </>
                     ) : (
-                      <ScoreLabel
-                        score={mode === "self" ? score.selfScore : score.managerScore}
-                      />
+                      <ScoreLabel score={mode === "self" ? score.selfScore : score.managerScore} />
                     )}
                   </td>
                 ))}

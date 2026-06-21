@@ -5,11 +5,10 @@ import { redirect } from "next/navigation";
 
 import { getSession } from "@/lib/auth";
 import { BadRequestError, ConflictError, NotFoundError } from "@/lib/errors";
+import { assignVersionToFiscalYear, unassignVersionFromFiscalYear } from "@/lib/eval-item-versions";
 import {
-  addFiscalYearItem,
   createFiscalYear,
   deleteFiscalYear,
-  removeFiscalYearItem,
   toggleFiscalYearLock,
   updateFiscalYear,
 } from "@/lib/fiscal-years";
@@ -26,8 +25,7 @@ export async function createFiscalYearAction(data: {
 
   if (!Number.isInteger(data.year) || data.year < 1900 || data.year > 9999)
     return { error: "year は 1900〜9999 の整数で指定してください" };
-  if (typeof data.name !== "string" || !data.name.trim())
-    return { error: "name は必須です" };
+  if (typeof data.name !== "string" || !data.name.trim()) return { error: "name は必須です" };
   if (typeof data.startDate !== "string" || typeof data.endDate !== "string")
     return { error: "startDate, endDate は必須です" };
 
@@ -53,8 +51,7 @@ export async function updateFiscalYearAction(
   if (!Number.isInteger(year) || year < 1900 || year > 9999)
     return { error: "year は 1900〜9999 の整数で指定してください" };
 
-  if (Object.keys(data).length === 0)
-    return { error: "更新するフィールドを指定してください" };
+  if (Object.keys(data).length === 0) return { error: "更新するフィールドを指定してください" };
 
   try {
     await updateFiscalYear(year, data);
@@ -89,6 +86,51 @@ export async function toggleFiscalYearLockAction(
   return {};
 }
 
+export async function assignVersionAction(
+  year: number,
+  versionId: number,
+): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (session.user.role !== "ADMIN") redirect("/evaluations");
+
+  if (!Number.isInteger(year) || year < 1900 || year > 9999)
+    return { error: "year は 1900〜9999 の整数で指定してください" };
+  if (!Number.isInteger(versionId) || versionId < 1)
+    return { error: "versionId は正の整数で指定してください" };
+
+  try {
+    await assignVersionToFiscalYear(year, versionId);
+  } catch (e) {
+    if (e instanceof BadRequestError || e instanceof NotFoundError || e instanceof ConflictError)
+      return { error: e.message };
+    throw e;
+  }
+
+  revalidatePath("/admin/fiscal-years");
+  return {};
+}
+
+export async function unassignVersionAction(year: number): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (session.user.role !== "ADMIN") redirect("/evaluations");
+
+  if (!Number.isInteger(year) || year < 1900 || year > 9999)
+    return { error: "year は 1900〜9999 の整数で指定してください" };
+
+  try {
+    await unassignVersionFromFiscalYear(year);
+  } catch (e) {
+    if (e instanceof BadRequestError || e instanceof NotFoundError || e instanceof ConflictError)
+      return { error: e.message };
+    throw e;
+  }
+
+  revalidatePath("/admin/fiscal-years");
+  return {};
+}
+
 export async function deleteFiscalYearAction(year: number): Promise<{ error?: string }> {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -101,55 +143,6 @@ export async function deleteFiscalYearAction(year: number): Promise<{ error?: st
     await deleteFiscalYear(year);
   } catch (e) {
     if (e instanceof NotFoundError || e instanceof ConflictError) return { error: e.message };
-    throw e;
-  }
-
-  revalidatePath("/admin/fiscal-years");
-  return {};
-}
-
-export async function addFiscalYearItemAction(
-  year: number,
-  itemId: number,
-): Promise<{ error?: string }> {
-  const session = await getSession();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/evaluations");
-
-  if (!Number.isInteger(year) || year < 1900 || year > 9999)
-    return { error: "year は 1900〜9999 の整数で指定してください" };
-  if (!Number.isInteger(itemId) || itemId < 1)
-    return { error: "evaluationItemId は正の整数で指定してください" };
-
-  try {
-    await addFiscalYearItem(year, itemId);
-  } catch (e) {
-    if (e instanceof BadRequestError || e instanceof NotFoundError || e instanceof ConflictError)
-      return { error: e.message };
-    throw e;
-  }
-
-  revalidatePath("/admin/fiscal-years");
-  return {};
-}
-
-export async function removeFiscalYearItemAction(
-  year: number,
-  itemId: number,
-): Promise<{ error?: string }> {
-  const session = await getSession();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/evaluations");
-
-  if (!Number.isInteger(year) || year < 1900 || year > 9999)
-    return { error: "year は 1900〜9999 の整数で指定してください" };
-  if (!Number.isInteger(itemId) || itemId < 1)
-    return { error: "itemId は正の整数で指定してください" };
-
-  try {
-    await removeFiscalYearItem(year, itemId);
-  } catch (e) {
-    if (e instanceof BadRequestError || e instanceof NotFoundError) return { error: e.message };
     throw e;
   }
 

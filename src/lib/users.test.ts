@@ -1,7 +1,14 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "./errors";
-import { deleteUser, generateApiKey, getUsers, revokeApiKey, updateUser, updateUserName } from "./users";
+import {
+  deleteUser,
+  generateApiKey,
+  getUsers,
+  revokeApiKey,
+  updateUser,
+  updateUserName,
+} from "./users";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -193,9 +200,7 @@ describe("generateApiKey", () => {
 
     const result = await generateApiKey({ id: "user-1" });
 
-    expect(result.apiKey).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-    );
+    expect(result.apiKey).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: "user-1" },
       data: { apiKey: result.apiKey },

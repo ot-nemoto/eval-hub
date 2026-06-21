@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getSession } from "@/lib/auth";
-import { upsertEvaluationSetting } from "@/lib/evaluation-settings";
 import { BadRequestError, NotFoundError } from "@/lib/errors";
+import { upsertEvaluationSetting } from "@/lib/evaluation-settings";
 
 export async function upsertEvaluationSettingAction(
   userId: string,

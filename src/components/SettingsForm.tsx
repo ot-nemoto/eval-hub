@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { generateMyApiKeyAction, revokeMyApiKeyAction, updateNameAction } from "@/app/(dashboard)/actions";
+import {
+  generateMyApiKeyAction,
+  revokeMyApiKeyAction,
+  updateNameAction,
+} from "@/app/(dashboard)/actions";
 
 type Props = {
   initialName: string;

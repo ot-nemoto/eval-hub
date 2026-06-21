@@ -1,8 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import ManagerEvaluationTabs from "@/components/evaluation/ManagerEvaluationTabs";
 import { getSession } from "@/lib/auth";
-import { getCurrentFiscalYear } from "@/lib/fiscal-year";
 import { getEvaluations } from "@/lib/evaluations";
+import { getCurrentFiscalYear } from "@/lib/fiscal-year";
 import { prisma } from "@/lib/prisma";
 
 type Props = { params: Promise<{ id: string }> };
@@ -15,7 +15,18 @@ export default async function MemberEvaluationsPage({ params }: Props) {
   const evaluatorId = session.user.id;
   const isAdmin = session.user.role === "ADMIN";
   const fiscalYear = await getCurrentFiscalYear();
-  if (!fiscalYear) notFound();
+  if (!fiscalYear) {
+    return (
+      <div>
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900">評価</h2>
+        </div>
+        <div className="rounded-lg border bg-white p-8 text-center text-gray-500">
+          年度が設定されていません。管理者にお問い合わせください。
+        </div>
+      </div>
+    );
+  }
 
   // 対象ユーザーが当該年度の被評価者として存在するか確認
   const isEvaluatee = await prisma.evaluationAssignment.findFirst({
@@ -45,21 +56,23 @@ export default async function MemberEvaluationsPage({ params }: Props) {
   });
   if (!evaluatee) notFound();
 
-  const [items, evaluations, fiscalYearRecord] = await Promise.all([
-    prisma.evaluationItem.findMany({
-      where: { fiscalYearItems: { some: { fiscalYear: fiscalYear } } },
-      orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
-      include: { target: true, category: true },
-    }),
-    getEvaluations(evaluateeId, fiscalYear),
+  const [fiscalYearRecord, evaluations] = await Promise.all([
     prisma.fiscalYear.findUnique({
       where: { year: fiscalYear },
-      select: { isLocked: true },
+      select: { isLocked: true, evalItemVersionId: true },
     }),
+    getEvaluations(evaluateeId, fiscalYear),
   ]);
   const isLocked = fiscalYearRecord?.isLocked ?? false;
 
-  const evalMap = Object.fromEntries(evaluations.map((e) => [e.evalItemId, e]));
+  const items = fiscalYearRecord?.evalItemVersionId
+    ? await prisma.evalItemVersionDetail.findMany({
+        where: { versionId: fiscalYearRecord.evalItemVersionId },
+        orderBy: [{ targetNo: "asc" }, { categoryNo: "asc" }, { no: "asc" }],
+      })
+    : [];
+
+  const evalMap = Object.fromEntries(evaluations.map((e) => [e.evalItemVersionDetailId, e]));
 
   const itemsWithEval = items.map((item) => {
     const ev = evalMap[item.id];
@@ -68,8 +81,8 @@ export default async function MemberEvaluationsPage({ params }: Props) {
       name: item.name,
       description: item.description,
       evalCriteria: item.evalCriteria,
-      category: item.category.name,
-      target: item.target.name,
+      category: item.categoryName,
+      target: item.targetName,
       selfScore: (ev?.selfScore ?? null) as "none" | "ka" | "ryo" | "yu" | null,
       selfReason: ev?.selfReason ?? null,
       managerScore: (ev?.managerScore ?? null) as "none" | "ka" | "ryo" | "yu" | null,
