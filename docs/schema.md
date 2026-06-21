@@ -115,7 +115,7 @@ erDiagram
     users ||--o{ evaluation_settings : "user_id"
     fiscal_years }o--o| eval_item_versions : "eval_item_version_id"
     eval_item_versions ||--o{ eval_item_version_details : "version_id"
-    eval_item_version_details ||--o{ evaluations : "eval_item_id"
+    eval_item_version_details ||--o{ evaluations : "eval_item_version_detail_id"
     fiscal_years ||--o{ evaluation_assignments : "fiscal_year"
     fiscal_years ||--o{ evaluation_settings : "fiscal_year"
     fiscal_years ||--o{ evaluations : "fiscal_year"
