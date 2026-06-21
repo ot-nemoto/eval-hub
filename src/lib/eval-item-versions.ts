@@ -151,6 +151,17 @@ export async function restoreEvalItemVersion(versionId: number) {
         detail.evalCriteria,
       );
     }
+
+    // SERIAL シーケンスを max(id) に同期
+    await tx.$executeRawUnsafe(
+      `SELECT setval(pg_get_serial_sequence('"targets"', 'id'), COALESCE(MAX(id), 1)) FROM "targets"`,
+    );
+    await tx.$executeRawUnsafe(
+      `SELECT setval(pg_get_serial_sequence('"categories"', 'id'), COALESCE(MAX(id), 1)) FROM "categories"`,
+    );
+    await tx.$executeRawUnsafe(
+      `SELECT setval(pg_get_serial_sequence('"evaluation_items"', 'id'), COALESCE(MAX(id), 1)) FROM "evaluation_items"`,
+    );
   });
 }
 
