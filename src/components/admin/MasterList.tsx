@@ -1,23 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
+  closestCenter,
   DndContext,
   type DragEndEvent,
   KeyboardSensor,
   PointerSensor,
-  closestCenter,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
 import {
-  SortableContext,
   arrayMove,
+  SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useEffect, useState } from "react";
 import {
   reorderCategoriesAction,
   reorderEvaluationItemsAction,
@@ -84,7 +84,13 @@ function SortableEvaluationItem({ item }: { item: EvaluationItem }) {
   return (
     <tr ref={setNodeRef} style={style} className="hover:bg-gray-50">
       <td className="py-2 pl-2 pr-1 w-6">
-        <button type="button" aria-label="並び替え" {...attributes} {...listeners} className="cursor-grab touch-none">
+        <button
+          type="button"
+          aria-label="並び替え"
+          {...attributes}
+          {...listeners}
+          className="cursor-grab touch-none"
+        >
           <DragHandle />
         </button>
       </td>
@@ -92,7 +98,12 @@ function SortableEvaluationItem({ item }: { item: EvaluationItem }) {
       <td className="py-2 text-gray-700">{item.name}</td>
       <td className="py-2 text-right pr-2">
         <EvaluationItemActions
-          item={{ id: item.id, name: item.name, description: item.description, evalCriteria: item.evalCriteria }}
+          item={{
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            evalCriteria: item.evalCriteria,
+          }}
           hasEvaluations={item.hasEvaluations}
         />
       </td>
@@ -142,7 +153,13 @@ function SortableCategory({ category, targetId }: { category: Category; targetId
   return (
     <div ref={setNodeRef} style={style} className="border-b last:border-b-0">
       <div className="flex items-center gap-2 px-2 py-2 bg-gray-50/50">
-        <button type="button" aria-label="並び替え" {...attributes} {...listeners} className="cursor-grab touch-none shrink-0">
+        <button
+          type="button"
+          aria-label="並び替え"
+          {...attributes}
+          {...listeners}
+          className="cursor-grab touch-none shrink-0"
+        >
           <DragHandle />
         </button>
         <button
@@ -168,10 +185,7 @@ function SortableCategory({ category, targetId }: { category: Category; targetId
             collisionDetection={closestCenter}
             onDragEnd={handleItemDragEnd}
           >
-            <SortableContext
-              items={items.map((i) => i.id)}
-              strategy={verticalListSortingStrategy}
-            >
+            <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
               {items.length > 0 ? (
                 <table className="w-full text-sm mb-2">
                   <tbody className="divide-y">
@@ -235,7 +249,13 @@ function SortableTarget({ target }: { target: Target }) {
   return (
     <div ref={setNodeRef} style={style} className="overflow-hidden rounded-lg border bg-white">
       <div className="flex items-center gap-2 border-b bg-gray-50 px-2 py-3">
-        <button type="button" aria-label="並び替え" {...attributes} {...listeners} className="cursor-grab touch-none shrink-0">
+        <button
+          type="button"
+          aria-label="並び替え"
+          {...attributes}
+          {...listeners}
+          className="cursor-grab touch-none shrink-0"
+        >
           <DragHandle />
         </button>
         <span className="text-xs font-medium text-gray-400 w-6 shrink-0">No.{target.no}</span>

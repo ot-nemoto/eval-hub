@@ -1,15 +1,13 @@
 "use server";
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { FISCAL_YEAR_COOKIE } from "@/lib/fiscal-year";
 import { BadRequestError, NotFoundError } from "@/lib/errors";
+import { FISCAL_YEAR_COOKIE } from "@/lib/fiscal-year";
 import { generateApiKey, revokeApiKey, updateUserName } from "@/lib/users";
 
-export async function setFiscalYearAction(
-  year: number,
-): Promise<{ error?: string }> {
+export async function setFiscalYearAction(year: number): Promise<{ error?: string }> {
   const session = await getSession();
   if (!session) redirect("/login");
 

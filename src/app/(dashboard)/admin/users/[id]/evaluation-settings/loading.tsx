@@ -11,26 +11,50 @@ export default function EvaluationSettingsLoading() {
         <table className="w-full text-sm">
           <thead className="border-b bg-gray-50">
             <tr>
-              <th className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></th>
-              <th className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></th>
-              <th className="px-4 py-3"><div className="h-4 w-16 rounded bg-gray-200" /></th>
+              <th className="px-4 py-3">
+                <div className="h-4 w-16 rounded bg-gray-200" />
+              </th>
+              <th className="px-4 py-3">
+                <div className="h-4 w-16 rounded bg-gray-200" />
+              </th>
+              <th className="px-4 py-3">
+                <div className="h-4 w-16 rounded bg-gray-200" />
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y">
             <tr>
-              <td className="px-4 py-3"><div className="h-4 w-20 rounded bg-gray-200" /></td>
-              <td className="px-4 py-3"><div className="h-6 w-10 rounded-full bg-gray-200" /></td>
-              <td className="px-4 py-3"><div className="h-4 w-8 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3">
+                <div className="h-4 w-20 rounded bg-gray-200" />
+              </td>
+              <td className="px-4 py-3">
+                <div className="h-6 w-10 rounded-full bg-gray-200" />
+              </td>
+              <td className="px-4 py-3">
+                <div className="h-4 w-8 rounded bg-gray-200" />
+              </td>
             </tr>
             <tr>
-              <td className="px-4 py-3"><div className="h-4 w-20 rounded bg-gray-200" /></td>
-              <td className="px-4 py-3"><div className="h-6 w-10 rounded-full bg-gray-200" /></td>
-              <td className="px-4 py-3"><div className="h-4 w-8 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3">
+                <div className="h-4 w-20 rounded bg-gray-200" />
+              </td>
+              <td className="px-4 py-3">
+                <div className="h-6 w-10 rounded-full bg-gray-200" />
+              </td>
+              <td className="px-4 py-3">
+                <div className="h-4 w-8 rounded bg-gray-200" />
+              </td>
             </tr>
             <tr>
-              <td className="px-4 py-3"><div className="h-4 w-20 rounded bg-gray-200" /></td>
-              <td className="px-4 py-3"><div className="h-6 w-10 rounded-full bg-gray-200" /></td>
-              <td className="px-4 py-3"><div className="h-4 w-8 rounded bg-gray-200" /></td>
+              <td className="px-4 py-3">
+                <div className="h-4 w-20 rounded bg-gray-200" />
+              </td>
+              <td className="px-4 py-3">
+                <div className="h-6 w-10 rounded-full bg-gray-200" />
+              </td>
+              <td className="px-4 py-3">
+                <div className="h-4 w-8 rounded bg-gray-200" />
+              </td>
             </tr>
           </tbody>
         </table>

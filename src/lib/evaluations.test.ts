@@ -23,11 +23,11 @@ vi.mock("@/lib/prisma", () => ({
     evaluationAssignment: {
       findMany: vi.fn(),
     },
-    evaluationItem: {
+    evalItemVersionDetail: {
       findMany: vi.fn(),
     },
-    fiscalYearItem: {
-      findMany: vi.fn(),
+    fiscalYear: {
+      findUnique: vi.fn(),
     },
     managerComment: {
       create: vi.fn(),
@@ -44,24 +44,24 @@ import { prisma } from "@/lib/prisma";
 
 const mockEvaluation = {
   id: "eval-1",
-  evalItemId: 1,
+  evalItemVersionDetailId: 1,
   fiscalYear: 2024,
   evaluateeId: "user-1",
   selfScore: "ryo",
   selfReason: "理由",
   managerScore: null,
-  evaluationItem: { name: "評価項目A" },
+  evalItemVersionDetail: { name: "評価項目A" },
   managerComments: [],
 };
 
 const mockSelfEvaluationRow = {
   id: "eval-1",
   evaluatee: { id: "user-1", name: "テストユーザー" },
-  evaluationItem: {
+  evalItemVersionDetail: {
     no: 1,
     name: "評価項目A",
-    target: { no: 1 },
-    category: { no: 1 },
+    targetNo: 1,
+    categoryNo: 1,
   },
   selfScore: "ryo",
   selfReason: "理由",
@@ -81,9 +81,9 @@ describe("getAllSelfEvaluations", () => {
         where: { fiscalYear: 2026, evaluatee: { isActive: true } },
         orderBy: [
           { evaluatee: { name: "asc" } },
-          { evaluationItem: { target: { no: "asc" } } },
-          { evaluationItem: { category: { no: "asc" } } },
-          { evaluationItem: { no: "asc" } },
+          { evalItemVersionDetail: { targetNo: "asc" } },
+          { evalItemVersionDetail: { categoryNo: "asc" } },
+          { evalItemVersionDetail: { no: "asc" } },
         ],
       }),
     );
@@ -135,7 +135,7 @@ describe("getAllSelfEvaluations", () => {
 describe("getEvaluations", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("評価一覧を evalItemId 昇順で返し、managerComments 配列を含む", async () => {
+  it("評価一覧を evalItemVersionDetailId 昇順で返し、managerComments 配列を含む", async () => {
     const evalWithComments = {
       ...mockEvaluation,
       managerComments: [
@@ -155,12 +155,12 @@ describe("getEvaluations", () => {
     expect(prisma.evaluation.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { fiscalYear: 2024, evaluateeId: "user-1" },
-        orderBy: { evalItemId: "asc" },
+        orderBy: { evalItemVersionDetailId: "asc" },
       }),
     );
     expect(result).toEqual([
       {
-        evalItemId: 1,
+        evalItemVersionDetailId: 1,
         evaluationId: "eval-1",
         itemName: "評価項目A",
         selfScore: "ryo",
@@ -206,7 +206,7 @@ describe("upsertEvaluation", () => {
     const result = await upsertEvaluation({
       fiscalYear: 2024,
       evaluateeId: "user-1",
-      evalItemId: 1,
+      evalItemVersionDetailId: 1,
       selfScore: "ryo",
       selfReason: "理由",
     });
@@ -214,16 +214,16 @@ describe("upsertEvaluation", () => {
     expect(prisma.evaluation.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
-          fiscalYear_evaluateeId_evalItemId: {
+          fiscalYear_evaluateeId_evalItemVersionDetailId: {
             fiscalYear: 2024,
             evaluateeId: "user-1",
-            evalItemId: 1,
+            evalItemVersionDetailId: 1,
           },
         },
       }),
     );
     expect(result).toEqual({
-      evalItemId: 1,
+      evalItemVersionDetailId: 1,
       selfScore: "ryo",
       selfReason: "理由",
     });
@@ -231,25 +231,25 @@ describe("upsertEvaluation", () => {
 
   it("fiscalYear が範囲外の場合は BadRequestError をスロー", async () => {
     await expect(
-      upsertEvaluation({ fiscalYear: 1800, evaluateeId: "user-1", evalItemId: 1 }),
+      upsertEvaluation({ fiscalYear: 1800, evaluateeId: "user-1", evalItemVersionDetailId: 1 }),
     ).rejects.toThrow(BadRequestError);
   });
 
   it("fiscalYear が整数でない場合は BadRequestError をスロー", async () => {
     await expect(
-      upsertEvaluation({ fiscalYear: 2024.5, evaluateeId: "user-1", evalItemId: 1 }),
+      upsertEvaluation({ fiscalYear: 2024.5, evaluateeId: "user-1", evalItemVersionDetailId: 1 }),
     ).rejects.toThrow(BadRequestError);
   });
 
-  it("evalItemId が 0 以下の場合は BadRequestError をスロー", async () => {
+  it("evalItemVersionDetailId が 0 以下の場合は BadRequestError をスロー", async () => {
     await expect(
-      upsertEvaluation({ fiscalYear: 2024, evaluateeId: "user-1", evalItemId: 0 }),
+      upsertEvaluation({ fiscalYear: 2024, evaluateeId: "user-1", evalItemVersionDetailId: 0 }),
     ).rejects.toThrow(BadRequestError);
   });
 
-  it("evalItemId が整数でない場合は BadRequestError をスロー", async () => {
+  it("evalItemVersionDetailId が整数でない場合は BadRequestError をスロー", async () => {
     await expect(
-      upsertEvaluation({ fiscalYear: 2024, evaluateeId: "user-1", evalItemId: 1.5 }),
+      upsertEvaluation({ fiscalYear: 2024, evaluateeId: "user-1", evalItemVersionDetailId: 1.5 }),
     ).rejects.toThrow(BadRequestError);
   });
 });
@@ -268,17 +268,17 @@ describe("upsertManagerScore", () => {
     expect(prisma.evaluation.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
-          fiscalYear_evaluateeId_evalItemId: {
+          fiscalYear_evaluateeId_evalItemVersionDetailId: {
             fiscalYear: 2024,
             evaluateeId: "user-1",
-            evalItemId: 1,
+            evalItemVersionDetailId: 1,
           },
         },
         create: expect.objectContaining({ managerScore: "yu" }),
         update: { managerScore: "yu" },
       }),
     );
-    expect(result).toEqual({ evalItemId: 1, managerScore: "yu" });
+    expect(result).toEqual({ evalItemVersionDetailId: 1, managerScore: "yu" });
   });
 
   it("managerScore に null を渡すとクリアできる", async () => {
@@ -296,7 +296,7 @@ describe("upsertManagerScore", () => {
     await expect(upsertManagerScore("user-1", 1800, 1, "yu")).rejects.toThrow(BadRequestError);
   });
 
-  it("evalItemId が正の整数でない場合は BadRequestError をスロー", async () => {
+  it("evalItemVersionDetailId が正の整数でない場合は BadRequestError をスロー", async () => {
     await expect(upsertManagerScore("user-1", 2024, 0, "yu")).rejects.toThrow(BadRequestError);
   });
 });
@@ -324,10 +324,10 @@ describe("addManagerComment", () => {
     expect(prisma.evaluation.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
-          fiscalYear_evaluateeId_evalItemId: {
+          fiscalYear_evaluateeId_evalItemVersionDetailId: {
             fiscalYear: 2024,
             evaluateeId: "user-1",
-            evalItemId: 1,
+            evalItemVersionDetailId: 1,
           },
         },
       }),
@@ -348,7 +348,7 @@ describe("addManagerComment", () => {
     ).rejects.toThrow(BadRequestError);
   });
 
-  it("evalItemId が正の整数でない場合は BadRequestError をスロー", async () => {
+  it("evalItemVersionDetailId が正の整数でない場合は BadRequestError をスロー", async () => {
     await expect(
       addManagerComment("user-1", 2024, 0, "manager-1", { reason: null }),
     ).rejects.toThrow(BadRequestError);
@@ -405,10 +405,13 @@ describe("getEvaluationProgress", () => {
       { evaluateeId: "user-1", evaluatee: { name: "田中" } },
       { evaluateeId: "user-2", evaluatee: { name: "鈴木" } },
     ] as never);
-    vi.mocked(prisma.fiscalYearItem.findMany).mockResolvedValue([
-      { evaluationItemId: 1 },
-      { evaluationItemId: 2 },
-      { evaluationItemId: 3 },
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue({
+      evalItemVersionId: 1,
+    } as never);
+    vi.mocked(prisma.evalItemVersionDetail.findMany).mockResolvedValue([
+      { id: 10 },
+      { id: 11 },
+      { id: 12 },
     ] as never);
     vi.mocked(prisma.evaluation.findMany).mockResolvedValue([
       { evaluateeId: "user-1", selfScore: "ryo", managerScore: "yu", updatedAt: now },
@@ -443,12 +446,15 @@ describe("getEvaluationProgress", () => {
     vi.mocked(prisma.evaluationAssignment.findMany).mockResolvedValue([
       { evaluateeId: "user-1", evaluatee: { name: "田中" } },
     ] as never);
-    vi.mocked(prisma.fiscalYearItem.findMany).mockResolvedValue([
-      { evaluationItemId: 1 },
-      { evaluationItemId: 2 },
-      { evaluationItemId: 3 },
-      { evaluationItemId: 4 },
-      { evaluationItemId: 5 },
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue({
+      evalItemVersionId: 1,
+    } as never);
+    vi.mocked(prisma.evalItemVersionDetail.findMany).mockResolvedValue([
+      { id: 1 },
+      { id: 2 },
+      { id: 3 },
+      { id: 4 },
+      { id: 5 },
     ] as never);
     vi.mocked(prisma.evaluation.findMany).mockResolvedValue([] as never);
 
@@ -478,11 +484,11 @@ describe("getEvaluationProgress", () => {
 const mockManagerEvalRow = {
   id: "eval-1",
   evaluatee: { id: "user-1", name: "テストユーザー" },
-  evaluationItem: {
+  evalItemVersionDetail: {
     no: 1,
     name: "評価項目A",
-    target: { no: 1 },
-    category: { no: 1 },
+    targetNo: 1,
+    categoryNo: 1,
   },
   managerScore: "ryo",
   managerComments: [
@@ -507,9 +513,9 @@ describe("getAllManagerEvaluations", () => {
         where: { fiscalYear: 2026, evaluatee: { isActive: true } },
         orderBy: [
           { evaluatee: { name: "asc" } },
-          { evaluationItem: { target: { no: "asc" } } },
-          { evaluationItem: { category: { no: "asc" } } },
-          { evaluationItem: { no: "asc" } },
+          { evalItemVersionDetail: { targetNo: "asc" } },
+          { evalItemVersionDetail: { categoryNo: "asc" } },
+          { evalItemVersionDetail: { no: "asc" } },
         ],
       }),
     );
@@ -560,17 +566,20 @@ describe("getEvaluationMatrix", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("正常系: ユーザー × 評価項目のマトリクスを返す", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue({
+      evalItemVersionId: 1,
+    } as never);
     vi.mocked(prisma.user.findMany).mockResolvedValue([
       { id: "user-1", name: "田中" },
       { id: "user-2", name: "鈴木" },
     ] as never);
-    vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue([
-      { id: 1, no: 1, name: "項目A", target: { no: 1 }, category: { no: 1 } },
-      { id: 2, no: 2, name: "項目B", target: { no: 1 }, category: { no: 1 } },
+    vi.mocked(prisma.evalItemVersionDetail.findMany).mockResolvedValue([
+      { id: 10, no: 1, name: "項目A", targetNo: 1, categoryNo: 1 },
+      { id: 11, no: 2, name: "項目B", targetNo: 1, categoryNo: 1 },
     ] as never);
     vi.mocked(prisma.evaluation.findMany).mockResolvedValue([
-      { evaluateeId: "user-1", evalItemId: 1, selfScore: "ryo", managerScore: "yu" },
-      { evaluateeId: "user-2", evalItemId: 2, selfScore: "ka", managerScore: null },
+      { evaluateeId: "user-1", evalItemVersionDetailId: 10, selfScore: "ryo", managerScore: "yu" },
+      { evaluateeId: "user-2", evalItemVersionDetailId: 11, selfScore: "ka", managerScore: null },
     ] as never);
 
     const result = await getEvaluationMatrix(2026);
@@ -600,11 +609,12 @@ describe("getEvaluationMatrix", () => {
   });
 
   it("評価データがない場合は全セルが null になる", async () => {
-    vi.mocked(prisma.user.findMany).mockResolvedValue([
-      { id: "user-1", name: "田中" },
-    ] as never);
-    vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue([
-      { id: 1, no: 1, name: "項目A", target: { no: 1 }, category: { no: 1 } },
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue({
+      evalItemVersionId: 1,
+    } as never);
+    vi.mocked(prisma.user.findMany).mockResolvedValue([{ id: "user-1", name: "田中" }] as never);
+    vi.mocked(prisma.evalItemVersionDetail.findMany).mockResolvedValue([
+      { id: 10, no: 1, name: "項目A", targetNo: 1, categoryNo: 1 },
     ] as never);
     vi.mocked(prisma.evaluation.findMany).mockResolvedValue([] as never);
 
@@ -614,9 +624,12 @@ describe("getEvaluationMatrix", () => {
   });
 
   it("ユーザーがいない場合は scores が空配列になる", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue({
+      evalItemVersionId: 1,
+    } as never);
     vi.mocked(prisma.user.findMany).mockResolvedValue([] as never);
-    vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue([
-      { id: 1, no: 1, name: "項目A", target: { no: 1 }, category: { no: 1 } },
+    vi.mocked(prisma.evalItemVersionDetail.findMany).mockResolvedValue([
+      { id: 10, no: 1, name: "項目A", targetNo: 1, categoryNo: 1 },
     ] as never);
     vi.mocked(prisma.evaluation.findMany).mockResolvedValue([] as never);
 

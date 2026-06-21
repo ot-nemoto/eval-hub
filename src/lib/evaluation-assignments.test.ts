@@ -107,7 +107,11 @@ describe("createEvaluationAssignment", () => {
 
   it("fiscalYear が範囲外の場合は BadRequestError をスロー", async () => {
     await expect(
-      createEvaluationAssignment({ fiscalYear: 1800, evaluateeId: "user-1", evaluatorId: "user-2" }),
+      createEvaluationAssignment({
+        fiscalYear: 1800,
+        evaluateeId: "user-1",
+        evaluatorId: "user-2",
+      }),
     ).rejects.toThrow(BadRequestError);
   });
 
@@ -127,7 +131,11 @@ describe("createEvaluationAssignment", () => {
     vi.mocked(prisma.evaluationAssignment.findUnique).mockResolvedValue(mockAssignment as never);
 
     await expect(
-      createEvaluationAssignment({ fiscalYear: 2024, evaluateeId: "user-1", evaluatorId: "user-2" }),
+      createEvaluationAssignment({
+        fiscalYear: 2024,
+        evaluateeId: "user-1",
+        evaluatorId: "user-2",
+      }),
     ).rejects.toThrow(ConflictError);
   });
 
@@ -141,7 +149,11 @@ describe("createEvaluationAssignment", () => {
     );
 
     await expect(
-      createEvaluationAssignment({ fiscalYear: 2024, evaluateeId: "user-1", evaluatorId: "user-2" }),
+      createEvaluationAssignment({
+        fiscalYear: 2024,
+        evaluateeId: "user-1",
+        evaluatorId: "user-2",
+      }),
     ).rejects.toThrow(ConflictError);
   });
 });

@@ -1,7 +1,13 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  createCategory,
+  deleteCategory,
+  getCategories,
+  reorderCategories,
+  updateCategory,
+} from "./categories";
 import { ConflictError, NotFoundError } from "./errors";
-import { createCategory, deleteCategory, getCategories, reorderCategories, updateCategory } from "./categories";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -163,10 +169,22 @@ describe("reorderCategories", () => {
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(prisma.category.update).toHaveBeenCalledTimes(4);
-    expect(prisma.category.update).toHaveBeenNthCalledWith(1, { where: { id: 1 }, data: { no: 100002 } });
-    expect(prisma.category.update).toHaveBeenNthCalledWith(2, { where: { id: 2 }, data: { no: 100001 } });
-    expect(prisma.category.update).toHaveBeenNthCalledWith(3, { where: { id: 1 }, data: { no: 2 } });
-    expect(prisma.category.update).toHaveBeenNthCalledWith(4, { where: { id: 2 }, data: { no: 1 } });
+    expect(prisma.category.update).toHaveBeenNthCalledWith(1, {
+      where: { id: 1 },
+      data: { no: 100002 },
+    });
+    expect(prisma.category.update).toHaveBeenNthCalledWith(2, {
+      where: { id: 2 },
+      data: { no: 100001 },
+    });
+    expect(prisma.category.update).toHaveBeenNthCalledWith(3, {
+      where: { id: 1 },
+      data: { no: 2 },
+    });
+    expect(prisma.category.update).toHaveBeenNthCalledWith(4, {
+      where: { id: 2 },
+      data: { no: 1 },
+    });
   });
 });
 

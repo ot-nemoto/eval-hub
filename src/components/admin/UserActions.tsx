@@ -65,7 +65,9 @@ export function UserActions({ userId, isActive, isSelf, isDeletable }: Props) {
         type="button"
         onClick={handleDelete}
         disabled={loading || !isDeletable}
-        title={!isDeletable ? "評価データまたはアサインデータが存在するため削除できません" : undefined}
+        title={
+          !isDeletable ? "評価データまたはアサインデータが存在するため削除できません" : undefined
+        }
         className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         削除

@@ -85,7 +85,9 @@ describe("upsertEvaluationSetting", () => {
 
   it("selfEvaluationEnabled が boolean でない場合は BadRequestError をスロー", async () => {
     await expect(
-      upsertEvaluationSetting("user-1", 2024, { selfEvaluationEnabled: "true" as unknown as boolean }),
+      upsertEvaluationSetting("user-1", 2024, {
+        selfEvaluationEnabled: "true" as unknown as boolean,
+      }),
     ).rejects.toThrow(BadRequestError);
   });
 

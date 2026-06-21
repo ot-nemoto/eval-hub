@@ -30,9 +30,7 @@ export async function createEvaluationAssignmentAction(data: {
   return {};
 }
 
-export async function deleteEvaluationAssignmentAction(
-  id: string,
-): Promise<{ error?: string }> {
+export async function deleteEvaluationAssignmentAction(id: string): Promise<{ error?: string }> {
   const session = await getSession();
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");

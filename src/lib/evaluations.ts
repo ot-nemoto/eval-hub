@@ -6,23 +6,30 @@ export async function getEvaluationProgress(fiscalYear: number) {
   if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
     throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
 
-  const [evaluatees, fiscalYearItems] = await Promise.all([
+  const [evaluatees, fy] = await Promise.all([
     prisma.evaluationAssignment.findMany({
       where: { fiscalYear },
       select: { evaluateeId: true, evaluatee: { select: { name: true } } },
       distinct: ["evaluateeId"],
       orderBy: { evaluatee: { name: "asc" } },
     }),
-    prisma.fiscalYearItem.findMany({
-      where: { fiscalYear },
-      select: { evaluationItemId: true },
+    prisma.fiscalYear.findUnique({
+      where: { year: fiscalYear },
+      select: { evalItemVersionId: true },
     }),
   ]);
 
-  const fiscalYearItemIds = fiscalYearItems.map((item) => item.evaluationItemId);
-  const totalItems = fiscalYearItemIds.length;
+  const versionDetails = fy?.evalItemVersionId
+    ? await prisma.evalItemVersionDetail.findMany({
+        where: { versionId: fy.evalItemVersionId },
+        select: { id: true },
+      })
+    : [];
+
+  const versionDetailIds = versionDetails.map((d) => d.id);
+  const totalItems = versionDetailIds.length;
   const evaluations = await prisma.evaluation.findMany({
-    where: { fiscalYear, evalItemId: { in: fiscalYearItemIds } },
+    where: { fiscalYear, evalItemVersionDetailId: { in: versionDetailIds } },
     select: { evaluateeId: true, selfScore: true, managerScore: true, updatedAt: true },
   });
 
@@ -39,17 +46,19 @@ export async function getEvaluationProgress(fiscalYear: number) {
     const selfScored = evals.filter((e) => e.selfScore !== null).length;
     const managerScored = evals.filter((e) => e.managerScore !== null).length;
     const lastUpdatedAt =
-      evals.length > 0
-        ? new Date(Math.max(...evals.map((e) => e.updatedAt.getTime())))
-        : null;
-    return { evaluateeId, name: evaluatee.name, totalItems, selfScored, managerScored, lastUpdatedAt };
+      evals.length > 0 ? new Date(Math.max(...evals.map((e) => e.updatedAt.getTime()))) : null;
+    return {
+      evaluateeId,
+      name: evaluatee.name,
+      totalItems,
+      selfScored,
+      managerScored,
+      lastUpdatedAt,
+    };
   });
 }
 
-export async function getAllManagerEvaluations(
-  fiscalYear: number,
-  filter?: { userId?: string },
-) {
+export async function getAllManagerEvaluations(fiscalYear: number, filter?: { userId?: string }) {
   if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
     throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
 
@@ -61,12 +70,12 @@ export async function getAllManagerEvaluations(
     },
     include: {
       evaluatee: { select: { id: true, name: true } },
-      evaluationItem: {
+      evalItemVersionDetail: {
         select: {
           no: true,
           name: true,
-          target: { select: { no: true } },
-          category: { select: { no: true } },
+          targetNo: true,
+          categoryNo: true,
         },
       },
       managerComments: {
@@ -77,9 +86,9 @@ export async function getAllManagerEvaluations(
     },
     orderBy: [
       { evaluatee: { name: "asc" } },
-      { evaluationItem: { target: { no: "asc" } } },
-      { evaluationItem: { category: { no: "asc" } } },
-      { evaluationItem: { no: "asc" } },
+      { evalItemVersionDetail: { targetNo: "asc" } },
+      { evalItemVersionDetail: { categoryNo: "asc" } },
+      { evalItemVersionDetail: { no: "asc" } },
     ],
   });
 
@@ -89,8 +98,8 @@ export async function getAllManagerEvaluations(
       id: r.id,
       evaluatee: r.evaluatee,
       item: {
-        uid: `${r.evaluationItem.target.no}-${r.evaluationItem.category.no}-${r.evaluationItem.no}`,
-        name: r.evaluationItem.name,
+        uid: `${r.evalItemVersionDetail.targetNo}-${r.evalItemVersionDetail.categoryNo}-${r.evalItemVersionDetail.no}`,
+        name: r.evalItemVersionDetail.name,
       },
       managerScore: r.managerScore,
       latestComment: latestComment
@@ -101,10 +110,7 @@ export async function getAllManagerEvaluations(
   });
 }
 
-export async function getAllSelfEvaluations(
-  fiscalYear: number,
-  filter?: { userId?: string },
-) {
+export async function getAllSelfEvaluations(fiscalYear: number, filter?: { userId?: string }) {
   if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
     throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
 
@@ -116,20 +122,20 @@ export async function getAllSelfEvaluations(
     },
     include: {
       evaluatee: { select: { id: true, name: true } },
-      evaluationItem: {
+      evalItemVersionDetail: {
         select: {
           no: true,
           name: true,
-          target: { select: { no: true } },
-          category: { select: { no: true } },
+          targetNo: true,
+          categoryNo: true,
         },
       },
     },
     orderBy: [
       { evaluatee: { name: "asc" } },
-      { evaluationItem: { target: { no: "asc" } } },
-      { evaluationItem: { category: { no: "asc" } } },
-      { evaluationItem: { no: "asc" } },
+      { evalItemVersionDetail: { targetNo: "asc" } },
+      { evalItemVersionDetail: { categoryNo: "asc" } },
+      { evalItemVersionDetail: { no: "asc" } },
     ],
   });
 
@@ -137,8 +143,8 @@ export async function getAllSelfEvaluations(
     id: r.id,
     evaluatee: r.evaluatee,
     item: {
-      uid: `${r.evaluationItem.target.no}-${r.evaluationItem.category.no}-${r.evaluationItem.no}`,
-      name: r.evaluationItem.name,
+      uid: `${r.evalItemVersionDetail.targetNo}-${r.evalItemVersionDetail.categoryNo}-${r.evalItemVersionDetail.no}`,
+      name: r.evalItemVersionDetail.name,
     },
     selfScore: r.selfScore,
     selfReason: r.selfReason,
@@ -150,34 +156,41 @@ export async function getEvaluationMatrix(fiscalYear: number) {
   if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
     throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
 
+  const fy = await prisma.fiscalYear.findUnique({
+    where: { year: fiscalYear },
+    select: { evalItemVersionId: true },
+  });
+
   const [users, items] = await Promise.all([
     prisma.user.findMany({
       where: { isActive: true },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
-    prisma.evaluationItem.findMany({
-      where: { fiscalYearItems: { some: { fiscalYear } } },
-      select: {
-        id: true,
-        no: true,
-        name: true,
-        target: { select: { no: true } },
-        category: { select: { no: true } },
-      },
-      orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
-    }),
+    fy?.evalItemVersionId
+      ? prisma.evalItemVersionDetail.findMany({
+          where: { versionId: fy.evalItemVersionId },
+          select: {
+            id: true,
+            no: true,
+            name: true,
+            targetNo: true,
+            categoryNo: true,
+          },
+          orderBy: [{ targetNo: "asc" }, { categoryNo: "asc" }, { no: "asc" }],
+        })
+      : Promise.resolve([]),
   ]);
 
   const evaluations = await prisma.evaluation.findMany({
     where: {
       fiscalYear,
       evaluatee: { isActive: true },
-      evalItemId: { in: items.map((i) => i.id) },
+      evalItemVersionDetailId: { in: items.map((i) => i.id) },
     },
     select: {
       evaluateeId: true,
-      evalItemId: true,
+      evalItemVersionDetailId: true,
       selfScore: true,
       managerScore: true,
     },
@@ -185,14 +198,14 @@ export async function getEvaluationMatrix(fiscalYear: number) {
 
   const scoreMap = new Map<string, { selfScore: Score | null; managerScore: Score | null }>();
   for (const e of evaluations) {
-    scoreMap.set(`${e.evaluateeId}:${e.evalItemId}`, {
+    scoreMap.set(`${e.evaluateeId}:${e.evalItemVersionDetailId}`, {
       selfScore: e.selfScore,
       managerScore: e.managerScore,
     });
   }
 
   const rows = items.map((item) => ({
-    uid: `${item.target.no}-${item.category.no}-${item.no}`,
+    uid: `${item.targetNo}-${item.categoryNo}-${item.no}`,
     name: item.name,
     scores: users.map((user) => {
       const key = `${user.id}:${item.id}`;
@@ -214,19 +227,19 @@ export async function getEvaluations(evaluateeId: string, fiscalYear: number) {
   const evaluations = await prisma.evaluation.findMany({
     where: { fiscalYear, evaluateeId },
     include: {
-      evaluationItem: { select: { name: true } },
+      evalItemVersionDetail: { select: { name: true } },
       managerComments: {
         include: { evaluator: { select: { name: true } } },
         orderBy: { createdAt: "asc" },
       },
     },
-    orderBy: { evalItemId: "asc" },
+    orderBy: { evalItemVersionDetailId: "asc" },
   });
 
   return evaluations.map((e) => ({
-    evalItemId: e.evalItemId,
+    evalItemVersionDetailId: e.evalItemVersionDetailId,
     evaluationId: e.id,
-    itemName: e.evaluationItem.name,
+    itemName: e.evalItemVersionDetail.name,
     selfScore: e.selfScore,
     selfReason: e.selfReason,
     managerScore: e.managerScore,
@@ -243,27 +256,31 @@ export async function getEvaluations(evaluateeId: string, fiscalYear: number) {
 export async function upsertEvaluation(data: {
   fiscalYear: number;
   evaluateeId: string;
-  evalItemId: number;
+  evalItemVersionDetailId: number;
   selfScore?: Score | null;
   selfReason?: string | null;
 }) {
   if (!Number.isInteger(data.fiscalYear) || data.fiscalYear < 1900 || data.fiscalYear > 9999)
     throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
-  if (!Number.isInteger(data.evalItemId) || data.evalItemId < 1)
-    throw new BadRequestError("evalItemId は正の整数で指定してください");
+  if (!Number.isInteger(data.evalItemVersionDetailId) || data.evalItemVersionDetailId < 1)
+    throw new BadRequestError("evalItemVersionDetailId は正の整数で指定してください");
 
-  const { fiscalYear, evaluateeId, evalItemId, ...fields } = data;
+  const { fiscalYear, evaluateeId, evalItemVersionDetailId, ...fields } = data;
 
   const evaluation = await prisma.evaluation.upsert({
     where: {
-      fiscalYear_evaluateeId_evalItemId: { fiscalYear, evaluateeId, evalItemId },
+      fiscalYear_evaluateeId_evalItemVersionDetailId: {
+        fiscalYear,
+        evaluateeId,
+        evalItemVersionDetailId,
+      },
     },
-    create: { fiscalYear, evaluateeId, evalItemId, ...fields },
+    create: { fiscalYear, evaluateeId, evalItemVersionDetailId, ...fields },
     update: fields,
   });
 
   return {
-    evalItemId: evaluation.evalItemId,
+    evalItemVersionDetailId: evaluation.evalItemVersionDetailId,
     selfScore: evaluation.selfScore,
     selfReason: evaluation.selfReason,
   };
@@ -272,43 +289,53 @@ export async function upsertEvaluation(data: {
 export async function upsertManagerScore(
   evaluateeId: string,
   fiscalYear: number,
-  evalItemId: number,
+  evalItemVersionDetailId: number,
   managerScore: Score | null,
 ) {
   if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
     throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
-  if (!Number.isInteger(evalItemId) || evalItemId < 1)
-    throw new BadRequestError("evalItemId は正の整数で指定してください");
+  if (!Number.isInteger(evalItemVersionDetailId) || evalItemVersionDetailId < 1)
+    throw new BadRequestError("evalItemVersionDetailId は正の整数で指定してください");
 
   const evaluation = await prisma.evaluation.upsert({
     where: {
-      fiscalYear_evaluateeId_evalItemId: { fiscalYear, evaluateeId, evalItemId },
+      fiscalYear_evaluateeId_evalItemVersionDetailId: {
+        fiscalYear,
+        evaluateeId,
+        evalItemVersionDetailId,
+      },
     },
-    create: { fiscalYear, evaluateeId, evalItemId, managerScore },
+    create: { fiscalYear, evaluateeId, evalItemVersionDetailId, managerScore },
     update: { managerScore },
   });
 
-  return { evalItemId: evaluation.evalItemId, managerScore: evaluation.managerScore };
+  return {
+    evalItemVersionDetailId: evaluation.evalItemVersionDetailId,
+    managerScore: evaluation.managerScore,
+  };
 }
 
 export async function addManagerComment(
   evaluateeId: string,
   fiscalYear: number,
-  evalItemId: number,
+  evalItemVersionDetailId: number,
   evaluatorId: string,
   data: { reason: string | null },
 ) {
   if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
     throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
-  if (!Number.isInteger(evalItemId) || evalItemId < 1)
-    throw new BadRequestError("evalItemId は正の整数で指定してください");
+  if (!Number.isInteger(evalItemVersionDetailId) || evalItemVersionDetailId < 1)
+    throw new BadRequestError("evalItemVersionDetailId は正の整数で指定してください");
 
-  // evaluation が存在しなければ作成する
   const evaluation = await prisma.evaluation.upsert({
     where: {
-      fiscalYear_evaluateeId_evalItemId: { fiscalYear, evaluateeId, evalItemId },
+      fiscalYear_evaluateeId_evalItemVersionDetailId: {
+        fiscalYear,
+        evaluateeId,
+        evalItemVersionDetailId,
+      },
     },
-    create: { fiscalYear, evaluateeId, evalItemId },
+    create: { fiscalYear, evaluateeId, evalItemVersionDetailId },
     update: {},
   });
 
@@ -321,10 +348,7 @@ export async function addManagerComment(
   });
 }
 
-export async function updateManagerComment(
-  commentId: string,
-  data: { reason?: string | null },
-) {
+export async function updateManagerComment(commentId: string, data: { reason?: string | null }) {
   return prisma.managerComment.update({
     where: { id: commentId },
     data,

@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { FiscalYearActions } from "@/components/admin/FiscalYearActions";
 import { FiscalYearForm } from "@/components/admin/FiscalYearForm";
+import { FiscalYearVersionSelect } from "@/components/admin/FiscalYearVersionSelect";
 import { getSession } from "@/lib/auth";
+import { getEvalItemVersions } from "@/lib/eval-item-versions";
 import { prisma } from "@/lib/prisma";
 
 export default async function FiscalYearsPage() {
@@ -9,25 +11,30 @@ export default async function FiscalYearsPage() {
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/evaluations");
 
-  const fiscalYears = await prisma.fiscalYear.findMany({
-    orderBy: { year: "desc" },
-    select: {
-      year: true,
-      name: true,
-      startDate: true,
-      endDate: true,
-      isCurrent: true,
-      isLocked: true,
-      _count: {
-        select: {
-          fiscalYearItems: true,
-          evaluationSettings: true,
-          evaluationAssignments: true,
-          evaluations: true,
+  const [fiscalYears, versions] = await Promise.all([
+    prisma.fiscalYear.findMany({
+      orderBy: { year: "desc" },
+      select: {
+        year: true,
+        name: true,
+        startDate: true,
+        endDate: true,
+        isCurrent: true,
+        isLocked: true,
+        evalItemVersionId: true,
+        _count: {
+          select: {
+            evaluationSettings: true,
+            evaluationAssignments: true,
+            evaluations: true,
+          },
         },
       },
-    },
-  });
+    }),
+    getEvalItemVersions(),
+  ]);
+
+  const versionOptions = versions.map((v) => ({ id: v.id, name: v.name }));
 
   return (
     <div>
@@ -50,13 +57,14 @@ export default async function FiscalYearsPage() {
               <th className="px-4 py-3 text-left font-medium text-gray-700">終了日</th>
               <th className="px-4 py-3 text-left font-medium text-gray-700">現在年度</th>
               <th className="px-4 py-3 text-left font-medium text-gray-700">状態</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-700">バージョン</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y">
             {fiscalYears.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                   年度が登録されていません。
                 </td>
               </tr>
@@ -83,11 +91,19 @@ export default async function FiscalYearsPage() {
                   <td className="px-4 py-3">
                     {fy.isLocked ? (
                       <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
-                        🔒 ロック済み
+                        ロック済み
                       </span>
                     ) : (
                       <span className="text-gray-400">—</span>
                     )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <FiscalYearVersionSelect
+                      year={fy.year}
+                      isLocked={fy.isLocked}
+                      currentVersionId={fy.evalItemVersionId}
+                      versions={versionOptions}
+                    />
                   </td>
                   <td className="px-4 py-3 text-right">
                     <FiscalYearActions

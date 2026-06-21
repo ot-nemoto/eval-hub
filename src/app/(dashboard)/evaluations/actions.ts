@@ -1,9 +1,8 @@
 "use server";
 
+import type { Score } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-
-import type { Score } from "@prisma/client";
 import { getSession } from "@/lib/auth";
 import { BadRequestError } from "@/lib/errors";
 import { upsertEvaluation } from "@/lib/evaluations";
@@ -36,7 +35,7 @@ export async function upsertSelfEvaluationAction(
     await upsertEvaluation({
       fiscalYear,
       evaluateeId: session.user.id,
-      evalItemId,
+      evalItemVersionDetailId: evalItemId,
       selfScore: data.selfScore,
       selfReason: data.selfReason,
     });
