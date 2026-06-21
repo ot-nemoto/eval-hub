@@ -181,6 +181,11 @@ export async function deleteEvalItemVersion(versionId: number) {
 }
 
 export async function assignVersionToFiscalYear(year: number, versionId: number) {
+  if (!Number.isInteger(year) || year < 1900 || year > 9999)
+    throw new BadRequestError("year は 1900〜9999 の整数で指定してください");
+  if (!Number.isInteger(versionId) || versionId < 1)
+    throw new BadRequestError("versionId は正の整数で指定してください");
+
   const fiscalYear = await prisma.fiscalYear.findUnique({ where: { year } });
   if (!fiscalYear) throw new NotFoundError("年度が見つかりません");
 
@@ -197,6 +202,9 @@ export async function assignVersionToFiscalYear(year: number, versionId: number)
 }
 
 export async function unassignVersionFromFiscalYear(year: number) {
+  if (!Number.isInteger(year) || year < 1900 || year > 9999)
+    throw new BadRequestError("year は 1900〜9999 の整数で指定してください");
+
   const fiscalYear = await prisma.fiscalYear.findUnique({ where: { year } });
   if (!fiscalYear) throw new NotFoundError("年度が見つかりません");
 
