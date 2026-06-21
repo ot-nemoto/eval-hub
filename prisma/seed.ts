@@ -339,36 +339,53 @@ async function main() {
   );
 
   // =========================================================================
-  // 8. fiscal_year_items（年度と評価項目の紐付け）
-  //    2026（現在年度）: 採用カテゴリ2件＋改善カテゴリ1件を除外（フィルタリング動作確認用）
-  //    → 採用: オンボーディングのみ表示（1件）、改善: 課題発見・改善実施のみ表示（2件）
+  // 8. 評価項目バージョン（eval_item_versions）＋ 年度への割り当て
+  //    全評価項目のスナップショットをバージョンとして保存し、各年度に割り当てる
   // =========================================================================
   const allItems = await prisma.evaluationItem.findMany({
-    select: { id: true, name: true },
+    include: {
+      target: { select: { no: true, name: true } },
+      category: { select: { no: true, name: true } },
+    },
     orderBy: { id: "asc" },
   });
 
-  // 2026 から除外する項目（フィルタリング動作確認用）
-  //   採用カテゴリ: 採用計画・面接実施を除外（オンボーディングは残す → 1件のみ表示）
-  //   改善カテゴリ: 効果測定を除外（課題発見・改善実施は残す → 2件のみ表示）
-  const adoptionExcluded = new Set(
-    allItems
-      .filter((item) => ["採用計画", "面接実施", "効果測定"].includes(item.name))
-      .map((item) => item.id),
-  );
-  const items2026 = allItems.filter((item) => !adoptionExcluded.has(item.id));
-
-  await prisma.fiscalYearItem.createMany({
-    data: [
-      ...allItems.flatMap((item) => [
-        { fiscalYear: 2025, evaluationItemId: item.id },
-        { fiscalYear: 2027, evaluationItemId: item.id },
-      ]),
-      ...items2026.map((item) => ({ fiscalYear: 2026, evaluationItemId: item.id })),
-    ],
+  const version = await prisma.evalItemVersion.create({
+    data: {
+      name: "初期バージョン",
+      details: {
+        createMany: {
+          data: allItems.map((item) => ({
+            evaluationItemId: item.id,
+            targetId: item.targetId,
+            categoryId: item.categoryId,
+            no: item.no,
+            name: item.name,
+            description: item.description,
+            evalCriteria: item.evalCriteria,
+            targetNo: item.target.no,
+            targetName: item.target.name,
+            categoryNo: item.category.no,
+            categoryName: item.category.name,
+          })),
+        },
+      },
+    },
+    include: { details: { select: { id: true, evaluationItemId: true } } },
   });
+
+  // 全年度にバージョンを割り当て
+  await prisma.fiscalYear.updateMany({
+    data: { evalItemVersionId: version.id },
+  });
+
+  // evaluationItemId → versionDetailId のマッピング
+  const detailByItemId = Object.fromEntries(
+    version.details.map((d) => [d.evaluationItemId, d.id]),
+  );
+
   console.log(
-    `fiscal_year_items: created (2025/2027: ${allItems.length}件, 2026: ${items2026.length}件 ※採用2件・効果測定1件除外)`,
+    `eval_item_versions: バージョン "${version.name}" (id=${version.id}) を作成、詳細 ${version.details.length}件、全年度に割り当て`,
   );
 
   // =========================================================================
@@ -450,7 +467,7 @@ async function main() {
     data: evaluationsData.map((e) => ({
       fiscalYear: e.fiscalYear,
       evaluateeId: u[e.evaluateeEmail].id,
-      evalItemId: e.itemId,
+      evalItemVersionDetailId: detailByItemId[e.itemId],
       selfScore: e.selfScore,
       selfReason: e.selfReason,
     })),
@@ -461,7 +478,7 @@ async function main() {
     data: allItems.map((item) => ({
       fiscalYear: 2025,
       evaluateeId: u["tsukune@example.com"].id,
-      evalItemId: item.id,
+      evalItemVersionDetailId: detailByItemId[item.id],
       selfScore: "ryo" as const,
       selfReason: null,
     })),
@@ -484,52 +501,57 @@ async function main() {
   //    item[0]: managerScore = "ryo"（最終スコア設定済みの確認用）
   // =========================================================================
 
-  // tebasaki の評価 MAP
+  // tebasaki の評価 MAP（evalItemVersionDetailId → evaluation.id）
+  const seedDetailIds = seedItems.map((item) => detailByItemId[item.id]);
   const tebasakiEvals = await prisma.evaluation.findMany({
     where: {
       fiscalYear: 2026,
       evaluateeId: u["tebasaki@example.com"].id,
-      evalItemId: { in: [seedItems[0].id, seedItems[1].id, seedItems[2].id] },
+      evalItemVersionDetailId: { in: [seedDetailIds[0], seedDetailIds[1], seedDetailIds[2]] },
     },
   });
-  const tebasakiEvalMap = Object.fromEntries(tebasakiEvals.map((e) => [e.evalItemId, e.id]));
+  const tebasakiEvalMap = Object.fromEntries(
+    tebasakiEvals.map((e) => [e.evalItemVersionDetailId, e.id]),
+  );
 
   // nankotsu の評価 MAP
   const nankotsuEvals = await prisma.evaluation.findMany({
     where: {
       fiscalYear: 2026,
       evaluateeId: u["nankotsu@example.com"].id,
-      evalItemId: { in: [seedItems[0].id] },
+      evalItemVersionDetailId: { in: [seedDetailIds[0]] },
     },
   });
-  const nankotsuEvalMap = Object.fromEntries(nankotsuEvals.map((e) => [e.evalItemId, e.id]));
+  const nankotsuEvalMap = Object.fromEntries(
+    nankotsuEvals.map((e) => [e.evalItemVersionDetailId, e.id]),
+  );
 
   const managerCommentsData = [
     // tebasaki item[0]: bonjiri + tsukune の2人がコメント（複数評価者ケース）
     {
-      evaluationId: tebasakiEvalMap[seedItems[0].id],
+      evaluationId: tebasakiEvalMap[seedDetailIds[0]],
       evaluatorId: u["bonjiri@example.com"].id,
       reason: "非常に優秀な取り組みでした",
     },
     {
-      evaluationId: tebasakiEvalMap[seedItems[0].id],
+      evaluationId: tebasakiEvalMap[seedDetailIds[0]],
       evaluatorId: u["tsukune@example.com"].id,
       reason: "よく頑張っています。さらなる成長を期待しています",
     },
     // tebasaki item[1,2]: bonjiri のみ
     {
-      evaluationId: tebasakiEvalMap[seedItems[1].id],
+      evaluationId: tebasakiEvalMap[seedDetailIds[1]],
       evaluatorId: u["bonjiri@example.com"].id,
       reason: "着実に成長しています",
     },
     {
-      evaluationId: tebasakiEvalMap[seedItems[2].id],
+      evaluationId: tebasakiEvalMap[seedDetailIds[2]],
       evaluatorId: u["bonjiri@example.com"].id,
       reason: "期待以上の成果でした",
     },
     // nankotsu item[0]: tsukune のみ（tebasaki が「他者コメント閲覧のみ」を確認するため）
     {
-      evaluationId: nankotsuEvalMap[seedItems[0].id],
+      evaluationId: nankotsuEvalMap[seedDetailIds[0]],
       evaluatorId: u["tsukune@example.com"].id,
       reason: "基礎的な部分はしっかりできています",
     },
@@ -539,11 +561,11 @@ async function main() {
 
   // 最終スコア設定
   await prisma.evaluation.update({
-    where: { id: tebasakiEvalMap[seedItems[0].id] },
+    where: { id: tebasakiEvalMap[seedDetailIds[0]] },
     data: { managerScore: "yu" },
   });
   await prisma.evaluation.update({
-    where: { id: nankotsuEvalMap[seedItems[0].id] },
+    where: { id: nankotsuEvalMap[seedDetailIds[0]] },
     data: { managerScore: "ryo" },
   });
   console.log("evaluations: managerScore updated for tebasaki item[0] and nankotsu item[0]");
