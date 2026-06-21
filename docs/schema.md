@@ -122,7 +122,6 @@ erDiagram
     targets ||--o{ categories : "target_id"
     targets ||--o{ evaluation_items : "target_id"
     categories ||--o{ evaluation_items : "category_id"
-    evaluation_items ||--o{ evaluations : "eval_item_id"
     evaluations ||--o{ manager_comments : "evaluation_id"
 ```
 
