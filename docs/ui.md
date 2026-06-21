@@ -11,9 +11,8 @@
 | 自己評価一覧 | `/evaluations` | ヘッダーあり | 要ログイン |
 | 社員一覧 | `/members` | ヘッダーあり | 要ログイン |
 | メンバー別評価 | `/members/[id]/evaluations` | ヘッダーあり | 要ログイン |
-| 管理：大分類・中分類マスタ | `/admin/targets` | ヘッダーあり | admin のみ |
-| 管理：評価項目マスタ | `/admin/evaluation-items` | ヘッダーあり | admin のみ |
-| 管理：年度別評価項目設定 | `/admin/fiscal-year-items` | ヘッダーあり | admin のみ |
+| 管理：マスタ管理 | `/admin/targets` | ヘッダーあり | admin のみ |
+| 管理：評価項目マスタ（リダイレクト） | `/admin/evaluation-items` | — | → `/admin/targets` |
 | 管理：年度管理 | `/admin/fiscal-years` | ヘッダーあり | admin のみ |
 | 管理：ユーザー一覧 | `/admin/users` | ヘッダーあり | admin のみ |
 | 管理：自己評価要否設定 | `/admin/users/[id]/evaluation-settings` | ヘッダーあり | admin のみ |
@@ -34,8 +33,7 @@ flowchart TD
     EVALUATIONS["自己評価一覧"]:::screen
     MEMBERS["社員一覧"]:::screen
     MEMBER_EVAL["メンバー別評価"]:::screen
-    ADMIN_TARGETS["大分類・中分類マスタ"]:::screen
-    ADMIN_ITEMS["評価項目マスタ"]:::screen
+    ADMIN_TARGETS["マスタ管理"]:::screen
     ADMIN_YEARS["年度管理"]:::screen
     ADMIN_USERS["ユーザー一覧"]:::screen
     ADMIN_SETTINGS["自己評価要否設定"]:::screen
@@ -57,7 +55,6 @@ flowchart TD
         H_ADMIN_USERS("ユーザー管理 admin"):::nav
         H_ADMIN_YEARS("年度管理 admin"):::nav
         H_ADMIN_TARGETS("マスタ管理 admin"):::nav
-        H_ADMIN_ITEMS("評価項目管理 admin"):::nav
         H_LOGOUT("ログアウト"):::nav
     end
 
@@ -66,7 +63,6 @@ flowchart TD
     H_ADMIN_USERS --> ADMIN_USERS
     H_ADMIN_YEARS --> ADMIN_YEARS
     H_ADMIN_TARGETS --> ADMIN_TARGETS
-    H_ADMIN_ITEMS --> ADMIN_ITEMS
     H_LOGOUT -->|"Clerk サインアウト"| LOGIN
 ```
 
@@ -142,34 +138,17 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 
 対象年度が **ロック済み**（`is_locked = true`）の場合、画面上部に「🔒 この年度はロック済みです。閲覧のみ可能です。」バナーを表示し、採点ボタン・保存ボタン・コメント追加／編集／削除ボタンをすべて非表示にして閲覧専用モードに切り替える。
 
-### 管理：大分類・中分類マスタ（`/admin/targets`）
+### 管理：マスタ管理（`/admin/targets`）
 
-大分類の一覧表示・追加・編集・削除を行う。中分類が紐づいている場合は削除不可（エラー表示）。
-
-### 管理：評価項目マスタ（`/admin/evaluation-items`）
-
-評価項目の一覧表示・追加・編集・削除を行う。大分類・中分類を選択して登録する。
-
-### 管理：年度別評価項目設定（`/admin/fiscal-year-items`）
-
-年度ごとに有効な評価項目をチェックボックスマトリクスで設定する。
+大分類・中分類・評価項目の一覧表示・追加・編集・削除・並び替え、およびバージョン管理を行う。
 
 | 機能 | 説明 |
 |------|------|
-| 年度セレクタ | 表示する年度を切り替え |
-| チェックボックスマトリクス | 大分類 > 中分類 > 評価項目のグループ構造で表示。チェックで有効/無効を即時反映 |
-| 前年度コピー | 直前の年度の設定を一括コピー（現在の設定は上書き、確認ダイアログあり） |
-| ロック時読み取り専用 | ロック済み年度はチェックボックス無効、コピーボタン非表示 |
-| 有効項目カウント | 有効/全体の項目数を表示 |
-
-**表示状態：**
-
-| 状態 | 表示 |
-|------|------|
-| Loading | プレースホルダー（animate-pulse） |
-| Empty（年度未選択） | 「年度を選択してください。」 |
-| Empty（評価項目なし） | 「評価項目が登録されていません。先にマスタ管理で評価項目を追加してください。」 |
-| Error | エラーメッセージ + 再試行ボタン |
+| 大分類・中分類・評価項目管理 | 3 階層アコーディオンで表示。追加・編集・削除・ドラッグ＆ドロップ並び替え |
+| バージョン保存 | 現在の作業スペース（大分類・中分類・評価項目）をスナップショットとして保存 |
+| バージョン一覧 | 保存済みバージョンの名前・作成日時・評価項目数・年度割り当て数を表示 |
+| バージョン復元 | バージョンから作業スペースを完全復元（全消し→insert） |
+| バージョン削除 | 年度に割り当て中のバージョンは削除不可（ボタン disabled） |
 
 ### 管理：年度管理（`/admin/fiscal-years`）
 
@@ -180,7 +159,7 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 | 年度一覧 | 年度名・期間・現在年度フラグ・ロック状態を表示 |
 | 現在年度設定 | `is_current = true` は常に1件のみ |
 | ロック/解除 | ADMIN が年度をロック（`is_locked = true`）すると、その年度の評価編集を一括禁止。解除も可能 |
-| 有効評価項目管理 | 年度ごとに有効な評価項目を追加・削除 |
+| バージョン割り当て | 年度ごとにバージョンを割り当て・解除するドロップダウン。ロック済み年度は変更不可 |
 
 ### 管理：ユーザー一覧（`/admin/users`）
 
@@ -256,31 +235,13 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 | Error | API エラー / アクセス権限なし | エラーメッセージ（`text-red-600`） |
 | SaveError | 採点保存失敗 | ボタン下部にインラインエラー（`text-sm text-red-600`） |
 
-### 管理：大分類・中分類マスタ（`/admin/targets`）
+### 管理：マスタ管理（`/admin/targets`）
 
 | 状態 | 条件 | 表示 |
 |------|------|------|
 | Loading | データ取得中 | テーブルスケルトン |
-| Empty | 大分類が 0 件 | 「大分類がありません。」（`text-gray-500`） |
+| Empty | 大分類が 0 件 | 「大分類が登録されていません。」（`text-gray-500`） |
 | Error | 削除時に中分類が紐づいている | フォーム上部エラーメッセージ（`text-red-600`） |
-
-### 管理：評価項目マスタ（`/admin/evaluation-items`）
-
-| 状態 | 条件 | 表示 |
-|------|------|------|
-| Loading | データ取得中 | テーブルスケルトン |
-| Empty | 評価項目が 0 件 | 「評価項目がありません。」（`text-gray-500`） |
-| Error | 削除時に年度に紐づいている | フォーム上部エラーメッセージ（`text-red-600`） |
-
-### 管理：年度別評価項目設定（`/admin/fiscal-year-items`）
-
-| 状態 | 条件 | 表示 |
-|------|------|------|
-| Loading | データ取得中 | プレースホルダー（animate-pulse） |
-| Empty（年度未選択） | selectedYear が null | 「年度を選択してください。」（`text-gray-500`） |
-| Empty（評価項目なし） | allItems が 0 件 | 「評価項目が登録されていません。先にマスタ管理で評価項目を追加してください。」（`text-gray-500`） |
-| Error | Server Action 失敗 | 赤色バナーでエラーメッセージ表示 |
-| Locked | 対象年度がロック済み | 黄色バナー + チェックボックス無効 + コピーボタン非表示 |
 
 ### 管理：年度管理（`/admin/fiscal-years`）
 
@@ -375,8 +336,11 @@ src/app/layout.tsx（RootLayout）
 | `CategoryForm` | Client Component | 中分類の追加・編集フォーム |
 | `CategoryActions` | Client Component | 中分類の編集・削除ボタン |
 | `EvaluationMatrix` | Client Component | 評価マトリクス表示（自己採点/上長採点トグル付き） |
-| `EvaluationItemForm` | Client Component | 評価項目の追加・編集フォーム |
+| `EvaluationItemInlineForm` | Client Component | 評価項目のインライン追加・編集フォーム |
 | `EvaluationItemActions` | Client Component | 評価項目の編集・削除ボタン |
+| `VersionSaveForm` | Client Component | バージョン保存フォーム（名前入力） |
+| `VersionList` | Client Component | バージョン一覧（復元・削除ボタン） |
+| `FiscalYearVersionSelect` | Client Component | 年度別バージョン割り当てドロップダウン |
 | `FiscalYearForm` | Client Component | 年度の追加・編集フォーム |
 | `FiscalYearActions` | Client Component | 年度の編集・削除・現在年度設定・ロック/解除ボタン |
 | `UserActions` | Client Component | ユーザーのロール変更・有効化/無効化・削除ボタン |
