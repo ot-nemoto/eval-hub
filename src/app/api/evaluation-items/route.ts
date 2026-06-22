@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const items = await prisma.evaluationItem.findMany({
-      orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
+      orderBy: [{ target: { index: "asc" } }, { category: { index: "asc" } }, { index: "asc" }],
       select: itemSelect,
     });
     return successResponse(items, { total: items.length });
@@ -116,24 +116,34 @@ export async function POST(req: NextRequest) {
         await tx.category.deleteMany({});
         await tx.target.deleteMany({});
 
-        // 再挿入（大分類→中分類→評価項目）
+        // 再挿入（大分類→中分類→評価項目）— 送信順で index を自動採番
+        let targetIndex = 0;
         for (const targetInput of body as TargetInput[]) {
+          targetIndex++;
           const target = await tx.target.create({
-            data: { no: targetInput.no, name: targetInput.name },
+            data: { no: targetInput.no, name: targetInput.name, index: targetIndex },
           });
 
+          let categoryIndex = 0;
           for (const categoryInput of targetInput.categories) {
+            categoryIndex++;
             const category = await tx.category.create({
-              data: { targetId: target.id, no: categoryInput.no, name: categoryInput.name },
+              data: {
+                targetId: target.id,
+                no: categoryInput.no,
+                name: categoryInput.name,
+                index: categoryIndex,
+              },
             });
 
-            const itemsData = categoryInput.items.map((itemInput) => ({
+            const itemsData = categoryInput.items.map((itemInput, i) => ({
               targetId: target.id,
               categoryId: category.id,
               no: itemInput.no,
               name: itemInput.name,
               description: itemInput.description ?? null,
               evalCriteria: itemInput.evalCriteria ?? null,
+              index: i + 1,
             }));
             await tx.evaluationItem.createMany({ data: itemsData });
 

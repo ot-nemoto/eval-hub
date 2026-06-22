@@ -84,10 +84,13 @@ model EvalItemVersionDetail {
   name             String  @db.VarChar(255)
   description      String? @db.Text
   evalCriteria     String? @map("eval_criteria") @db.Text
+  index            Int     @default(0)
   targetNo         Int     @map("target_no")
   targetName       String  @map("target_name") @db.VarChar(255)
+  targetIndex      Int     @default(0) @map("target_index")
   categoryNo       Int     @map("category_no")
   categoryName     String  @map("category_name") @db.VarChar(255)
+  categoryIndex    Int     @default(0) @map("category_index")
 
   version     EvalItemVersion @relation(fields: [versionId], references: [id])
   evaluations Evaluation[]
@@ -124,9 +127,10 @@ model EvaluationAssignment {
 }
 
 model Target {
-  id   Int    @id @default(autoincrement())
-  name String @db.VarChar(100)
-  no   Int    @unique
+  id    Int    @id @default(autoincrement())
+  name  String @db.VarChar(100)
+  no    Int    @unique
+  index Int    @default(0)
 
   categories      Category[]
   evaluationItems EvaluationItem[]
@@ -139,6 +143,7 @@ model Category {
   targetId Int    @map("target_id")
   name     String @db.VarChar(100)
   no       Int
+  index    Int    @default(0)
 
   target          Target           @relation(fields: [targetId], references: [id])
   evaluationItems EvaluationItem[]
@@ -155,6 +160,7 @@ model EvaluationItem {
   name         String  @db.VarChar(255)
   description  String? @db.Text
   evalCriteria String? @map("eval_criteria") @db.Text
+  index        Int     @default(0)
 
   target   Target   @relation(fields: [targetId], references: [id])
   category Category @relation(fields: [categoryId], references: [id])

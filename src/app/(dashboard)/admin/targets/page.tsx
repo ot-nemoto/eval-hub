@@ -16,15 +16,15 @@ export default async function TargetsPage() {
 
   const [targets, versionDetailCounts] = await Promise.all([
     prisma.target.findMany({
-      orderBy: { no: "asc" },
+      orderBy: { index: "asc" },
       include: {
         _count: { select: { categories: true } },
         categories: {
-          orderBy: { no: "asc" },
+          orderBy: { index: "asc" },
           include: {
             _count: { select: { evaluationItems: true } },
             evaluationItems: {
-              orderBy: { no: "asc" },
+              orderBy: { index: "asc" },
               select: {
                 id: true,
                 no: true,

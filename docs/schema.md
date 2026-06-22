@@ -51,21 +51,26 @@ erDiagram
         VARCHAR name
         TEXT description
         TEXT eval_criteria
+        INT index
         INT target_no
         VARCHAR target_name
+        INT target_index
         INT category_no
         VARCHAR category_name
+        INT category_index
     }
     targets {
         INT id PK
         VARCHAR name
         INT no UK
+        INT index
     }
     categories {
         INT id PK
         INT target_id FK
         VARCHAR name
         INT no
+        INT index
     }
     evaluation_items {
         INT id PK
@@ -75,6 +80,7 @@ erDiagram
         VARCHAR name
         TEXT description
         TEXT eval_criteria
+        INT index
     }
     evaluation_assignments {
         TEXT id PK
@@ -187,19 +193,23 @@ erDiagram
 | evaluation_item_id | INTEGER | NOT NULL | スナップショット元の評価項目ID（FK制約なし） |
 | target_id | INTEGER | NOT NULL | スナップショット元の大分類ID（FK制約なし） |
 | category_id | INTEGER | NOT NULL | スナップショット元の中分類ID（FK制約なし） |
-| no | INTEGER | NOT NULL | 中分類内での項目番号 |
+| no | INTEGER | NOT NULL | 中分類内での項目番号（管理番号） |
 | name | VARCHAR(255) | NOT NULL | 評価項目名 |
 | description | TEXT | | 説明 |
 | eval_criteria | TEXT | | 評価事例・基準 |
-| target_no | INTEGER | NOT NULL | 大分類の表示順番号（スナップショット） |
+| index | INTEGER | NOT NULL, DEFAULT 0 | 表示順（中分類内） |
+| target_no | INTEGER | NOT NULL | 大分類の管理番号（スナップショット） |
 | target_name | VARCHAR(255) | NOT NULL | 大分類名（スナップショット） |
-| category_no | INTEGER | NOT NULL | 中分類の表示順番号（スナップショット） |
+| target_index | INTEGER | NOT NULL, DEFAULT 0 | 大分類の表示順（スナップショット） |
+| category_no | INTEGER | NOT NULL | 中分類の管理番号（スナップショット） |
 | category_name | VARCHAR(255) | NOT NULL | 中分類名（スナップショット） |
+| category_index | INTEGER | NOT NULL, DEFAULT 0 | 中分類の表示順（スナップショット） |
 | UNIQUE | (version_id, evaluation_item_id) | | バージョン内で評価項目の重複防止 |
 
 - 作業スペース（targets / categories / evaluation_items）への FK 制約を持たない
 - バージョン復元時に作業スペースを全消し→insert するため、FK制約があると復元できない
 - target_no / target_name / category_no / category_name はスナップショット時点の値を保持する
+- index / target_index / category_index はスナップショット時点の表示順を保持する
 
 ---
 
@@ -209,7 +219,8 @@ erDiagram
 |---|---|---|---|
 | id | INTEGER | PK, AUTOINCREMENT | 大分類ID |
 | name | VARCHAR(100) | NOT NULL | 大分類名 |
-| no | INTEGER | UNIQUE, NOT NULL | 表示順番号 |
+| no | INTEGER | UNIQUE, NOT NULL | 管理番号（固定、欠番あり） |
+| index | INTEGER | NOT NULL, DEFAULT 0 | 表示順 |
 
 ---
 
@@ -220,7 +231,8 @@ erDiagram
 | id | INTEGER | PK, AUTOINCREMENT | 中分類ID |
 | target_id | INTEGER | FK → targets.id, NOT NULL | 所属する大分類 |
 | name | VARCHAR(100) | NOT NULL | 中分類名 |
-| no | INTEGER | NOT NULL | 大分類内での表示順番号 |
+| no | INTEGER | NOT NULL | 大分類内での管理番号（固定、欠番あり） |
+| index | INTEGER | NOT NULL, DEFAULT 0 | 大分類内での表示順 |
 | UNIQUE | (target_id, no) | | 大分類内番号の重複防止 |
 
 ---
@@ -248,10 +260,11 @@ erDiagram
 | id | INTEGER | PK, AUTOINCREMENT | 評価項目ID |
 | target_id | INTEGER | FK → targets.id, NOT NULL | 大分類 |
 | category_id | INTEGER | FK → categories.id, NOT NULL | 中分類 |
-| no | INTEGER | NOT NULL | 中分類内での項目番号 |
+| no | INTEGER | NOT NULL | 中分類内での管理番号（固定、欠番あり） |
 | name | VARCHAR(255) | NOT NULL | 評価項目名 |
 | description | TEXT | | 説明 |
 | eval_criteria | TEXT | | 評価事例・基準 |
+| index | INTEGER | NOT NULL, DEFAULT 0 | 中分類内での表示順 |
 | UNIQUE | (category_id, no) | | 中分類内番号の重複防止 |
 
 ---

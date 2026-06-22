@@ -209,31 +209,31 @@ describe("updateEvaluationItem", () => {
 describe("reorderEvaluationItems", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("2ステップで no を更新する", async () => {
+  it("2ステップで index を更新する", async () => {
     vi.mocked(prisma.evaluationItem.update).mockResolvedValue({} as never);
 
     await reorderEvaluationItems([
-      { id: 1, no: 2 },
-      { id: 2, no: 1 },
+      { id: 1, index: 2 },
+      { id: 2, index: 1 },
     ]);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(prisma.evaluationItem.update).toHaveBeenCalledTimes(4);
     expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(1, {
       where: { id: 1 },
-      data: { no: 100002 },
+      data: { index: 100002 },
     });
     expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(2, {
       where: { id: 2 },
-      data: { no: 100001 },
+      data: { index: 100001 },
     });
     expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(3, {
       where: { id: 1 },
-      data: { no: 2 },
+      data: { index: 2 },
     });
     expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(4, {
       where: { id: 2 },
-      data: { no: 1 },
+      data: { index: 1 },
     });
   });
 });

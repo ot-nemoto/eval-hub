@@ -68,7 +68,7 @@ export default async function MemberEvaluationsPage({ params }: Props) {
   const items = fiscalYearRecord?.evalItemVersionId
     ? await prisma.evalItemVersionDetail.findMany({
         where: { versionId: fiscalYearRecord.evalItemVersionId },
-        orderBy: [{ targetNo: "asc" }, { categoryNo: "asc" }, { no: "asc" }],
+        orderBy: [{ targetIndex: "asc" }, { categoryIndex: "asc" }, { index: "asc" }],
       })
     : [];
 
