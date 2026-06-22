@@ -13,6 +13,7 @@
 | メンバー別評価 | `/members/[id]/evaluations` | ヘッダーあり | 要ログイン |
 | 管理：マスタ管理 | `/admin/targets` | ヘッダーあり | admin のみ |
 | 管理：バージョン詳細 | `/admin/targets/versions/[id]` | ヘッダーあり | admin のみ |
+| 管理：評価項目比較 | `/admin/targets/compare` | ヘッダーあり | admin のみ |
 | 管理：評価項目マスタ（リダイレクト） | `/admin/evaluation-items` | — | → `/admin/targets` |
 | 管理：年度管理 | `/admin/fiscal-years` | ヘッダーあり | admin のみ |
 | 管理：ユーザー一覧 | `/admin/users` | ヘッダーあり | admin のみ |
@@ -35,6 +36,7 @@ flowchart TD
     MEMBERS["社員一覧"]:::screen
     MEMBER_EVAL["メンバー別評価"]:::screen
     ADMIN_TARGETS["マスタ管理"]:::screen
+    ADMIN_COMPARE["評価項目比較"]:::screen
     ADMIN_YEARS["年度管理"]:::screen
     ADMIN_USERS["ユーザー一覧"]:::screen
     ADMIN_SETTINGS["自己評価要否設定"]:::screen
@@ -64,6 +66,7 @@ flowchart TD
     H_ADMIN_USERS --> ADMIN_USERS
     H_ADMIN_YEARS --> ADMIN_YEARS
     H_ADMIN_TARGETS --> ADMIN_TARGETS
+    ADMIN_TARGETS -->|"比較ボタン"| ADMIN_COMPARE
     H_LOGOUT -->|"Clerk サインアウト"| LOGIN
 ```
 

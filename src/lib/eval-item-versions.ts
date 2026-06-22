@@ -45,6 +45,33 @@ export async function getEvalItemVersionDetails(versionId: number) {
   return { version, details };
 }
 
+export async function getCurrentEvalItems() {
+  const items = await prisma.evaluationItem.findMany({
+    include: {
+      target: { select: { no: true, name: true, index: true } },
+      category: { select: { no: true, name: true, index: true } },
+    },
+    orderBy: [{ target: { index: "asc" } }, { category: { index: "asc" } }, { index: "asc" }],
+  });
+
+  return items.map((item) => ({
+    evaluationItemId: item.id,
+    targetId: item.targetId,
+    categoryId: item.categoryId,
+    no: item.no,
+    name: item.name,
+    description: item.description,
+    evalCriteria: item.evalCriteria,
+    index: item.index,
+    targetNo: item.target.no,
+    targetName: item.target.name,
+    targetIndex: item.target.index,
+    categoryNo: item.category.no,
+    categoryName: item.category.name,
+    categoryIndex: item.category.index,
+  }));
+}
+
 export async function createEvalItemVersion(name: string) {
   if (!name.trim()) throw new BadRequestError("name は必須です");
 

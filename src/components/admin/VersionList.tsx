@@ -97,6 +97,14 @@ export function VersionList({ versions }: { versions: Version[] }) {
               <td className="px-4 py-2 text-gray-500">{v.createdAt}</td>
               <td className="px-4 py-2 text-right">
                 <div className="flex gap-2">
+                  <a
+                    href={`/admin/targets/compare?left=${v.id}&right=current`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-md border px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
+                  >
+                    比較
+                  </a>
                   <button
                     type="button"
                     onClick={() => handleRestore(v.id, v.name)}
