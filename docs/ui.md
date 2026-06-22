@@ -12,6 +12,7 @@
 | 社員一覧 | `/members` | ヘッダーあり | 要ログイン |
 | メンバー別評価 | `/members/[id]/evaluations` | ヘッダーあり | 要ログイン |
 | 管理：マスタ管理 | `/admin/targets` | ヘッダーあり | admin のみ |
+| 管理：バージョン詳細 | `/admin/targets/versions/[id]` | ヘッダーあり | admin のみ |
 | 管理：評価項目マスタ（リダイレクト） | `/admin/evaluation-items` | — | → `/admin/targets` |
 | 管理：年度管理 | `/admin/fiscal-years` | ヘッダーあり | admin のみ |
 | 管理：ユーザー一覧 | `/admin/users` | ヘッダーあり | admin のみ |
