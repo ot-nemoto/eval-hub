@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { CompareSelector } from "@/components/admin/CompareSelector";
 import { getSession } from "@/lib/auth";
+import { NotFoundError } from "@/lib/errors";
 import {
   getCurrentEvalItems,
   getEvalItemVersionDetails,
@@ -125,8 +126,9 @@ async function loadItems(source: string): Promise<{ label: string; items: Item[]
   try {
     const { version, details } = await getEvalItemVersionDetails(id);
     return { label: version.name, items: details };
-  } catch {
-    return { label: "不明", items: [] };
+  } catch (e) {
+    if (e instanceof NotFoundError) return { label: "不明", items: [] };
+    throw e;
   }
 }
 
