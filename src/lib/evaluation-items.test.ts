@@ -204,6 +204,45 @@ describe("updateEvaluationItem", () => {
 
     await expect(updateEvaluationItem(1, { name: "  " })).rejects.toThrow(BadRequestError);
   });
+
+  it("no を更新できる", async () => {
+    vi.mocked(prisma.evaluationItem.findUnique)
+      .mockResolvedValueOnce(mockItem as never)
+      .mockResolvedValueOnce(null as never);
+    vi.mocked(prisma.evaluationItem.update).mockResolvedValue({
+      ...mockItem,
+      no: 5,
+    } as never);
+
+    const result = await updateEvaluationItem(1, { no: 5 });
+
+    expect(result.no).toBe(5);
+    expect(prisma.evaluationItem.findUnique).toHaveBeenCalledWith({
+      where: { categoryId_no: { categoryId: 1, no: 5 } },
+    });
+  });
+
+  it("no が重複する場合は ConflictError をスロー（事前チェック）", async () => {
+    vi.mocked(prisma.evaluationItem.findUnique)
+      .mockResolvedValueOnce(mockItem as never)
+      .mockResolvedValueOnce({ id: 2, categoryId: 1, no: 2 } as never);
+
+    await expect(updateEvaluationItem(1, { no: 2 })).rejects.toThrow(ConflictError);
+  });
+
+  it("no 更新時に P2002 が発生した場合は ConflictError をスロー", async () => {
+    vi.mocked(prisma.evaluationItem.findUnique)
+      .mockResolvedValueOnce(mockItem as never)
+      .mockResolvedValueOnce(null as never);
+    vi.mocked(prisma.evaluationItem.update).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+        code: "P2002",
+        clientVersion: "5",
+      }),
+    );
+
+    await expect(updateEvaluationItem(1, { no: 3 })).rejects.toThrow(ConflictError);
+  });
 });
 
 describe("reorderEvaluationItems", () => {
