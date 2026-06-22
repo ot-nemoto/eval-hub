@@ -10,7 +10,7 @@ import {
 } from "@/lib/eval-item-versions";
 
 type Item = {
-  evaluationItemId: number;
+  evaluationItemId: number | null;
   no: number;
   name: string;
   description: string | null;
@@ -27,7 +27,7 @@ type Item = {
 type DiffStatus = "added" | "removed" | "changed" | "unchanged";
 
 type DiffItem = {
-  evaluationItemId: number;
+  evaluationItemId: number | null;
   status: DiffStatus;
   left: Item | null;
   right: Item | null;
@@ -36,21 +36,39 @@ type DiffItem = {
 type DiffCategory = {
   no: number;
   name: string;
+  index: number;
   items: DiffItem[];
 };
 
 type DiffTarget = {
   no: number;
   name: string;
+  index: number;
   categories: DiffCategory[];
 };
 
 function computeDiff(leftItems: Item[], rightItems: Item[]): DiffItem[] {
-  const leftMap = new Map(leftItems.map((i) => [i.evaluationItemId, i]));
-  const rightMap = new Map(rightItems.map((i) => [i.evaluationItemId, i]));
-  const allIds = new Set([...leftMap.keys(), ...rightMap.keys()]);
-
   const result: DiffItem[] = [];
+
+  const leftMap = new Map<number, Item>();
+  for (const item of leftItems) {
+    if (item.evaluationItemId !== null) {
+      leftMap.set(item.evaluationItemId, item);
+    } else {
+      result.push({ evaluationItemId: null, status: "removed", left: item, right: null });
+    }
+  }
+
+  const rightMap = new Map<number, Item>();
+  for (const item of rightItems) {
+    if (item.evaluationItemId !== null) {
+      rightMap.set(item.evaluationItemId, item);
+    } else {
+      result.push({ evaluationItemId: null, status: "added", left: null, right: item });
+    }
+  }
+
+  const allIds = new Set([...leftMap.keys(), ...rightMap.keys()]);
   for (const id of allIds) {
     const left = leftMap.get(id) ?? null;
     const right = rightMap.get(id) ?? null;
@@ -83,14 +101,19 @@ function buildDiffTree(diffItems: DiffItem[]): DiffTarget[] {
     const targetKey = `${item.targetIndex}-${item.targetNo}`;
     let target = targetsMap.get(targetKey);
     if (!target) {
-      target = { no: item.targetNo, name: item.targetName, categories: [] };
+      target = {
+        no: item.targetNo,
+        name: item.targetName,
+        index: item.targetIndex,
+        categories: [],
+      };
       targetsMap.set(targetKey, target);
     }
 
     const categoryKey = `${targetKey}-${item.categoryIndex}-${item.categoryNo}`;
     let cat = categoriesMap.get(categoryKey);
     if (!cat) {
-      cat = { no: item.categoryNo, name: item.categoryName, items: [] };
+      cat = { no: item.categoryNo, name: item.categoryName, index: item.categoryIndex, items: [] };
       categoriesMap.set(categoryKey, cat);
       target.categories.push(cat);
     }
@@ -106,7 +129,12 @@ function buildDiffTree(diffItems: DiffItem[]): DiffTarget[] {
     });
   }
 
-  return Array.from(targetsMap.values());
+  const targets = Array.from(targetsMap.values());
+  targets.sort((a, b) => a.index - b.index);
+  for (const t of targets) {
+    t.categories.sort((a, b) => a.index - b.index);
+  }
+  return targets;
 }
 
 const statusStyles: Record<DiffStatus, string> = {
@@ -228,11 +256,14 @@ export default async function ComparePage({
                         </tr>
                       </thead>
                       <tbody className="divide-y">
-                        {cat.items.map((d) => {
+                        {cat.items.map((d, idx) => {
                           const item = d.right ?? d.left;
                           if (!item) return null;
                           return (
-                            <tr key={d.evaluationItemId} className={statusStyles[d.status]}>
+                            <tr
+                              key={d.evaluationItemId ?? `null-${idx}`}
+                              className={statusStyles[d.status]}
+                            >
                               <td className="py-1.5 pr-2 text-xs text-gray-400">
                                 {d.status === "changed" &&
                                 d.left &&

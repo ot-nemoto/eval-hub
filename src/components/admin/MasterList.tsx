@@ -35,7 +35,6 @@ type EvaluationItem = {
   name: string;
   description: string | null;
   evalCriteria: string | null;
-  hasEvaluations: boolean;
 };
 
 type Category = {
@@ -105,7 +104,6 @@ function SortableEvaluationItem({ item }: { item: EvaluationItem }) {
             description: item.description,
             evalCriteria: item.evalCriteria,
           }}
-          hasEvaluations={item.hasEvaluations}
         />
       </td>
     </tr>
