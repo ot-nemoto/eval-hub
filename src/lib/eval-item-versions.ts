@@ -14,10 +14,13 @@ export async function getEvalItemVersions() {
 }
 
 export async function getEvalItemVersionDetails(versionId: number) {
-  const version = await prisma.evalItemVersion.findUnique({ where: { id: versionId } });
+  const version = await prisma.evalItemVersion.findUnique({
+    where: { id: versionId },
+    select: { id: true, name: true, createdAt: true },
+  });
   if (!version) throw new NotFoundError("バージョンが見つかりません");
 
-  return prisma.evalItemVersionDetail.findMany({
+  const details = await prisma.evalItemVersionDetail.findMany({
     where: { versionId },
     select: {
       id: true,
@@ -38,6 +41,8 @@ export async function getEvalItemVersionDetails(versionId: number) {
     },
     orderBy: [{ targetIndex: "asc" }, { categoryIndex: "asc" }, { index: "asc" }],
   });
+
+  return { version, details };
 }
 
 export async function createEvalItemVersion(name: string) {

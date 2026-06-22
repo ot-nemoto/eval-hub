@@ -2,7 +2,6 @@ import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { NotFoundError } from "@/lib/errors";
 import { getEvalItemVersionDetails } from "@/lib/eval-item-versions";
-import { prisma } from "@/lib/prisma";
 
 type Detail = {
   no: number;
@@ -65,15 +64,10 @@ export default async function VersionDetailPage({ params }: { params: Promise<{ 
   const versionId = Number(id);
   if (!Number.isInteger(versionId) || versionId < 1) notFound();
 
-  const version = await prisma.evalItemVersion.findUnique({
-    where: { id: versionId },
-    select: { id: true, name: true, createdAt: true },
-  });
-  if (!version) notFound();
-
+  let version: { id: number; name: string; createdAt: Date };
   let details: Detail[];
   try {
-    details = await getEvalItemVersionDetails(versionId);
+    ({ version, details } = await getEvalItemVersionDetails(versionId));
   } catch (e) {
     if (e instanceof NotFoundError) notFound();
     throw e;
