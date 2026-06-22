@@ -88,6 +88,8 @@ Authorization: Bearer <api_key>
 | `description` | string \| null | — | 説明（評価項目のみ） |
 | `evalCriteria` | string \| null | — | 評価基準（評価項目のみ） |
 
+> **表示順（index）について:** `index`（表示順）はリクエストに含めない。サーバ側でリクエスト配列の順序に基づき、大項目・中項目・評価項目それぞれに 1 から連番で自動採番される。`no`（管理番号）は固定値であり、表示順とは独立して管理される。
+
 ### レスポンス（200）
 
 ```json
