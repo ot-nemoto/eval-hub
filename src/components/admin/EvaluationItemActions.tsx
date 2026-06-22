@@ -37,7 +37,12 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
     e.preventDefault();
     setLoading(true);
     try {
-      const noValue = Number.parseInt(form.no, 10);
+      const noValue = Number(form.no);
+      if (!Number.isInteger(noValue) || noValue < 1) {
+        alert("No は 1 以上の整数で指定してください");
+        setLoading(false);
+        return;
+      }
       const result = await updateEvaluationItemAction(item.id, {
         no: noValue !== item.no ? noValue : undefined,
         name: form.name,
