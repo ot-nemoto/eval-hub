@@ -107,48 +107,51 @@ export async function POST(req: NextRequest) {
   let created: { targetNo: number; categoryNo: number; itemNo: number; name: string }[] = [];
 
   try {
-    created = await prisma.$transaction(async (tx) => {
-      const result: typeof created = [];
+    created = await prisma.$transaction(
+      async (tx) => {
+        const result: typeof created = [];
 
-      // 全削除（FK順: 評価項目→中分類→大分類）
-      await tx.evaluationItem.deleteMany({});
-      await tx.category.deleteMany({});
-      await tx.target.deleteMany({});
+        // 全削除（FK順: 評価項目→中分類→大分類）
+        await tx.evaluationItem.deleteMany({});
+        await tx.category.deleteMany({});
+        await tx.target.deleteMany({});
 
-      // 再挿入（大分類→中分類→評価項目）
-      for (const targetInput of body as TargetInput[]) {
-        const target = await tx.target.create({
-          data: { no: targetInput.no, name: targetInput.name },
-        });
-
-        for (const categoryInput of targetInput.categories) {
-          const category = await tx.category.create({
-            data: { targetId: target.id, no: categoryInput.no, name: categoryInput.name },
+        // 再挿入（大分類→中分類→評価項目）
+        for (const targetInput of body as TargetInput[]) {
+          const target = await tx.target.create({
+            data: { no: targetInput.no, name: targetInput.name },
           });
 
-          for (const itemInput of categoryInput.items) {
-            await tx.evaluationItem.create({
-              data: {
-                targetId: target.id,
-                categoryId: category.id,
-                no: itemInput.no,
-                name: itemInput.name,
-                description: itemInput.description ?? null,
-                evalCriteria: itemInput.evalCriteria ?? null,
-              },
+          for (const categoryInput of targetInput.categories) {
+            const category = await tx.category.create({
+              data: { targetId: target.id, no: categoryInput.no, name: categoryInput.name },
             });
-            result.push({
-              targetNo: target.no,
-              categoryNo: category.no,
-              itemNo: itemInput.no,
+
+            const itemsData = categoryInput.items.map((itemInput) => ({
+              targetId: target.id,
+              categoryId: category.id,
+              no: itemInput.no,
               name: itemInput.name,
-            });
+              description: itemInput.description ?? null,
+              evalCriteria: itemInput.evalCriteria ?? null,
+            }));
+            await tx.evaluationItem.createMany({ data: itemsData });
+
+            for (const itemInput of categoryInput.items) {
+              result.push({
+                targetNo: target.no,
+                categoryNo: category.no,
+                itemNo: itemInput.no,
+                name: itemInput.name,
+              });
+            }
           }
         }
-      }
 
-      return result;
-    });
+        return result;
+      },
+      { timeout: 30000 },
+    );
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       return errorResponse("BAD_REQUEST", "no が重複しています", 400);
