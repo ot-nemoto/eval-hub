@@ -98,6 +98,14 @@ function buildDiffTree(diffItems: DiffItem[]): DiffTarget[] {
     cat.items.push(d);
   }
 
+  for (const cat of categoriesMap.values()) {
+    cat.items.sort((a, b) => {
+      const ai = (a.right ?? a.left)?.index ?? 0;
+      const bi = (b.right ?? b.left)?.index ?? 0;
+      return ai - bi;
+    });
+  }
+
   return Array.from(targetsMap.values());
 }
 
