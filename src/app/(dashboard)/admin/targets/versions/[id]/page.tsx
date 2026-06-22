@@ -107,10 +107,16 @@ export default async function VersionDetailPage({ params }: { params: Promise<{ 
                     </div>
 
                     {cat.items.length > 0 ? (
-                      <table className="w-full text-sm ml-4">
+                      <table className="w-full text-sm ml-4 table-fixed">
+                        <colgroup>
+                          <col className="w-[5%]" />
+                          <col className="w-[15%]" />
+                          <col className="w-[35%]" />
+                          <col className="w-[45%]" />
+                        </colgroup>
                         <thead>
                           <tr className="text-xs text-gray-500">
-                            <th className="py-1 pr-2 text-left w-10">No</th>
+                            <th className="py-1 pr-2 text-left">No</th>
                             <th className="py-1 pr-2 text-left">名称</th>
                             <th className="py-1 pr-2 text-left">説明</th>
                             <th className="py-1 text-left">評価基準</th>
