@@ -82,7 +82,16 @@ export function VersionList({ versions }: { versions: Version[] }) {
         <tbody className="divide-y">
           {versions.map((v) => (
             <tr key={v.id} className="hover:bg-gray-50">
-              <td className="px-4 py-2 font-medium text-gray-900">{v.name}</td>
+              <td className="px-4 py-2 font-medium">
+                <a
+                  href={`/admin/targets/versions/${v.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  {v.name}
+                </a>
+              </td>
               <td className="px-4 py-2 text-gray-500">{v.detailCount}</td>
               <td className="px-4 py-2 text-gray-500">{v.fiscalYearCount}</td>
               <td className="px-4 py-2 text-gray-500">{v.createdAt}</td>
