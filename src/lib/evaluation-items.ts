@@ -29,7 +29,7 @@ export async function getEvaluationItems(filter?: { targetId?: number; categoryI
 
   return prisma.evaluationItem.findMany({
     where,
-    orderBy: [{ target: { no: "asc" } }, { category: { no: "asc" } }, { no: "asc" }],
+    orderBy: [{ target: { index: "asc" } }, { category: { index: "asc" } }, { index: "asc" }],
     select: itemSelect,
   });
 }
@@ -59,12 +59,20 @@ export async function createEvaluationItem(data: {
   });
   const no = (maxItem?.no ?? 0) + 1;
 
+  const maxIndex = await prisma.evaluationItem.findFirst({
+    where: { categoryId: data.categoryId },
+    orderBy: { index: "desc" },
+    select: { index: true },
+  });
+  const index = (maxIndex?.index ?? 0) + 1;
+
   try {
     return await prisma.evaluationItem.create({
       data: {
         targetId: data.targetId,
         categoryId: data.categoryId,
         no,
+        index,
         name: data.name,
         description: data.description ?? null,
         evalCriteria: data.evalCriteria ?? null,
@@ -81,7 +89,7 @@ export async function createEvaluationItem(data: {
 
 export async function updateEvaluationItem(
   id: number,
-  data: { name?: string; description?: string | null; evalCriteria?: string | null },
+  data: { name?: string; no?: number; description?: string | null; evalCriteria?: string | null },
 ) {
   const existing = await prisma.evaluationItem.findUnique({ where: { id } });
   if (!existing) throw new NotFoundError("評価項目が見つかりません");
@@ -92,22 +100,36 @@ export async function updateEvaluationItem(
   if (data.name !== undefined && !data.name.trim())
     throw new BadRequestError("name は空にできません");
 
-  return prisma.evaluationItem.update({
-    where: { id },
-    data,
-    select: itemSelect,
-  });
+  if (data.no !== undefined && data.no !== existing.no) {
+    const conflict = await prisma.evaluationItem.findUnique({
+      where: { categoryId_no: { categoryId: existing.categoryId, no: data.no } },
+    });
+    if (conflict) throw new ConflictError("同じ中分類内に同じ no の評価項目がすでに存在します");
+  }
+
+  try {
+    return await prisma.evaluationItem.update({
+      where: { id },
+      data,
+      select: itemSelect,
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new ConflictError("同じ中分類内に同じ no の評価項目がすでに存在します");
+    }
+    throw e;
+  }
 }
 
-export async function reorderEvaluationItems(orders: { id: number; no: number }[]) {
+export async function reorderEvaluationItems(orders: { id: number; index: number }[]) {
   const OFFSET = 100000;
   try {
     await prisma.$transaction(async (tx) => {
-      for (const { id, no } of orders) {
-        await tx.evaluationItem.update({ where: { id }, data: { no: no + OFFSET } });
+      for (const { id, index } of orders) {
+        await tx.evaluationItem.update({ where: { id }, data: { index: index + OFFSET } });
       }
-      for (const { id, no } of orders) {
-        await tx.evaluationItem.update({ where: { id }, data: { no } });
+      for (const { id, index } of orders) {
+        await tx.evaluationItem.update({ where: { id }, data: { index } });
       }
     });
   } catch (e) {

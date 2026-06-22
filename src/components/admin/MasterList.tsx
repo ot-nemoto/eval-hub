@@ -100,6 +100,7 @@ function SortableEvaluationItem({ item }: { item: EvaluationItem }) {
         <EvaluationItemActions
           item={{
             id: item.id,
+            no: item.no,
             name: item.name,
             description: item.description,
             evalCriteria: item.evalCriteria,
@@ -138,12 +139,11 @@ function SortableCategory({ category, targetId }: { category: Category; targetId
 
     const oldIndex = items.findIndex((i) => i.id === active.id);
     const newIndex = items.findIndex((i) => i.id === over.id);
-    const reordered = arrayMove(items, oldIndex, newIndex).map((item, idx) => ({
-      ...item,
-      no: idx + 1,
-    }));
+    const reordered = arrayMove(items, oldIndex, newIndex);
     setItems(reordered);
-    const result = await reorderEvaluationItemsAction(reordered.map(({ id, no }) => ({ id, no })));
+    const result = await reorderEvaluationItemsAction(
+      reordered.map(({ id }, idx) => ({ id, index: idx + 1 })),
+    );
     if (result.error) {
       setItems(category.items);
       alert(result.error);
@@ -234,12 +234,11 @@ function SortableTarget({ target }: { target: Target }) {
 
     const oldIndex = categories.findIndex((c) => c.id === active.id);
     const newIndex = categories.findIndex((c) => c.id === over.id);
-    const reordered = arrayMove(categories, oldIndex, newIndex).map((cat, idx) => ({
-      ...cat,
-      no: idx + 1,
-    }));
+    const reordered = arrayMove(categories, oldIndex, newIndex);
     setCategories(reordered);
-    const result = await reorderCategoriesAction(reordered.map(({ id, no }) => ({ id, no })));
+    const result = await reorderCategoriesAction(
+      reordered.map(({ id }, idx) => ({ id, index: idx + 1 })),
+    );
     if (result.error) {
       setCategories(target.categories);
       alert(result.error);
@@ -314,12 +313,11 @@ export function MasterList({ targets: initialTargets }: Props) {
 
     const oldIndex = targets.findIndex((t) => t.id === active.id);
     const newIndex = targets.findIndex((t) => t.id === over.id);
-    const reordered = arrayMove(targets, oldIndex, newIndex).map((t, idx) => ({
-      ...t,
-      no: idx + 1,
-    }));
+    const reordered = arrayMove(targets, oldIndex, newIndex);
     setTargets(reordered);
-    const result = await reorderTargetsAction(reordered.map(({ id, no }) => ({ id, no })));
+    const result = await reorderTargetsAction(
+      reordered.map(({ id }, idx) => ({ id, index: idx + 1 })),
+    );
     if (result.error) {
       setTargets(initialTargets);
       alert(result.error);

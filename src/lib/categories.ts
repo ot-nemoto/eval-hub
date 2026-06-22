@@ -6,8 +6,8 @@ export async function getCategories(targetId?: number) {
   const where = targetId !== undefined ? { targetId } : {};
   return prisma.category.findMany({
     where,
-    orderBy: { no: "asc" },
-    select: { id: true, targetId: true, name: true, no: true },
+    orderBy: { index: "asc" },
+    select: { id: true, targetId: true, name: true, no: true, index: true },
   });
 }
 
@@ -22,10 +22,17 @@ export async function createCategory(data: { targetId: number; name: string }) {
   });
   const no = (max?.no ?? 0) + 1;
 
+  const maxIndex = await prisma.category.findFirst({
+    where: { targetId: data.targetId },
+    orderBy: { index: "desc" },
+    select: { index: true },
+  });
+  const index = (maxIndex?.index ?? 0) + 1;
+
   try {
     return await prisma.category.create({
-      data: { targetId: data.targetId, name: data.name, no },
-      select: { id: true, targetId: true, name: true, no: true },
+      data: { targetId: data.targetId, name: data.name, no, index },
+      select: { id: true, targetId: true, name: true, no: true, index: true },
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
@@ -50,7 +57,7 @@ export async function updateCategory(id: number, data: { name?: string; no?: num
     return await prisma.category.update({
       where: { id },
       data,
-      select: { id: true, targetId: true, name: true, no: true },
+      select: { id: true, targetId: true, name: true, no: true, index: true },
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
@@ -60,15 +67,15 @@ export async function updateCategory(id: number, data: { name?: string; no?: num
   }
 }
 
-export async function reorderCategories(orders: { id: number; no: number }[]) {
+export async function reorderCategories(orders: { id: number; index: number }[]) {
   const OFFSET = 100000;
   try {
     await prisma.$transaction(async (tx) => {
-      for (const { id, no } of orders) {
-        await tx.category.update({ where: { id }, data: { no: no + OFFSET } });
+      for (const { id, index } of orders) {
+        await tx.category.update({ where: { id }, data: { index: index + OFFSET } });
       }
-      for (const { id, no } of orders) {
-        await tx.category.update({ where: { id }, data: { no } });
+      for (const { id, index } of orders) {
+        await tx.category.update({ where: { id }, data: { index } });
       }
     });
   } catch (e) {

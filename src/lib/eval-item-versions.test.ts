@@ -5,6 +5,7 @@ import {
   assignVersionToFiscalYear,
   createEvalItemVersion,
   deleteEvalItemVersion,
+  getCurrentEvalItems,
   getEvalItemVersionDetails,
   getEvalItemVersions,
   restoreEvalItemVersion,
@@ -64,6 +65,60 @@ describe("getEvalItemVersionDetails", () => {
     expect(prisma.evalItemVersionDetail.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { versionId: 1 } }),
     );
+  });
+});
+
+describe("getCurrentEvalItems", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("評価項目を evaluationItemId ベースで返す", async () => {
+    const mockItems = [
+      {
+        id: 10,
+        targetId: 1,
+        categoryId: 2,
+        no: 3,
+        name: "項目A",
+        description: "説明",
+        evalCriteria: "基準",
+        index: 0,
+        target: { no: 1, name: "大分類1", index: 0 },
+        category: { no: 2, name: "中分類2", index: 1 },
+      },
+    ];
+    vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue(mockItems as never);
+
+    const result = await getCurrentEvalItems();
+
+    expect(prisma.evaluationItem.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [{ target: { index: "asc" } }, { category: { index: "asc" } }, { index: "asc" }],
+      }),
+    );
+    expect(result).toEqual([
+      {
+        evaluationItemId: 10,
+        targetId: 1,
+        categoryId: 2,
+        no: 3,
+        name: "項目A",
+        description: "説明",
+        evalCriteria: "基準",
+        index: 0,
+        targetNo: 1,
+        targetName: "大分類1",
+        targetIndex: 0,
+        categoryNo: 2,
+        categoryName: "中分類2",
+        categoryIndex: 1,
+      },
+    ]);
+  });
+
+  it("評価項目が0件の場合は空配列を返す", async () => {
+    vi.mocked(prisma.evaluationItem.findMany).mockResolvedValue([]);
+    const result = await getCurrentEvalItems();
+    expect(result).toEqual([]);
   });
 });
 

@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 export async function getTargets() {
   return prisma.target.findMany({
-    orderBy: { no: "asc" },
-    select: { id: true, name: true, no: true },
+    orderBy: { index: "asc" },
+    select: { id: true, name: true, no: true, index: true },
   });
 }
 
@@ -16,10 +16,16 @@ export async function createTarget(data: { name: string }) {
   });
   const no = (max?.no ?? 0) + 1;
 
+  const maxIndex = await prisma.target.findFirst({
+    orderBy: { index: "desc" },
+    select: { index: true },
+  });
+  const index = (maxIndex?.index ?? 0) + 1;
+
   try {
     return await prisma.target.create({
-      data: { name: data.name, no },
-      select: { id: true, name: true, no: true },
+      data: { name: data.name, no, index },
+      select: { id: true, name: true, no: true, index: true },
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
@@ -42,7 +48,7 @@ export async function updateTarget(id: number, data: { name?: string; no?: numbe
     return await prisma.target.update({
       where: { id },
       data,
-      select: { id: true, name: true, no: true },
+      select: { id: true, name: true, no: true, index: true },
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
@@ -52,15 +58,15 @@ export async function updateTarget(id: number, data: { name?: string; no?: numbe
   }
 }
 
-export async function reorderTargets(orders: { id: number; no: number }[]) {
+export async function reorderTargets(orders: { id: number; index: number }[]) {
   const OFFSET = 100000;
   try {
     await prisma.$transaction(async (tx) => {
-      for (const { id, no } of orders) {
-        await tx.target.update({ where: { id }, data: { no: no + OFFSET } });
+      for (const { id, index } of orders) {
+        await tx.target.update({ where: { id }, data: { index: index + OFFSET } });
       }
-      for (const { id, no } of orders) {
-        await tx.target.update({ where: { id }, data: { no } });
+      for (const { id, index } of orders) {
+        await tx.target.update({ where: { id }, data: { index } });
       }
     });
   } catch (e) {

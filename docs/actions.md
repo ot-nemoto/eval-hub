@@ -208,7 +208,7 @@
 
 大分類の並び順を変更する。
 
-**引数:** `orders: { id: number; no: number }[]`
+**引数:** `orders: { id: number; index: number }[]`
 
 **戻り値:** `{}` | `{ error: string }`
 
@@ -223,7 +223,7 @@
 
 中分類の並び順を変更する。
 
-**引数:** `orders: { id: number; no: number }[]`
+**引数:** `orders: { id: number; index: number }[]`
 
 **戻り値:** `{}` | `{ error: string }`
 
@@ -255,9 +255,9 @@
 
 ### `updateEvaluationItemAction(id, data)`
 
-評価項目を更新する。`name`・`description`・`evalCriteria` はいずれかが必須。
+評価項目を更新する。`name`・`no`・`description`・`evalCriteria` はいずれかが必須。
 
-**引数:** `id: number`, `{ name?: string; description?: string | null; evalCriteria?: string | null }`
+**引数:** `id: number`, `{ name?: string; no?: number; description?: string | null; evalCriteria?: string | null }`
 
 **戻り値:** `{}` | `{ error: string }`
 
@@ -265,8 +265,10 @@
 |--------|------|
 | `"id は 1 以上の整数で指定してください"` | id が不正値 |
 | `"name は空にできません"` | name が空文字 |
+| `"no は 1 以上の整数で指定してください"` | no が不正値 |
 | `"更新するフィールドを指定してください"` | 更新フィールドが全て undefined |
 | `"評価項目が見つかりません"` | 指定 id が存在しない（NotFoundError） |
+| `"同じ中分類内に同じ no の評価項目がすでに存在します"` | no が重複（ConflictError） |
 
 ---
 
@@ -290,7 +292,7 @@
 
 評価項目の並び順を変更する。
 
-**引数:** `orders: { id: number; no: number }[]`
+**引数:** `orders: { id: number; index: number }[]`
 
 **戻り値:** `{}` | `{ error: string }`
 

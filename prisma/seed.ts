@@ -265,7 +265,9 @@ async function main() {
     ).values(),
   ].sort((a, b) => a.no - b.no);
 
-  await prisma.target.createMany({ data: targetsData });
+  await prisma.target.createMany({
+    data: targetsData.map((t, i) => ({ ...t, index: i + 1 })),
+  });
   console.log(`targets: ${targetsData.length} created`);
 
   // =========================================================================
@@ -301,6 +303,7 @@ async function main() {
       targetId: targetByName[c.target].id,
       name: c.name,
       no: c.no,
+      index: c.no,
     })),
   });
   console.log(`categories: ${categoriesData.length} created`);
@@ -324,15 +327,23 @@ async function main() {
     return true;
   });
 
+  // category ごとに index を連番で付与
+  const itemIndexByCategory = new Map<string, number>();
   await prisma.evaluationItem.createMany({
-    data: deduplicatedItems.map((item) => ({
-      targetId: targetByName[item.target].id,
-      categoryId: categoryByKey[`${item.target}|${item.category}`].id,
-      no: item.item_no,
-      name: item.name,
-      description: item.description ?? null,
-      evalCriteria: item.eval_criteria ?? null,
-    })),
+    data: deduplicatedItems.map((item) => {
+      const catKey = `${item.target}|${item.category}`;
+      const idx = (itemIndexByCategory.get(catKey) ?? 0) + 1;
+      itemIndexByCategory.set(catKey, idx);
+      return {
+        targetId: targetByName[item.target].id,
+        categoryId: categoryByKey[catKey].id,
+        no: item.item_no,
+        name: item.name,
+        description: item.description ?? null,
+        evalCriteria: item.eval_criteria ?? null,
+        index: idx,
+      };
+    }),
   });
   console.log(
     `evaluation_items: ${deduplicatedItems.length} created (${evaluationItemsData.length - deduplicatedItems.length} duplicates skipped)`,
@@ -344,8 +355,8 @@ async function main() {
   // =========================================================================
   const allItems = await prisma.evaluationItem.findMany({
     include: {
-      target: { select: { no: true, name: true } },
-      category: { select: { no: true, name: true } },
+      target: { select: { no: true, name: true, index: true } },
+      category: { select: { no: true, name: true, index: true } },
     },
     orderBy: { id: "asc" },
   });
@@ -363,10 +374,13 @@ async function main() {
             name: item.name,
             description: item.description,
             evalCriteria: item.evalCriteria,
+            index: item.index,
             targetNo: item.target.no,
             targetName: item.target.name,
+            targetIndex: item.target.index,
             categoryNo: item.category.no,
             categoryName: item.category.name,
+            categoryIndex: item.category.index,
           })),
         },
       },

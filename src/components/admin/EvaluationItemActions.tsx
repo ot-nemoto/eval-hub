@@ -9,6 +9,7 @@ import {
 
 type EvaluationItem = {
   id: number;
+  no: number;
   name: string;
   description: string | null;
   evalCriteria: string | null;
@@ -21,6 +22,7 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
+    no: String(item.no),
     name: item.name,
     description: item.description ?? "",
     evalCriteria: item.evalCriteria ?? "",
@@ -35,7 +37,14 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
     e.preventDefault();
     setLoading(true);
     try {
+      const noValue = Number(form.no);
+      if (!Number.isInteger(noValue) || noValue < 1) {
+        alert("No は 1 以上の整数で指定してください");
+        setLoading(false);
+        return;
+      }
       const result = await updateEvaluationItemAction(item.id, {
+        no: noValue !== item.no ? noValue : undefined,
         name: form.name,
         description: form.description || null,
         evalCriteria: form.evalCriteria || null,
@@ -73,6 +82,16 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
   if (editing) {
     return (
       <form onSubmit={handleEdit} className="flex flex-col gap-2 py-1">
+        <input
+          type="number"
+          name="no"
+          value={form.no}
+          onChange={handleChange}
+          placeholder="No"
+          required
+          min={1}
+          className="rounded border border-gray-300 px-2 py-1 text-xs w-20"
+        />
         <input
           type="text"
           name="name"

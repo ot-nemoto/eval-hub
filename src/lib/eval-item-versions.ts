@@ -14,10 +14,13 @@ export async function getEvalItemVersions() {
 }
 
 export async function getEvalItemVersionDetails(versionId: number) {
-  const version = await prisma.evalItemVersion.findUnique({ where: { id: versionId } });
+  const version = await prisma.evalItemVersion.findUnique({
+    where: { id: versionId },
+    select: { id: true, name: true, createdAt: true },
+  });
   if (!version) throw new NotFoundError("バージョンが見つかりません");
 
-  return prisma.evalItemVersionDetail.findMany({
+  const details = await prisma.evalItemVersionDetail.findMany({
     where: { versionId },
     select: {
       id: true,
@@ -28,13 +31,45 @@ export async function getEvalItemVersionDetails(versionId: number) {
       name: true,
       description: true,
       evalCriteria: true,
+      index: true,
       targetNo: true,
       targetName: true,
+      targetIndex: true,
       categoryNo: true,
       categoryName: true,
+      categoryIndex: true,
     },
-    orderBy: [{ targetNo: "asc" }, { categoryNo: "asc" }, { no: "asc" }],
+    orderBy: [{ targetIndex: "asc" }, { categoryIndex: "asc" }, { index: "asc" }],
   });
+
+  return { version, details };
+}
+
+export async function getCurrentEvalItems() {
+  const items = await prisma.evaluationItem.findMany({
+    include: {
+      target: { select: { no: true, name: true, index: true } },
+      category: { select: { no: true, name: true, index: true } },
+    },
+    orderBy: [{ target: { index: "asc" } }, { category: { index: "asc" } }, { index: "asc" }],
+  });
+
+  return items.map((item) => ({
+    evaluationItemId: item.id,
+    targetId: item.targetId,
+    categoryId: item.categoryId,
+    no: item.no,
+    name: item.name,
+    description: item.description,
+    evalCriteria: item.evalCriteria,
+    index: item.index,
+    targetNo: item.target.no,
+    targetName: item.target.name,
+    targetIndex: item.target.index,
+    categoryNo: item.category.no,
+    categoryName: item.category.name,
+    categoryIndex: item.category.index,
+  }));
 }
 
 export async function createEvalItemVersion(name: string) {
@@ -42,8 +77,8 @@ export async function createEvalItemVersion(name: string) {
 
   const items = await prisma.evaluationItem.findMany({
     include: {
-      target: { select: { no: true, name: true } },
-      category: { select: { no: true, name: true } },
+      target: { select: { no: true, name: true, index: true } },
+      category: { select: { no: true, name: true, index: true } },
     },
   });
 
@@ -62,10 +97,13 @@ export async function createEvalItemVersion(name: string) {
             name: item.name,
             description: item.description,
             evalCriteria: item.evalCriteria,
+            index: item.index,
             targetNo: item.target.no,
             targetName: item.target.name,
+            targetIndex: item.target.index,
             categoryNo: item.category.no,
             categoryName: item.category.name,
+            categoryIndex: item.category.index,
           })),
         },
       },
@@ -87,10 +125,13 @@ export async function restoreEvalItemVersion(versionId: number) {
           name: true,
           description: true,
           evalCriteria: true,
+          index: true,
           targetNo: true,
           targetName: true,
+          targetIndex: true,
           categoryNo: true,
           categoryName: true,
+          categoryIndex: true,
         },
       },
     },
@@ -98,17 +139,21 @@ export async function restoreEvalItemVersion(versionId: number) {
   if (!version) throw new NotFoundError("バージョンが見つかりません");
   if (version.details.length === 0) throw new BadRequestError("バージョンに詳細がありません");
 
-  const targetsMap = new Map<number, { no: number; name: string }>();
-  const categoriesMap = new Map<number, { targetId: number; no: number; name: string }>();
+  const targetsMap = new Map<number, { no: number; name: string; index: number }>();
+  const categoriesMap = new Map<
+    number,
+    { targetId: number; no: number; name: string; index: number }
+  >();
   for (const d of version.details) {
     if (!targetsMap.has(d.targetId)) {
-      targetsMap.set(d.targetId, { no: d.targetNo, name: d.targetName });
+      targetsMap.set(d.targetId, { no: d.targetNo, name: d.targetName, index: d.targetIndex });
     }
     if (!categoriesMap.has(d.categoryId)) {
       categoriesMap.set(d.categoryId, {
         targetId: d.targetId,
         no: d.categoryNo,
         name: d.categoryName,
+        index: d.categoryIndex,
       });
     }
   }
@@ -122,26 +167,28 @@ export async function restoreEvalItemVersion(versionId: number) {
     // 再挿入（大分類→中分類→評価項目）
     for (const [id, data] of targetsMap) {
       await tx.$executeRawUnsafe(
-        `INSERT INTO "targets" ("id", "no", "name") VALUES ($1, $2, $3)`,
+        `INSERT INTO "targets" ("id", "no", "name", "index") VALUES ($1, $2, $3, $4)`,
         id,
         data.no,
         data.name,
+        data.index,
       );
     }
 
     for (const [id, data] of categoriesMap) {
       await tx.$executeRawUnsafe(
-        `INSERT INTO "categories" ("id", "target_id", "no", "name") VALUES ($1, $2, $3, $4)`,
+        `INSERT INTO "categories" ("id", "target_id", "no", "name", "index") VALUES ($1, $2, $3, $4, $5)`,
         id,
         data.targetId,
         data.no,
         data.name,
+        data.index,
       );
     }
 
     for (const detail of version.details) {
       await tx.$executeRawUnsafe(
-        `INSERT INTO "evaluation_items" ("id", "target_id", "category_id", "no", "name", "description", "eval_criteria") VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        `INSERT INTO "evaluation_items" ("id", "target_id", "category_id", "no", "name", "description", "eval_criteria", "index") VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
         detail.evaluationItemId,
         detail.targetId,
         detail.categoryId,
@@ -149,6 +196,7 @@ export async function restoreEvalItemVersion(versionId: number) {
         detail.name,
         detail.description,
         detail.evalCriteria,
+        detail.index,
       );
     }
 
