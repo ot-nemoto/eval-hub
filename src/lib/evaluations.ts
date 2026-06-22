@@ -86,9 +86,9 @@ export async function getAllManagerEvaluations(fiscalYear: number, filter?: { us
     },
     orderBy: [
       { evaluatee: { name: "asc" } },
-      { evalItemVersionDetail: { targetNo: "asc" } },
-      { evalItemVersionDetail: { categoryNo: "asc" } },
-      { evalItemVersionDetail: { no: "asc" } },
+      { evalItemVersionDetail: { targetIndex: "asc" } },
+      { evalItemVersionDetail: { categoryIndex: "asc" } },
+      { evalItemVersionDetail: { index: "asc" } },
     ],
   });
 
@@ -133,9 +133,9 @@ export async function getAllSelfEvaluations(fiscalYear: number, filter?: { userI
     },
     orderBy: [
       { evaluatee: { name: "asc" } },
-      { evalItemVersionDetail: { targetNo: "asc" } },
-      { evalItemVersionDetail: { categoryNo: "asc" } },
-      { evalItemVersionDetail: { no: "asc" } },
+      { evalItemVersionDetail: { targetIndex: "asc" } },
+      { evalItemVersionDetail: { categoryIndex: "asc" } },
+      { evalItemVersionDetail: { index: "asc" } },
     ],
   });
 
@@ -177,7 +177,7 @@ export async function getEvaluationMatrix(fiscalYear: number) {
             targetNo: true,
             categoryNo: true,
           },
-          orderBy: [{ targetNo: "asc" }, { categoryNo: "asc" }, { no: "asc" }],
+          orderBy: [{ targetIndex: "asc" }, { categoryIndex: "asc" }, { index: "asc" }],
         })
       : Promise.resolve([]),
   ]);

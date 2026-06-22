@@ -204,36 +204,75 @@ describe("updateEvaluationItem", () => {
 
     await expect(updateEvaluationItem(1, { name: "  " })).rejects.toThrow(BadRequestError);
   });
+
+  it("no を更新できる", async () => {
+    vi.mocked(prisma.evaluationItem.findUnique)
+      .mockResolvedValueOnce(mockItem as never)
+      .mockResolvedValueOnce(null as never);
+    vi.mocked(prisma.evaluationItem.update).mockResolvedValue({
+      ...mockItem,
+      no: 5,
+    } as never);
+
+    const result = await updateEvaluationItem(1, { no: 5 });
+
+    expect(result.no).toBe(5);
+    expect(prisma.evaluationItem.findUnique).toHaveBeenCalledWith({
+      where: { categoryId_no: { categoryId: 1, no: 5 } },
+    });
+  });
+
+  it("no が重複する場合は ConflictError をスロー（事前チェック）", async () => {
+    vi.mocked(prisma.evaluationItem.findUnique)
+      .mockResolvedValueOnce(mockItem as never)
+      .mockResolvedValueOnce({ id: 2, categoryId: 1, no: 2 } as never);
+
+    await expect(updateEvaluationItem(1, { no: 2 })).rejects.toThrow(ConflictError);
+  });
+
+  it("no 更新時に P2002 が発生した場合は ConflictError をスロー", async () => {
+    vi.mocked(prisma.evaluationItem.findUnique)
+      .mockResolvedValueOnce(mockItem as never)
+      .mockResolvedValueOnce(null as never);
+    vi.mocked(prisma.evaluationItem.update).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+        code: "P2002",
+        clientVersion: "5",
+      }),
+    );
+
+    await expect(updateEvaluationItem(1, { no: 3 })).rejects.toThrow(ConflictError);
+  });
 });
 
 describe("reorderEvaluationItems", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("2ステップで no を更新する", async () => {
+  it("2ステップで index を更新する", async () => {
     vi.mocked(prisma.evaluationItem.update).mockResolvedValue({} as never);
 
     await reorderEvaluationItems([
-      { id: 1, no: 2 },
-      { id: 2, no: 1 },
+      { id: 1, index: 2 },
+      { id: 2, index: 1 },
     ]);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(prisma.evaluationItem.update).toHaveBeenCalledTimes(4);
     expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(1, {
       where: { id: 1 },
-      data: { no: 100002 },
+      data: { index: 100002 },
     });
     expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(2, {
       where: { id: 2 },
-      data: { no: 100001 },
+      data: { index: 100001 },
     });
     expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(3, {
       where: { id: 1 },
-      data: { no: 2 },
+      data: { index: 2 },
     });
     expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(4, {
       where: { id: 2 },
-      data: { no: 1 },
+      data: { index: 1 },
     });
   });
 });

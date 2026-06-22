@@ -38,8 +38,8 @@ describe("getTargets", () => {
     const result = await getTargets();
 
     expect(prisma.target.findMany).toHaveBeenCalledWith({
-      orderBy: { no: "asc" },
-      select: { id: true, name: true, no: true },
+      orderBy: { index: "asc" },
+      select: { id: true, name: true, no: true, index: true },
     });
     expect(result).toHaveLength(2);
   });
@@ -48,26 +48,38 @@ describe("getTargets", () => {
 describe("createTarget", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("no を自動採番して大分類を作成する", async () => {
-    vi.mocked(prisma.target.findFirst).mockResolvedValue({ no: 2 } as never);
-    vi.mocked(prisma.target.create).mockResolvedValue({ id: 3, name: "new", no: 3 } as never);
+  it("no と index を自動採番して大分類を作成する", async () => {
+    vi.mocked(prisma.target.findFirst)
+      .mockResolvedValueOnce({ no: 2 } as never)
+      .mockResolvedValueOnce({ index: 2 } as never);
+    vi.mocked(prisma.target.create).mockResolvedValue({
+      id: 3,
+      name: "new",
+      no: 3,
+      index: 3,
+    } as never);
 
     const result = await createTarget({ name: "new" });
 
     expect(prisma.target.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { name: "new", no: 3 } }),
+      expect.objectContaining({ data: { name: "new", no: 3, index: 3 } }),
     );
-    expect(result).toEqual({ id: 3, name: "new", no: 3 });
+    expect(result).toEqual({ id: 3, name: "new", no: 3, index: 3 });
   });
 
-  it("大分類が存在しない場合は no=1 で作成する", async () => {
+  it("大分類が存在しない場合は no=1, index=1 で作成する", async () => {
     vi.mocked(prisma.target.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.target.create).mockResolvedValue({ id: 1, name: "first", no: 1 } as never);
+    vi.mocked(prisma.target.create).mockResolvedValue({
+      id: 1,
+      name: "first",
+      no: 1,
+      index: 1,
+    } as never);
 
     await createTarget({ name: "first" });
 
     expect(prisma.target.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { name: "first", no: 1 } }),
+      expect.objectContaining({ data: { name: "first", no: 1, index: 1 } }),
     );
   });
 });
@@ -110,26 +122,32 @@ describe("updateTarget", () => {
 describe("reorderTargets", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("2ステップで no を更新する", async () => {
+  it("2ステップで index を更新する", async () => {
     vi.mocked(prisma.target.update).mockResolvedValue({} as never);
 
     await reorderTargets([
-      { id: 1, no: 2 },
-      { id: 2, no: 1 },
+      { id: 1, index: 2 },
+      { id: 2, index: 1 },
     ]);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(prisma.target.update).toHaveBeenCalledTimes(4);
     expect(prisma.target.update).toHaveBeenNthCalledWith(1, {
       where: { id: 1 },
-      data: { no: 100002 },
+      data: { index: 100002 },
     });
     expect(prisma.target.update).toHaveBeenNthCalledWith(2, {
       where: { id: 2 },
-      data: { no: 100001 },
+      data: { index: 100001 },
     });
-    expect(prisma.target.update).toHaveBeenNthCalledWith(3, { where: { id: 1 }, data: { no: 2 } });
-    expect(prisma.target.update).toHaveBeenNthCalledWith(4, { where: { id: 2 }, data: { no: 1 } });
+    expect(prisma.target.update).toHaveBeenNthCalledWith(3, {
+      where: { id: 1 },
+      data: { index: 2 },
+    });
+    expect(prisma.target.update).toHaveBeenNthCalledWith(4, {
+      where: { id: 2 },
+      data: { index: 1 },
+    });
   });
 });
 

@@ -81,9 +81,9 @@ describe("getAllSelfEvaluations", () => {
         where: { fiscalYear: 2026, evaluatee: { isActive: true } },
         orderBy: [
           { evaluatee: { name: "asc" } },
-          { evalItemVersionDetail: { targetNo: "asc" } },
-          { evalItemVersionDetail: { categoryNo: "asc" } },
-          { evalItemVersionDetail: { no: "asc" } },
+          { evalItemVersionDetail: { targetIndex: "asc" } },
+          { evalItemVersionDetail: { categoryIndex: "asc" } },
+          { evalItemVersionDetail: { index: "asc" } },
         ],
       }),
     );
@@ -513,9 +513,9 @@ describe("getAllManagerEvaluations", () => {
         where: { fiscalYear: 2026, evaluatee: { isActive: true } },
         orderBy: [
           { evaluatee: { name: "asc" } },
-          { evalItemVersionDetail: { targetNo: "asc" } },
-          { evalItemVersionDetail: { categoryNo: "asc" } },
-          { evalItemVersionDetail: { no: "asc" } },
+          { evalItemVersionDetail: { targetIndex: "asc" } },
+          { evalItemVersionDetail: { categoryIndex: "asc" } },
+          { evalItemVersionDetail: { index: "asc" } },
         ],
       }),
     );

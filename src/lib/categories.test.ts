@@ -47,8 +47,8 @@ describe("getCategories", () => {
 
     expect(prisma.category.findMany).toHaveBeenCalledWith({
       where: {},
-      orderBy: { no: "asc" },
-      select: { id: true, targetId: true, name: true, no: true },
+      orderBy: { index: "asc" },
+      select: { id: true, targetId: true, name: true, no: true, index: true },
     });
     expect(result).toHaveLength(2);
   });
@@ -60,8 +60,8 @@ describe("getCategories", () => {
 
     expect(prisma.category.findMany).toHaveBeenCalledWith({
       where: { targetId: 1 },
-      orderBy: { no: "asc" },
-      select: { id: true, targetId: true, name: true, no: true },
+      orderBy: { index: "asc" },
+      select: { id: true, targetId: true, name: true, no: true, index: true },
     });
   });
 });
@@ -69,25 +69,28 @@ describe("getCategories", () => {
 describe("createCategory", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("no を自動採番して中分類を作成する", async () => {
+  it("no と index を自動採番して中分類を作成する", async () => {
     vi.mocked(prisma.target.findUnique).mockResolvedValue(mockTarget as never);
-    vi.mocked(prisma.category.findFirst).mockResolvedValue({ no: 2 } as never);
+    vi.mocked(prisma.category.findFirst)
+      .mockResolvedValueOnce({ no: 2 } as never)
+      .mockResolvedValueOnce({ index: 2 } as never);
     vi.mocked(prisma.category.create).mockResolvedValue({
       id: 3,
       targetId: 1,
       name: "new",
       no: 3,
+      index: 3,
     } as never);
 
     const result = await createCategory({ targetId: 1, name: "new" });
 
     expect(prisma.category.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { targetId: 1, name: "new", no: 3 } }),
+      expect.objectContaining({ data: { targetId: 1, name: "new", no: 3, index: 3 } }),
     );
-    expect(result).toEqual({ id: 3, targetId: 1, name: "new", no: 3 });
+    expect(result).toEqual({ id: 3, targetId: 1, name: "new", no: 3, index: 3 });
   });
 
-  it("中分類が存在しない場合は no=1 で作成する", async () => {
+  it("中分類が存在しない場合は no=1, index=1 で作成する", async () => {
     vi.mocked(prisma.target.findUnique).mockResolvedValue(mockTarget as never);
     vi.mocked(prisma.category.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.category.create).mockResolvedValue({
@@ -95,12 +98,13 @@ describe("createCategory", () => {
       targetId: 1,
       name: "first",
       no: 1,
+      index: 1,
     } as never);
 
     await createCategory({ targetId: 1, name: "first" });
 
     expect(prisma.category.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { targetId: 1, name: "first", no: 1 } }),
+      expect.objectContaining({ data: { targetId: 1, name: "first", no: 1, index: 1 } }),
     );
   });
 
@@ -159,31 +163,31 @@ describe("updateCategory", () => {
 describe("reorderCategories", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("2ステップで no を更新する", async () => {
+  it("2ステップで index を更新する", async () => {
     vi.mocked(prisma.category.update).mockResolvedValue({} as never);
 
     await reorderCategories([
-      { id: 1, no: 2 },
-      { id: 2, no: 1 },
+      { id: 1, index: 2 },
+      { id: 2, index: 1 },
     ]);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(prisma.category.update).toHaveBeenCalledTimes(4);
     expect(prisma.category.update).toHaveBeenNthCalledWith(1, {
       where: { id: 1 },
-      data: { no: 100002 },
+      data: { index: 100002 },
     });
     expect(prisma.category.update).toHaveBeenNthCalledWith(2, {
       where: { id: 2 },
-      data: { no: 100001 },
+      data: { index: 100001 },
     });
     expect(prisma.category.update).toHaveBeenNthCalledWith(3, {
       where: { id: 1 },
-      data: { no: 2 },
+      data: { index: 2 },
     });
     expect(prisma.category.update).toHaveBeenNthCalledWith(4, {
       where: { id: 2 },
-      data: { no: 1 },
+      data: { index: 1 },
     });
   });
 });
