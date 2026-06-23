@@ -27,7 +27,7 @@ type Item = {
 type DiffStatus = "added" | "removed" | "changed" | "unchanged";
 
 type DiffItem = {
-  evaluationItemId: number | null;
+  matchKey: string;
   status: DiffStatus;
   left: Item | null;
   right: Item | null;
@@ -47,43 +47,37 @@ type DiffTarget = {
   categories: DiffCategory[];
 };
 
+function itemKey(item: Item): string {
+  return `${item.targetNo}-${item.categoryNo}-${item.no}`;
+}
+
 function computeDiff(leftItems: Item[], rightItems: Item[]): DiffItem[] {
-  const result: DiffItem[] = [];
-
-  const leftMap = new Map<number, Item>();
+  const leftMap = new Map<string, Item>();
   for (const item of leftItems) {
-    if (item.evaluationItemId !== null) {
-      leftMap.set(item.evaluationItemId, item);
-    } else {
-      result.push({ evaluationItemId: null, status: "removed", left: item, right: null });
-    }
+    leftMap.set(itemKey(item), item);
   }
 
-  const rightMap = new Map<number, Item>();
+  const rightMap = new Map<string, Item>();
   for (const item of rightItems) {
-    if (item.evaluationItemId !== null) {
-      rightMap.set(item.evaluationItemId, item);
-    } else {
-      result.push({ evaluationItemId: null, status: "added", left: null, right: item });
-    }
+    rightMap.set(itemKey(item), item);
   }
 
-  const allIds = new Set([...leftMap.keys(), ...rightMap.keys()]);
-  for (const id of allIds) {
-    const left = leftMap.get(id) ?? null;
-    const right = rightMap.get(id) ?? null;
+  const allKeys = new Set([...leftMap.keys(), ...rightMap.keys()]);
+  const result: DiffItem[] = [];
+  for (const key of allKeys) {
+    const left = leftMap.get(key) ?? null;
+    const right = rightMap.get(key) ?? null;
 
     if (!left) {
-      result.push({ evaluationItemId: id, status: "added", left: null, right });
+      result.push({ matchKey: key, status: "added", left: null, right });
     } else if (!right) {
-      result.push({ evaluationItemId: id, status: "removed", left, right: null });
+      result.push({ matchKey: key, status: "removed", left, right: null });
     } else {
       const changed =
-        left.no !== right.no ||
         left.name !== right.name ||
         left.description !== right.description ||
         left.evalCriteria !== right.evalCriteria;
-      result.push({ evaluationItemId: id, status: changed ? "changed" : "unchanged", left, right });
+      result.push({ matchKey: key, status: changed ? "changed" : "unchanged", left, right });
     }
   }
 
@@ -256,26 +250,12 @@ export default async function ComparePage({
                         </tr>
                       </thead>
                       <tbody className="divide-y">
-                        {cat.items.map((d, idx) => {
+                        {cat.items.map((d) => {
                           const item = d.right ?? d.left;
                           if (!item) return null;
                           return (
-                            <tr
-                              key={d.evaluationItemId ?? `null-${idx}`}
-                              className={statusStyles[d.status]}
-                            >
-                              <td className="py-1.5 pr-2 text-xs text-gray-400">
-                                {d.status === "changed" &&
-                                d.left &&
-                                d.right &&
-                                d.left.no !== d.right.no ? (
-                                  <span>
-                                    {d.left.no} → {d.right.no}
-                                  </span>
-                                ) : (
-                                  item.no
-                                )}
-                              </td>
+                            <tr key={d.matchKey} className={statusStyles[d.status]}>
+                              <td className="py-1.5 pr-2 text-xs text-gray-400">{item.no}</td>
                               <td className="py-1.5 pr-2">
                                 {d.status === "changed" &&
                                 d.left &&
