@@ -77,7 +77,7 @@ model EvalItemVersion {
 model EvalItemVersionDetail {
   id               Int     @id @default(autoincrement())
   versionId        Int     @map("version_id")
-  evaluationItemId Int     @map("evaluation_item_id")
+  evaluationItemId Int?    @map("evaluation_item_id")
   targetId         Int     @map("target_id")
   categoryId       Int     @map("category_id")
   no               Int

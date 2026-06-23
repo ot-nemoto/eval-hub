@@ -15,9 +15,9 @@ type EvaluationItem = {
   evalCriteria: string | null;
 };
 
-type Props = { item: EvaluationItem; hasEvaluations: boolean };
+type Props = { item: EvaluationItem };
 
-export function EvaluationItemActions({ item, hasEvaluations }: Props) {
+export function EvaluationItemActions({ item }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -151,8 +151,7 @@ export function EvaluationItemActions({ item, hasEvaluations }: Props) {
       <button
         type="button"
         onClick={handleDelete}
-        disabled={loading || hasEvaluations}
-        title={hasEvaluations ? "年度に紐づいているため削除できません" : undefined}
+        disabled={loading}
         className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-30"
       >
         削除

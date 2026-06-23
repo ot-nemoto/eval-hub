@@ -14,36 +14,28 @@ export default async function TargetsPage() {
 
   const versions = await getEvalItemVersions();
 
-  const [targets, versionDetailCounts] = await Promise.all([
-    prisma.target.findMany({
-      orderBy: { index: "asc" },
-      include: {
-        _count: { select: { categories: true } },
-        categories: {
-          orderBy: { index: "asc" },
-          include: {
-            _count: { select: { evaluationItems: true } },
-            evaluationItems: {
-              orderBy: { index: "asc" },
-              select: {
-                id: true,
-                no: true,
-                name: true,
-                description: true,
-                evalCriteria: true,
-              },
+  const targets = await prisma.target.findMany({
+    orderBy: { index: "asc" },
+    include: {
+      _count: { select: { categories: true } },
+      categories: {
+        orderBy: { index: "asc" },
+        include: {
+          _count: { select: { evaluationItems: true } },
+          evaluationItems: {
+            orderBy: { index: "asc" },
+            select: {
+              id: true,
+              no: true,
+              name: true,
+              description: true,
+              evalCriteria: true,
             },
           },
         },
       },
-    }),
-    prisma.evalItemVersionDetail.groupBy({
-      by: ["evaluationItemId"],
-      _count: true,
-    }),
-  ]);
-
-  const snapshotted = new Set(versionDetailCounts.map((v) => v.evaluationItemId));
+    },
+  });
 
   const data = targets.map((t) => ({
     id: t.id,
@@ -62,7 +54,6 @@ export default async function TargetsPage() {
         name: item.name,
         description: item.description,
         evalCriteria: item.evalCriteria,
-        hasEvaluations: snapshotted.has(item.id),
       })),
     })),
   }));
