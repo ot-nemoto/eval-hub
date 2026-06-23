@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { FiscalYearSelector } from "@/components/FiscalYearSelector";
+import { AppIcon } from "@/components/icons/AppIcon";
 import { LogoutButton } from "@/components/LogoutButton";
 import { NavLinks } from "@/components/NavLinks";
 import { SettingsModalTrigger } from "@/components/SettingsModalTrigger";
@@ -42,24 +43,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <div className="flex items-center gap-6">
             <h1 className="flex items-center gap-1.5 text-base font-bold text-zinc-900">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="28"
-                height="28"
-                viewBox="0 0 52 52"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <line x1="26" y1="4" x2="26" y2="8" strokeWidth="2" />
-                <path d="M14 16 L26 8 L38 16 L40 20 L12 20 Z" strokeWidth="2.5" fill="none" />
-                <path d="M10 30 L26 20 L42 30 L44 35 L8 35 Z" strokeWidth="2.5" fill="none" />
-                <line x1="8" y1="35" x2="44" y2="35" strokeWidth="2" />
-                <rect x="18" y="35" width="16" height="12" strokeWidth="2.5" fill="none" />
-                <line x1="8" y1="47" x2="44" y2="47" strokeWidth="2.5" />
-              </svg>
+              <AppIcon width={28} height={28} />
               {APP_NAME}
             </h1>
             <NavLinks role={session.user.role} />
