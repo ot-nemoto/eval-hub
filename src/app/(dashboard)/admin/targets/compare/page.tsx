@@ -10,7 +10,7 @@ import {
 } from "@/lib/eval-item-versions";
 
 type Item = {
-  evaluationItemId: number;
+  evaluationItemId: number | null;
   no: number;
   name: string;
   description: string | null;
@@ -27,7 +27,7 @@ type Item = {
 type DiffStatus = "added" | "removed" | "changed" | "unchanged";
 
 type DiffItem = {
-  evaluationItemId: number;
+  matchKey: string;
   status: DiffStatus;
   left: Item | null;
   right: Item | null;
@@ -36,36 +36,48 @@ type DiffItem = {
 type DiffCategory = {
   no: number;
   name: string;
+  index: number;
   items: DiffItem[];
 };
 
 type DiffTarget = {
   no: number;
   name: string;
+  index: number;
   categories: DiffCategory[];
 };
 
-function computeDiff(leftItems: Item[], rightItems: Item[]): DiffItem[] {
-  const leftMap = new Map(leftItems.map((i) => [i.evaluationItemId, i]));
-  const rightMap = new Map(rightItems.map((i) => [i.evaluationItemId, i]));
-  const allIds = new Set([...leftMap.keys(), ...rightMap.keys()]);
+function itemKey(item: Item): string {
+  return `${item.targetNo}-${item.categoryNo}-${item.no}`;
+}
 
+function computeDiff(leftItems: Item[], rightItems: Item[]): DiffItem[] {
+  const leftMap = new Map<string, Item>();
+  for (const item of leftItems) {
+    leftMap.set(itemKey(item), item);
+  }
+
+  const rightMap = new Map<string, Item>();
+  for (const item of rightItems) {
+    rightMap.set(itemKey(item), item);
+  }
+
+  const allKeys = new Set([...leftMap.keys(), ...rightMap.keys()]);
   const result: DiffItem[] = [];
-  for (const id of allIds) {
-    const left = leftMap.get(id) ?? null;
-    const right = rightMap.get(id) ?? null;
+  for (const key of allKeys) {
+    const left = leftMap.get(key) ?? null;
+    const right = rightMap.get(key) ?? null;
 
     if (!left) {
-      result.push({ evaluationItemId: id, status: "added", left: null, right });
+      result.push({ matchKey: key, status: "added", left: null, right });
     } else if (!right) {
-      result.push({ evaluationItemId: id, status: "removed", left, right: null });
+      result.push({ matchKey: key, status: "removed", left, right: null });
     } else {
       const changed =
-        left.no !== right.no ||
         left.name !== right.name ||
         left.description !== right.description ||
         left.evalCriteria !== right.evalCriteria;
-      result.push({ evaluationItemId: id, status: changed ? "changed" : "unchanged", left, right });
+      result.push({ matchKey: key, status: changed ? "changed" : "unchanged", left, right });
     }
   }
 
@@ -83,14 +95,19 @@ function buildDiffTree(diffItems: DiffItem[]): DiffTarget[] {
     const targetKey = `${item.targetIndex}-${item.targetNo}`;
     let target = targetsMap.get(targetKey);
     if (!target) {
-      target = { no: item.targetNo, name: item.targetName, categories: [] };
+      target = {
+        no: item.targetNo,
+        name: item.targetName,
+        index: item.targetIndex,
+        categories: [],
+      };
       targetsMap.set(targetKey, target);
     }
 
     const categoryKey = `${targetKey}-${item.categoryIndex}-${item.categoryNo}`;
     let cat = categoriesMap.get(categoryKey);
     if (!cat) {
-      cat = { no: item.categoryNo, name: item.categoryName, items: [] };
+      cat = { no: item.categoryNo, name: item.categoryName, index: item.categoryIndex, items: [] };
       categoriesMap.set(categoryKey, cat);
       target.categories.push(cat);
     }
@@ -106,7 +123,12 @@ function buildDiffTree(diffItems: DiffItem[]): DiffTarget[] {
     });
   }
 
-  return Array.from(targetsMap.values());
+  const targets = Array.from(targetsMap.values());
+  targets.sort((a, b) => a.index - b.index);
+  for (const t of targets) {
+    t.categories.sort((a, b) => a.index - b.index);
+  }
+  return targets;
 }
 
 const statusStyles: Record<DiffStatus, string> = {
@@ -232,19 +254,8 @@ export default async function ComparePage({
                           const item = d.right ?? d.left;
                           if (!item) return null;
                           return (
-                            <tr key={d.evaluationItemId} className={statusStyles[d.status]}>
-                              <td className="py-1.5 pr-2 text-xs text-gray-400">
-                                {d.status === "changed" &&
-                                d.left &&
-                                d.right &&
-                                d.left.no !== d.right.no ? (
-                                  <span>
-                                    {d.left.no} → {d.right.no}
-                                  </span>
-                                ) : (
-                                  item.no
-                                )}
-                              </td>
+                            <tr key={d.matchKey} className={statusStyles[d.status]}>
+                              <td className="py-1.5 pr-2 text-xs text-gray-400">{item.no}</td>
                               <td className="py-1.5 pr-2">
                                 {d.status === "changed" &&
                                 d.left &&
