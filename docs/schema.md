@@ -190,7 +190,7 @@ erDiagram
 |---|---|---|---|
 | id | INTEGER | PK, AUTOINCREMENT | 詳細ID |
 | version_id | INTEGER | FK → eval_item_versions.id, NOT NULL | 所属バージョン |
-| evaluation_item_id | INTEGER | NULLABLE | スナップショット元の評価項目ID（FK制約なし、マスタ削除時に NULL） |
+| evaluation_item_id | INTEGER | NULLABLE | スナップショット元の評価項目ID（FK制約なし、マスタ削除後もIDを保持し比較で使用） |
 | target_id | INTEGER | NOT NULL | スナップショット元の大分類ID（FK制約なし） |
 | category_id | INTEGER | NOT NULL | スナップショット元の中分類ID（FK制約なし） |
 | no | INTEGER | NOT NULL | 中分類内での項目番号（管理番号） |
