@@ -8,7 +8,9 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "postinstall": "prisma generate",
+    "prepare": "biome migrate --write",
     "build": "next build",
+    "vercel-build": "prisma migrate deploy && next build",
     "start": "next start",
     "lint": "biome lint .",
     "format": "biome format --write .",
