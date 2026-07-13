@@ -19,7 +19,7 @@
 - 年度ロック（評価編集の一括制限）
 - ユーザー管理（有効化・無効化・削除）
 
-詳細は [docs/product.md](docs/product.md) / [docs/requirements.md](docs/requirements.md) を参照。
+詳細は [docs/product.md](docs/product.md) / [docs/ui.md](docs/ui.md) を参照。
 
 ## ドキュメント
 
@@ -28,17 +28,13 @@
 | ファイル | 内容 |
 |----------|------|
 | [docs/product.md](docs/product.md) | プロダクト定義・目的 |
-| [docs/requirements.md](docs/requirements.md) | 機能要件・非機能要件・画面一覧 |
-| [docs/architecture.md](docs/architecture.md) | 技術スタック・ディレクトリ構成・実装方針 |
+| [docs/architecture.md](docs/architecture.md) | 技術スタック・実装方針・非機能要件 |
+| [docs/ui.md](docs/ui.md) | 機能要件・画面一覧・遷移・UI規約 |
 | [docs/api.md](docs/api.md) | 外部 REST API エンドポイント定義 |
 | [docs/actions.md](docs/actions.md) | Server Actions 定義 |
 | [docs/schema.md](docs/schema.md) | DB スキーマ・Prisma モデル定義 |
-| [docs/ui.md](docs/ui.md) | 画面一覧・遷移・UI コンポーネント仕様 |
 | [docs/auth.md](docs/auth.md) | 認証フロー・保護ルート |
 | [docs/development.md](docs/development.md) | ローカルセットアップ・Prisma 操作・デプロイ手順 |
-| [docs/tasks.md](docs/tasks.md) | フェーズ別マイルストーン |
-| [docs/testing.md](docs/testing.md) | 自動テスト方針・カバレッジ規約・実行手順 |
-| [docs/e2e-scenarios.md](docs/e2e-scenarios.md) | E2E テストシナリオ・手動テスト観点 |
 
 ## クイックスタート
 
