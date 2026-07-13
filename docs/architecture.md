@@ -4,16 +4,16 @@
 
 | レイヤー | 技術 | 選定理由 |
 |----------|------|----------|
-| フレームワーク | Next.js 16 (App Router) | SSR/CSR の柔軟な使い分け、TypeScript 標準対応 |
+| フレームワーク | Next.js (App Router) | SSR/CSR の柔軟な使い分け、TypeScript 標準対応 |
 | 言語 | TypeScript (strict) | 型安全、補完が効く |
-| スタイリング | Tailwind CSS v4 + shadcn/ui | 高速な UI 構築、デザイン統一 |
+| スタイリング | Tailwind CSS + shadcn/ui | 高速な UI 構築、デザイン統一 |
 | Lint / Format | Biome | ESLint + Prettier を 1 ツールで代替、高速 |
-| ORM | Prisma 7 | 型安全な DB アクセス、マイグレーション管理 |
+| ORM | Prisma | 型安全な DB アクセス、マイグレーション管理 |
 | DB | PostgreSQL (Neon) | サーバーレス PostgreSQL、Edge 対応、無料枠で運用可能 |
-| 認証 | Clerk (@clerk/nextjs v7, @clerk/backend v3) | ホスト型 UI・セッション管理・ロール制御が容易 |
+| 認証 | Clerk (@clerk/nextjs, @clerk/backend) | ホスト型 UI・セッション管理・ロール制御が容易 |
 | ホスティング | Vercel (Hobby) | Next.js の開発元、無料枠・無期限、デプロイが最も簡単 |
 | ユニットテスト | Vitest | 高速、Vite 互換 |
-| 開発サーバー | Turbopack | Next.js 16 デフォルト、HMR が高速 |
+| 開発サーバー | Turbopack | Next.js デフォルト、HMR が高速 |
 | パッケージ管理 | npm | devcontainer のデフォルト環境に合わせる |
 
 ## 非機能要件
