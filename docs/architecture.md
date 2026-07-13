@@ -16,70 +16,22 @@
 | 開発サーバー | Turbopack | Next.js 16 デフォルト、HMR が高速 |
 | パッケージ管理 | npm | devcontainer のデフォルト環境に合わせる |
 
-## ディレクトリ構成
+## 非機能要件
 
-```
-eval-hub/
-├── .github/
-│   ├── instructions/
-│   │   └── review.instructions.md  # Copilot PR レビュー指示
-│   └── workflows/
-│       ├── bump-version.yml        # master PR ラベルで自動バージョンバンプ
-│       └── release.yml             # master push 時に自動リリース
-├── docs/                           # 設計ドキュメント
-├── prisma/
-│   ├── schema.prisma               # DB スキーマ定義
-│   ├── seed.ts                     # 開発用シードデータ
-│   └── migrations/                 # マイグレーションファイル
-├── prisma.config.ts                # Prisma 7 設定（datasource URL）
-├── src/
-│   ├── app/
-│   │   ├── (auth)/
-│   │   │   └── login/              # Clerk SignIn
-│   │   ├── auth-error/             # 認証エラー（isActive=false 等）
-│   │   ├── (dashboard)/
-│   │   │   ├── actions.ts          # 共通 Server Actions（年度切り替え・名前変更）
-│   │   │   ├── members/
-│   │   │   │   ├── page.tsx        # 社員一覧
-│   │   │   │   ├── actions.ts      # 評価者評価 Server Actions
-│   │   │   │   └── [id]/evaluations/
-│   │   │   ├── evaluations/
-│   │   │   │   ├── page.tsx        # 自己評価
-│   │   │   │   └── actions.ts      # 自己評価 Server Actions
-│   │   │   └── admin/              # マスタ管理（ADMIN 専用）
-│   │   │       ├── targets/        # 大分類・中分類
-│   │   │       ├── evaluation-items/   # 評価項目
-│   │   │       ├── fiscal-years/   # 年度管理
-│   │   │       ├── users/          # ユーザー管理
-│   │   │       │   └── [id]/evaluation-settings/  # 評価設定
-│   │   │       └── evaluation-assignments/  # 評価者アサイン
-│   │   ├── api/                    # API Routes（外部連携・認証用のみ。現在は残存のみ）
-│   │   └── layout.tsx
-│   ├── components/
-│   │   ├── ui/                     # shadcn/ui ベース
-│   │   ├── evaluation/             # 評価関連
-│   │   └── admin/                  # 管理画面
-│   ├── lib/
-│   │   ├── prisma.ts               # Prisma クライアント
-│   │   ├── auth.ts                 # セッション取得
-│   │   ├── errors.ts               # カスタムエラークラス
-│   │   ├── targets.ts              # 大分類・中分類
-│   │   ├── categories.ts           # 中分類
-│   │   ├── evaluation-items.ts     # 評価項目
-│   │   ├── fiscal-years.ts         # 年度
-│   │   ├── users.ts                # ユーザー
-│   │   ├── evaluation-settings.ts  # 評価設定
-│   │   ├── evaluation-assignments.ts  # 評価者アサイン
-│   │   ├── evaluations.ts          # 採点
-│   │   └── utils.ts
-│   ├── test/
-│   │   └── setup.ts                # Vitest セットアップ
-│   └── proxy.ts                    # Next.js 16 middleware（旧 middleware.ts）
-├── CLAUDE.md
-├── biome.json
-├── vitest.config.ts
-└── package.json
-```
+### パフォーマンス
+- 一覧画面の初期表示 2秒以内
+
+### セキュリティ
+- HTTPS 必須、SQL インジェクション・XSS 対策
+- 他ユーザーのデータ編集防止（サーバー側検証）。評価データの閲覧はログイン済みユーザー全員に開放
+- セッション：Clerk JWT + DB ユーザー照合で認証
+
+### 対応環境
+- 対応ブラウザ：Chrome / Edge 最新版
+- レスポンシブ：PC（1280px 以上）を優先、タブレット対応は任意
+
+### データ保持
+- 年度をまたいだ評価履歴を無期限保持
 
 ## 認証フロー
 

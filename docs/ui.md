@@ -72,6 +72,69 @@ flowchart TD
 
 ---
 
+## 機能要件
+
+### 1. ユーザー・認証
+
+- Clerk によるメールアドレス + パスワード認証
+- ロールは `ADMIN` / `MEMBER` の2種類
+  - `ADMIN`：ユーザー管理・マスタデータ管理が可能
+  - `MEMBER`：評価者/被評価者どちらにもなれる（ロールではなく `evaluation_assignments` で制御）
+- `MEMBER` は自分が被評価者のデータのみ自己評価を入力できる
+- `evaluation_assignments` でアサインされた評価者は、担当する被評価者の評価者評価を入力できる
+- `ADMIN` はすべてのデータを操作できる
+
+#### ユーザーの削除・無効化
+
+| 操作 | 条件 | 挙動 |
+|---|---|---|
+| **削除** | 評価データ・アサインデータが一切ない場合のみ可 | DB からレコードを物理削除 |
+| **無効化** | 常に可（関連データの有無に関わらず） | `is_active: false` を設定。ログイン不可になるがデータは保持 |
+| **有効化** | 無効化済みユーザーのみ | `is_active: true` に戻す |
+
+- 無効化ユーザーはログイン時に `getSession()` が `null` を返し `/auth-error` へリダイレクト（Clerk セッションは残っているため `/login` ではなく `/auth-error`）
+- 無効化ユーザーはユーザー管理画面でグレーアウト表示
+- 社員一覧・評価アサイン等では無効化ユーザーを非表示にする
+- **無効化**：退職・休職など、評価データを残しつつアクセスを停止したい場合
+- **削除**：テストユーザーなど、関連データが一切ない不要なユーザーの完全除去
+
+### 2. 評価者アサイン管理
+
+- 年度ごとに「誰が誰を評価するか」を登録できる
+- 1人の被評価者に複数の評価者を紐付けられる
+- 評価者自身も別のアサインで被評価者になれる
+- アサインは ADMIN が管理する
+
+### 3. 評価項目マスタ
+
+- 評価項目は UID（例: `1-1-1`）で一意に識別される
+- 評価項目の構造：大分類（target）> 中分類（category）> 項目番号
+- 各項目に説明・評価基準・２年ルールフラグを持つ
+- マスタデータはシードで投入し、MVP では画面管理は行わない
+
+### 4. 評価登録
+
+- 評価は年度単位で管理される
+- 被評価者 × 年度 × 評価項目 で1レコード
+- 本人が入力できる項目：自己採点（なし / 可 / 良 / 優）・自己採点理由（テキスト）
+- 評価者が入力できる項目：評価者採点（なし / 可 / 良 / 優）・評価者採点理由（テキスト）
+- 複数の評価者がいる場合は評価者側で意見をまとめて1つのスコアを登録する
+- 自己評価は必ず行う
+
+#### 評価者コメント管理
+
+- アサインされた評価者は対象被評価者の評価ページにコメントを追加できる
+- 自分が投稿したコメントのみ編集・削除できる
+- **ADMIN はすべてのユーザーのコメントを編集・削除できる**（投稿者に関わらず）
+
+### 5. 年度ロック
+
+- ADMIN は年度をロック（`is_locked = true`）できる
+- ロックされた年度は自己評価・評価者評価の入力が一括で禁止される（閲覧のみ可能）
+- ADMIN はロックを解除して再び編集可能な状態に戻せる
+
+---
+
 ## 画面機能仕様
 
 ### ログイン（`/login`）
@@ -285,72 +348,6 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 |------|------|------|
 | Empty（年度未選択） | 年度が 1 件も登録されていない | 「年度を選択してください。」（中央、`text-gray-500`） |
 | Empty（データなし） | ユーザーまたは評価項目が 0 件 | 「評価データがありません。」（中央、`text-gray-500`） |
-
----
-
-## レイアウト構成
-
-### layout.tsx 階層
-
-```
-src/app/layout.tsx（RootLayout）
-  ClerkProvider
-  └─ html[lang="ja"]
-       └─ body
-            ├─ src/app/(auth)/login/[[...rest]]/page.tsx   ヘッダーなし
-            ├─ src/app/auth-error/page.tsx                  ヘッダーなし
-            └─ src/app/(dashboard)/layout.tsx（DashboardLayout）
-                 Header（NavLinks + SignOutButton）
-                 └─ /evaluations
-                 └─ /members/*
-                 └─ /admin/*
-```
-
-### ページ幅
-
-| 幅クラス | 使用箇所 |
-|---------|---------|
-| `max-w-5xl` | ヘッダー内コンテンツ、全ダッシュボードページのメインコンテンツ |
-
----
-
-## コンポーネント一覧
-
-### 共通コンポーネント（`src/components/`）
-
-| コンポーネント | 種別 | 用途 | 使用箇所 |
-|--------------|------|------|---------|
-| `NavLinks` | Client Component | ロールに応じたナビゲーションリンク。member は評価・メンバー、admin はさらに管理メニューを表示 | DashboardLayout |
-| `SignOutButton` | Clerk 提供 | ログアウト処理。`redirectUrl="/login"` を指定 | DashboardLayout |
-| `ui/Button` | Client Component | 共通ボタン（variant: default / outline / secondary / destructive 等） | 全画面 |
-
-### ページ内コンポーネント（`src/components/evaluation/`）
-
-| コンポーネント | 種別 | 用途 |
-|--------------|------|------|
-| `EvaluationTabs` | Client Component | 自己評価入力。中分類タブ・採点ボタン・理由テキストエリア・個別保存 |
-| `ManagerEvaluationTabs` | Client Component | 評価者採点入力。中分類タブ・自己評価表示・最終スコアセクション（evaluations.manager_score、アサイン済み評価者/admin が上書き可）・コメントスレッド（投稿者名・理由・日時）・追加フォーム・自コメントの編集/削除（ADMIN は全コメントの編集/削除可） |
-
-### ページ内コンポーネント（`src/components/admin/`）
-
-| コンポーネント | 種別 | 用途 |
-|--------------|------|------|
-| `TargetForm` | Client Component | 大分類の追加・編集フォーム |
-| `TargetActions` | Client Component | 大分類の編集・削除ボタン |
-| `CategoryForm` | Client Component | 中分類の追加・編集フォーム |
-| `CategoryActions` | Client Component | 中分類の編集・削除ボタン |
-| `EvaluationMatrix` | Client Component | 評価マトリクス表示（自己採点/上長採点トグル付き） |
-| `EvaluationItemInlineForm` | Client Component | 評価項目のインライン追加・編集フォーム |
-| `EvaluationItemActions` | Client Component | 評価項目の編集・削除ボタン |
-| `VersionSaveForm` | Client Component | バージョン保存フォーム（名前入力） |
-| `VersionList` | Client Component | バージョン一覧（復元・削除ボタン） |
-| `FiscalYearVersionSelect` | Client Component | 年度別バージョン割り当てドロップダウン |
-| `FiscalYearForm` | Client Component | 年度の追加・編集フォーム |
-| `FiscalYearActions` | Client Component | 年度の編集・削除・現在年度設定・ロック/解除ボタン |
-| `UserActions` | Client Component | ユーザーのロール変更・有効化/無効化・削除ボタン |
-| `EvaluationSettingToggle` | Client Component | 自己評価要否のトグルスイッチ |
-| `AdminYearSelector` | Client Component | 年度絞り込みセレクトボックス。`year` クエリパラメータを更新して遷移 |
-| `AdminUserFilter` | Client Component | ユーザー絞り込みセレクトボックス。`userId` クエリパラメータを更新して遷移 |
 
 ---
 
