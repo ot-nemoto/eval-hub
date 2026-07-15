@@ -1,11 +1,23 @@
 import { z } from "zod";
-import { errorResponseSchema } from "@/lib/schemas/common";
+import {
+  categoryCreateBodySchema,
+  categoryListResponseSchema,
+  categoryResponseSchema,
+  categoryUpdateBodySchema,
+} from "@/lib/schemas/category";
+import { errorResponseSchema, reorderBodySchema } from "@/lib/schemas/common";
 import {
   evaluationItemListResponseSchema,
   evaluationItemResponseSchema,
   evaluationItemsImportBodySchema,
   evaluationItemsImportResponseSchema,
 } from "@/lib/schemas/evaluation-item";
+import {
+  targetCreateBodySchema,
+  targetListResponseSchema,
+  targetResponseSchema,
+  targetUpdateBodySchema,
+} from "@/lib/schemas/target";
 
 /**
  * `info.description`（Markdown）に流し込む API 全体のナラティブ。
@@ -99,6 +111,15 @@ const jsonBody = (name: string) => ({
   content: { "application/json": { schema: ref(name) } },
 });
 
+/** 整数 ID の path パラメータ定義。 */
+const idParam = {
+  name: "id",
+  in: "path",
+  required: true,
+  schema: { type: "integer" },
+  description: "対象リソースの ID",
+};
+
 /** OpenAPI 3.1 ドキュメントを組み立てる。`serverUrl`（アクセス元オリジン）があれば servers 先頭に置く。 */
 export function buildOpenApiDocument(options: { version?: string; serverUrl?: string } = {}) {
   const localhost = "http://localhost:3000";
@@ -129,10 +150,19 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
       },
       schemas: {
         Error: toSchema(errorResponseSchema),
+        ReorderBody: toSchema(reorderBodySchema),
         EvaluationItem: toSchema(evaluationItemResponseSchema),
         EvaluationItemList: toSchema(evaluationItemListResponseSchema),
         EvaluationItemsImport: toSchema(evaluationItemsImportBodySchema),
         EvaluationItemsImportResult: toSchema(evaluationItemsImportResponseSchema),
+        Target: toSchema(targetResponseSchema),
+        TargetList: toSchema(targetListResponseSchema),
+        TargetCreate: toSchema(targetCreateBodySchema),
+        TargetUpdate: toSchema(targetUpdateBodySchema),
+        Category: toSchema(categoryResponseSchema),
+        CategoryList: toSchema(categoryListResponseSchema),
+        CategoryCreate: toSchema(categoryCreateBodySchema),
+        CategoryUpdate: toSchema(categoryUpdateBodySchema),
       },
     },
     paths: {
@@ -156,6 +186,149 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             401: errorResponse("認証エラー"),
             403: errorResponse("ADMIN 権限が必要"),
             409: errorResponse("no が重複"),
+          },
+        },
+      },
+      "/api/targets": {
+        get: {
+          summary: "大分類一覧を取得",
+          tags: ["targets"],
+          responses: {
+            200: jsonResponse("大分類の一覧", ref("TargetList")),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+          },
+        },
+        post: {
+          summary: "大分類を作成",
+          tags: ["targets"],
+          requestBody: jsonBody("TargetCreate"),
+          responses: {
+            201: jsonResponse("作成された大分類", ref("Target")),
+            400: errorResponse("バリデーションエラー"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            409: errorResponse("no 重複"),
+          },
+        },
+      },
+      "/api/targets/reorder": {
+        post: {
+          summary: "大分類の表示順を一括更新",
+          tags: ["targets"],
+          requestBody: jsonBody("ReorderBody"),
+          responses: {
+            204: { description: "並び替え成功（ボディなし）" },
+            400: errorResponse("バリデーションエラー"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("並び替え対象が未存在"),
+          },
+        },
+      },
+      "/api/targets/{id}": {
+        patch: {
+          summary: "大分類を更新（名称・no）",
+          tags: ["targets"],
+          parameters: [idParam],
+          requestBody: jsonBody("TargetUpdate"),
+          responses: {
+            200: jsonResponse("更新後の大分類", ref("Target")),
+            400: errorResponse("バリデーションエラー"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("未存在"),
+            409: errorResponse("no 重複"),
+          },
+        },
+        delete: {
+          summary: "大分類を削除",
+          tags: ["targets"],
+          parameters: [idParam],
+          responses: {
+            204: { description: "削除成功（ボディなし）" },
+            400: errorResponse("id 不正"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("未存在"),
+            409: errorResponse("紐づく中分類が存在"),
+          },
+        },
+      },
+      "/api/categories": {
+        get: {
+          summary: "中分類一覧を取得",
+          tags: ["categories"],
+          parameters: [
+            {
+              name: "targetId",
+              in: "query",
+              required: false,
+              schema: { type: "integer" },
+              description: "指定した大分類 ID で絞り込む",
+            },
+          ],
+          responses: {
+            200: jsonResponse("中分類の一覧", ref("CategoryList")),
+            400: errorResponse("targetId 不正"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+          },
+        },
+        post: {
+          summary: "中分類を作成",
+          tags: ["categories"],
+          requestBody: jsonBody("CategoryCreate"),
+          responses: {
+            201: jsonResponse("作成された中分類", ref("Category")),
+            400: errorResponse("バリデーションエラー"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("指定した targetId の大分類が未存在"),
+            409: errorResponse("no 重複"),
+          },
+        },
+      },
+      "/api/categories/reorder": {
+        post: {
+          summary: "中分類の表示順を一括更新",
+          tags: ["categories"],
+          requestBody: jsonBody("ReorderBody"),
+          responses: {
+            204: { description: "並び替え成功（ボディなし）" },
+            400: errorResponse("バリデーションエラー"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("並び替え対象が未存在"),
+          },
+        },
+      },
+      "/api/categories/{id}": {
+        patch: {
+          summary: "中分類を更新（名称・no）",
+          tags: ["categories"],
+          parameters: [idParam],
+          requestBody: jsonBody("CategoryUpdate"),
+          responses: {
+            200: jsonResponse("更新後の中分類", ref("Category")),
+            400: errorResponse("バリデーションエラー"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("未存在"),
+            409: errorResponse("no 重複"),
+          },
+        },
+        delete: {
+          summary: "中分類を削除",
+          tags: ["categories"],
+          parameters: [idParam],
+          responses: {
+            204: { description: "削除成功（ボディなし）" },
+            400: errorResponse("id 不正"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("未存在"),
+            409: errorResponse("紐づく評価項目が存在"),
           },
         },
       },
