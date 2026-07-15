@@ -6,21 +6,28 @@ import { z } from "zod";
  * route の責務は「型・構造の検証」のみ。no≥1・name 非空・no 重複(409) の判定は
  * lib（`bulkReplaceEvaluationItems`）が担う。
  */
+// 未指定（undefined）と型不一致で文言を分ける（両方「必須」だと誤解を招くため）。
+const noField = z
+  .number({
+    error: (iss) => (iss.input === undefined ? "no は必須です" : "no は数値で指定してください"),
+  })
+  .int({ error: "no は整数で指定してください" });
+
 const importItemSchema = z.object({
-  no: z.number({ error: "no は必須です" }).int({ error: "no は整数で指定してください" }),
+  no: noField,
   name: z.string({ error: "name は必須です" }),
   description: z.string().nullish(),
   evalCriteria: z.string().nullish(),
 });
 
 const importCategorySchema = z.object({
-  no: z.number({ error: "no は必須です" }).int({ error: "no は整数で指定してください" }),
+  no: noField,
   name: z.string({ error: "name は必須です" }),
   items: z.array(importItemSchema, { error: "items は配列で指定してください" }),
 });
 
 const importTargetSchema = z.object({
-  no: z.number({ error: "no は必須です" }).int({ error: "no は整数で指定してください" }),
+  no: noField,
   name: z.string({ error: "name は必須です" }),
   categories: z.array(importCategorySchema, { error: "categories は配列で指定してください" }),
 });
