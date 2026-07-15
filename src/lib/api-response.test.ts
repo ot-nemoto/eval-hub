@@ -1,76 +1,100 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { errorResponse, successResponse } from "./api-response";
+import {
+  jsonError,
+  jsonErrorFromException,
+  serializeEvaluationItem,
+  statusForError,
+  unauthorized,
+} from "./api-response";
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "./errors";
 
-describe("successResponse", () => {
-  it("data を含む 200 レスポンスを返す", async () => {
-    const res = successResponse({ id: "1", name: "test" });
+describe("jsonError", () => {
+  it("{ error } ボディ付きで指定ステータスを返す", async () => {
+    const res = jsonError("入力値が不正です", 400);
     const body = await res.json();
-    expect(res.status).toBe(200);
-    expect(body).toEqual({ data: { id: "1", name: "test" } });
-  });
-
-  it("meta を含む場合は meta も返す", async () => {
-    const res = successResponse([1, 2, 3], { total: 3, page: 1 });
-    const body = await res.json();
-    expect(res.status).toBe(200);
-    expect(body).toEqual({ data: [1, 2, 3], meta: { total: 3, page: 1 } });
-  });
-
-  it("status を指定できる", async () => {
-    const res = successResponse({ created: true }, undefined, 201);
-    expect(res.status).toBe(201);
-    const body = await res.json();
-    expect(body).toEqual({ data: { created: true } });
-  });
-
-  it("meta なしの場合は meta キーを含まない", async () => {
-    const res = successResponse({ id: "1" });
-    const body = await res.json();
-    expect(body).not.toHaveProperty("meta");
+    expect(res.status).toBe(400);
+    expect(body).toEqual({ error: "入力値が不正です" });
   });
 });
 
-describe("errorResponse", () => {
-  it("UNAUTHORIZED エラーを 401 で返す", async () => {
-    const res = errorResponse("UNAUTHORIZED", "認証が必要です", 401);
+describe("unauthorized", () => {
+  it("401 で { error } を返す", async () => {
+    const res = unauthorized();
     const body = await res.json();
     expect(res.status).toBe(401);
-    expect(body).toEqual({ error: { code: "UNAUTHORIZED", message: "認証が必要です" } });
+    expect(body).toEqual({ error: "API キーが無効です" });
   });
+});
 
-  it("FORBIDDEN エラーを 403 で返す", async () => {
-    const res = errorResponse("FORBIDDEN", "権限がありません", 403);
-    const body = await res.json();
-    expect(res.status).toBe(403);
-    expect(body).toEqual({ error: { code: "FORBIDDEN", message: "権限がありません" } });
+describe("statusForError", () => {
+  it("NotFoundError は 404", () => {
+    expect(statusForError(new NotFoundError())).toBe(404);
   });
-
-  it("NOT_FOUND エラーを 404 で返す", async () => {
-    const res = errorResponse("NOT_FOUND", "リソースが見つかりません", 404);
-    const body = await res.json();
-    expect(res.status).toBe(404);
-    expect(body).toEqual({ error: { code: "NOT_FOUND", message: "リソースが見つかりません" } });
+  it("ForbiddenError は 403", () => {
+    expect(statusForError(new ForbiddenError())).toBe(403);
   });
-
-  it("BAD_REQUEST エラーを 400 で返す", async () => {
-    const res = errorResponse("BAD_REQUEST", "入力値が不正です", 400);
-    const body = await res.json();
-    expect(res.status).toBe(400);
-    expect(body).toEqual({ error: { code: "BAD_REQUEST", message: "入力値が不正です" } });
+  it("ConflictError は 409", () => {
+    expect(statusForError(new ConflictError())).toBe(409);
   });
+  it("BadRequestError は 400", () => {
+    expect(statusForError(new BadRequestError())).toBe(400);
+  });
+  it("未知のエラーは 500", () => {
+    expect(statusForError(new Error("boom"))).toBe(500);
+    expect(statusForError("string")).toBe(500);
+  });
+});
 
-  it("CONFLICT エラーを 409 で返す", async () => {
-    const res = errorResponse("CONFLICT", "すでに存在します", 409);
+describe("jsonErrorFromException", () => {
+  it("型付きエラーは意図した日本語メッセージと対応ステータスを返す", async () => {
+    const res = jsonErrorFromException(new ConflictError("no が重複しています"));
     const body = await res.json();
     expect(res.status).toBe(409);
-    expect(body).toEqual({ error: { code: "CONFLICT", message: "すでに存在します" } });
+    expect(body).toEqual({ error: "no が重複しています" });
   });
 
-  it("INTERNAL_SERVER_ERROR を 500 で返す", async () => {
-    const res = errorResponse("INTERNAL_SERVER_ERROR", "サーバーエラー", 500);
+  it("想定外エラー（500）は内部メッセージを隠して汎用文言に固定する", async () => {
+    const res = jsonErrorFromException(new Error("Prisma: connection refused at host db:5432"));
     const body = await res.json();
     expect(res.status).toBe(500);
-    expect(body).toEqual({ error: { code: "INTERNAL_SERVER_ERROR", message: "サーバーエラー" } });
+    expect(body).toEqual({ error: "サーバーエラーが発生しました" });
+  });
+});
+
+describe("serializeEvaluationItem", () => {
+  it("camelCase / target・category をネストして整形する", () => {
+    const result = serializeEvaluationItem({
+      id: 1,
+      no: 2,
+      name: "評価項目A",
+      description: "説明",
+      evalCriteria: "基準",
+      target: { id: 10, no: 1, name: "社員" },
+      category: { id: 20, no: 3, name: "エンゲージメント" },
+    });
+    expect(result).toEqual({
+      id: 1,
+      no: 2,
+      name: "評価項目A",
+      description: "説明",
+      evalCriteria: "基準",
+      target: { id: 10, no: 1, name: "社員" },
+      category: { id: 20, no: 3, name: "エンゲージメント" },
+    });
+  });
+
+  it("description・evalCriteria が null でもそのまま返す", () => {
+    const result = serializeEvaluationItem({
+      id: 1,
+      no: 1,
+      name: "A",
+      description: null,
+      evalCriteria: null,
+      target: { id: 1, no: 1, name: "T" },
+      category: { id: 1, no: 1, name: "C" },
+    });
+    expect(result.description).toBeNull();
+    expect(result.evalCriteria).toBeNull();
   });
 });

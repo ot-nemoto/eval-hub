@@ -54,7 +54,7 @@ Client (Browser)
 - **writes（書き込み操作）**: Server Actions（`actions.ts`）に集約する。REST API は原則使用しない
 - ビジネスロジックは `src/lib/` に集約し、Server Actions はできるだけ薄く保つ
 - Server Actions の仕様は [`docs/actions.md`](actions.md) を参照
-- 外部 REST API の方針は [`docs/api.md`](api.md) を参照
+- 外部 REST API は API キー認証で提供する。検証は Zod スキーマ（`src/lib/schemas/`）を単一ソースとし、そこから OpenAPI 3.1 を実行時生成してアプリ内 `/openapi.json`・`/api-reference`（Stoplight・ログイン必須）で配信する。仕様の正はこの配信 spec とし、別途 `docs/api.md` は持たない
 
 ### 機能追加時のガイドライン
 

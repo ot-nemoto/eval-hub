@@ -30,11 +30,12 @@
 | [docs/product.md](docs/product.md) | プロダクト定義・目的 |
 | [docs/architecture.md](docs/architecture.md) | 技術スタック・実装方針・非機能要件 |
 | [docs/ui.md](docs/ui.md) | 機能要件・画面一覧・遷移・UI規約 |
-| [docs/api.md](docs/api.md) | 外部 REST API エンドポイント定義 |
 | [docs/actions.md](docs/actions.md) | Server Actions 定義 |
 | [docs/schema.md](docs/schema.md) | DB スキーマ・Prisma モデル定義 |
 | [docs/auth.md](docs/auth.md) | 認証フロー・保護ルート |
 | [docs/development.md](docs/development.md) | ローカルセットアップ・Prisma 操作・デプロイ手順 |
+
+外部 REST API の仕様は、アプリ内の **API リファレンス（`/api-reference`）** と **OpenAPI 仕様（`/openapi.json`）** を正とする（いずれもログイン必須）。
 
 ## クイックスタート
 

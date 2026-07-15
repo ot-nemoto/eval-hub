@@ -147,3 +147,88 @@ export async function deleteEvaluationItem(id: number) {
 
   await prisma.evaluationItem.delete({ where: { id } });
 }
+
+type ImportItem = {
+  no: number;
+  name: string;
+  description?: string | null;
+  evalCriteria?: string | null;
+};
+type ImportCategory = { no: number; name: string; items: ImportItem[] };
+type ImportTarget = { no: number; name: string; categories: ImportCategory[] };
+
+/**
+ * 評価項目マスタ（targets / categories / evaluation_items）を一括置換する。
+ * 既存の作業スペースを全削除してからツリーを再挿入し、index は送信順で 1 から採番する。
+ * バージョン（eval_item_versions）には影響しない。no は各階層でユニーク（重複時 P2002→Conflict）。
+ */
+export async function bulkReplaceEvaluationItems(
+  targets: ImportTarget[],
+): Promise<{ created: number }> {
+  for (const t of targets) {
+    if (!Number.isInteger(t.no) || t.no < 1 || !t.name.trim())
+      throw new BadRequestError("大項目に no（1以上の整数）と name（文字列）は必須です");
+    for (const c of t.categories) {
+      if (!Number.isInteger(c.no) || c.no < 1 || !c.name.trim())
+        throw new BadRequestError("中項目に no（1以上の整数）と name（文字列）は必須です");
+      for (const item of c.items) {
+        if (!Number.isInteger(item.no) || item.no < 1 || !item.name.trim())
+          throw new BadRequestError("評価項目に no（1以上の整数）と name（文字列）は必須です");
+      }
+    }
+  }
+
+  try {
+    return await prisma.$transaction(
+      async (tx) => {
+        // 全削除（FK順: 評価項目→中分類→大分類）
+        await tx.evaluationItem.deleteMany({});
+        await tx.category.deleteMany({});
+        await tx.target.deleteMany({});
+
+        // 再挿入（大分類→中分類→評価項目）— 送信順で index を自動採番
+        let created = 0;
+        let targetIndex = 0;
+        for (const targetInput of targets) {
+          targetIndex++;
+          const target = await tx.target.create({
+            data: { no: targetInput.no, name: targetInput.name, index: targetIndex },
+          });
+
+          let categoryIndex = 0;
+          for (const categoryInput of targetInput.categories) {
+            categoryIndex++;
+            const category = await tx.category.create({
+              data: {
+                targetId: target.id,
+                no: categoryInput.no,
+                name: categoryInput.name,
+                index: categoryIndex,
+              },
+            });
+
+            const itemsData = categoryInput.items.map((itemInput, i) => ({
+              targetId: target.id,
+              categoryId: category.id,
+              no: itemInput.no,
+              name: itemInput.name,
+              description: itemInput.description ?? null,
+              evalCriteria: itemInput.evalCriteria ?? null,
+              index: i + 1,
+            }));
+            await tx.evaluationItem.createMany({ data: itemsData });
+            created += itemsData.length;
+          }
+        }
+
+        return { created };
+      },
+      { timeout: 30000 },
+    );
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new ConflictError("no が重複しています");
+    }
+    throw e;
+  }
+}

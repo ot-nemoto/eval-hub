@@ -66,22 +66,46 @@ describe("GET /api/evaluation-items", () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.data).toHaveLength(1);
-    expect(body.meta.total).toBe(1);
+    expect(body.evaluationItems).toHaveLength(1);
+    expect(body.evaluationItems[0]).toEqual({
+      id: 1,
+      no: 1,
+      name: "item A",
+      description: null,
+      evalCriteria: null,
+      target: { id: 1, no: 1, name: "社員" },
+      category: { id: 1, no: 1, name: "エンゲージメント" },
+    });
   });
 
   it("API キーが無効な場合は 401 を返す", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(null);
 
     const res = await GET(makeRequest());
+    const body = await res.json();
     expect(res.status).toBe(401);
+    expect(typeof body.error).toBe("string");
   });
 
   it("MEMBER の場合は 403 を返す", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(memberUser);
 
     const res = await GET(makeRequest());
+    const body = await res.json();
     expect(res.status).toBe(403);
+    expect(body.error).toBe("権限がありません");
+  });
+
+  it("想定外エラーは 500 で内部メッセージを隠す", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    vi.mocked(prisma.evaluationItem.findMany).mockRejectedValue(
+      new Error("Prisma: connection refused at host db:5432"),
+    );
+
+    const res = await GET(makeRequest());
+    const body = await res.json();
+    expect(res.status).toBe(500);
+    expect(body.error).toBe("サーバーエラーが発生しました");
   });
 });
 
@@ -102,7 +126,7 @@ describe("POST /api/evaluation-items", () => {
     },
   ];
 
-  it("有効なリクエストで全削除→INSERT を実行して結果を返す", async () => {
+  it("有効なリクエストで全削除→INSERT を実行して作成件数を返す", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
     vi.mocked(prisma.target.create).mockResolvedValue({ id: 1, no: 1, name: "社員" } as never);
     vi.mocked(prisma.category.create).mockResolvedValue({
@@ -117,14 +141,13 @@ describe("POST /api/evaluation-items", () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.data.created).toBe(1);
+    expect(body.created).toBe(1);
     expect(prisma.evaluationItem.deleteMany).toHaveBeenCalledTimes(1);
     expect(prisma.category.deleteMany).toHaveBeenCalledTimes(1);
     expect(prisma.target.deleteMany).toHaveBeenCalledTimes(1);
     expect(prisma.target.create).toHaveBeenCalledTimes(1);
     expect(prisma.category.create).toHaveBeenCalledTimes(1);
     expect(prisma.evaluationItem.createMany).toHaveBeenCalledTimes(1);
-    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 30000 });
   });
 
   it("API キーが無効な場合は 401 を返す", async () => {
@@ -145,7 +168,9 @@ describe("POST /api/evaluation-items", () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
 
     const res = await POST(makeRequest({ not: "array" }));
+    const body = await res.json();
     expect(res.status).toBe(400);
+    expect(typeof body.error).toBe("string");
   });
 
   it("空配列は 400 を返す", async () => {
@@ -155,14 +180,14 @@ describe("POST /api/evaluation-items", () => {
     expect(res.status).toBe(400);
   });
 
-  it("大項目に name がない場合は 400 を返す", async () => {
+  it("大項目に name がない場合は 400 を返す（Zod 構造検証）", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
 
     const res = await POST(makeRequest([{ no: 1, categories: [] }]));
     expect(res.status).toBe(400);
   });
 
-  it("中項目に no がない場合は 400 を返す", async () => {
+  it("中項目に no がない場合は 400 を返す（Zod 構造検証）", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
 
     const res = await POST(
@@ -171,13 +196,13 @@ describe("POST /api/evaluation-items", () => {
     expect(res.status).toBe(400);
   });
 
-  it("評価項目に name がない場合は 400 を返す", async () => {
+  it("no が 0 以下の場合は 400 を返す（lib 業務検証）", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
 
-    const res = await POST(
-      makeRequest([{ no: 1, name: "T", categories: [{ no: 1, name: "C", items: [{ no: 1 }] }] }]),
-    );
+    const res = await POST(makeRequest([{ no: 0, name: "T", categories: [] }]));
+    const body = await res.json();
     expect(res.status).toBe(400);
+    expect(body.error).toContain("1以上の整数");
   });
 
   it("不正な JSON は 400 を返す", async () => {
@@ -193,7 +218,7 @@ describe("POST /api/evaluation-items", () => {
     expect(res.status).toBe(400);
   });
 
-  it("no 重複（P2002）は 400 を返す", async () => {
+  it("no 重複（P2002）は 409 を返す", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
     vi.mocked(prisma.target.create).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
@@ -205,7 +230,7 @@ describe("POST /api/evaluation-items", () => {
     const res = await POST(makeRequest(validBody));
     const body = await res.json();
 
-    expect(res.status).toBe(400);
-    expect(body.error.message).toBe("no が重複しています");
+    expect(res.status).toBe(409);
+    expect(body.error).toBe("no が重複しています");
   });
 });
