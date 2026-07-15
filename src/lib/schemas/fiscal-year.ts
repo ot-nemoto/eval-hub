@@ -9,7 +9,8 @@ const yearField = z
   .min(1900, { error: "year は 1900〜9999 で指定してください" })
   .max(9999, { error: "year は 1900〜9999 で指定してください" });
 
-const dateField = (label: string) => z.string({ error: `${label} は必須です` });
+const dateField = (label: string) =>
+  z.iso.date({ error: `${label} は YYYY-MM-DD 形式で指定してください` });
 
 /**
  * 年度の作成 body。日付の妥当性・startDate≤endDate・year 重複(409) は
@@ -32,8 +33,8 @@ export const fiscalYearCreateBodySchema = z.object(
 export const fiscalYearUpdateBodySchema = z.object(
   {
     name: nameField.optional(),
-    startDate: z.string().optional(),
-    endDate: z.string().optional(),
+    startDate: dateField("startDate").optional(),
+    endDate: dateField("endDate").optional(),
     isCurrent: z.boolean({ error: "isCurrent は真偽値で指定してください" }).optional(),
   },
   { error: "リクエストボディが不正です" },

@@ -99,6 +99,13 @@ describe("POST /api/fiscal-years", () => {
     expect((await POST(makePost({ year: 2025, name: "x" }))).status).toBe(400);
   });
 
+  it("非 ISO 日付（YYYY/MM/DD 等）は 400（Zod）", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    expect((await POST(makePost({ ...validBody, startDate: "2025/04/01" }))).status).toBe(400);
+    expect((await POST(makePost({ ...validBody, endDate: "April 1, 2026" }))).status).toBe(400);
+    expect(createFiscalYear).not.toHaveBeenCalled();
+  });
+
   it("日付不正（lib）は 400", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
     vi.mocked(createFiscalYear).mockRejectedValue(
