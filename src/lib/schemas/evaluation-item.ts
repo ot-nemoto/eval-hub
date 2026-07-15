@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nameField, positiveIntField } from "@/lib/schemas/common";
 
 /**
  * 評価項目一括インポート（POST /api/evaluation-items/import）の body スキーマ。
@@ -57,17 +58,6 @@ export const evaluationItemResponseSchema = z.object({
 export const evaluationItemListResponseSchema = z.object({
   evaluationItems: z.array(evaluationItemResponseSchema),
 });
-
-/** 非空の名称フィールド（空文字・空白のみを弾く）。 */
-const nameField = z
-  .string({ error: "name は必須です" })
-  .refine((v) => v.trim().length > 0, { error: "name は必須です" });
-
-const positiveIntField = (label: string) =>
-  z
-    .number({ error: `${label} は数値で指定してください` })
-    .int({ error: `${label} は整数で指定してください` })
-    .min(1, { error: `${label} は 1 以上で指定してください` });
 
 /**
  * 評価項目の単体作成 body。所属（targetId・categoryId）と name が必須。
