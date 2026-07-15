@@ -6,6 +6,9 @@ const doc = buildOpenApiDocument({ version: "9.9.9" });
 
 const EXPECTED_PATHS = [
   "/api/evaluation-items",
+  "/api/evaluation-items/import",
+  "/api/evaluation-items/reorder",
+  "/api/evaluation-items/{id}",
   "/api/targets",
   "/api/targets/reorder",
   "/api/targets/{id}",
@@ -59,7 +62,7 @@ describe("buildOpenApiDocument", () => {
       (n, item) => n + Object.keys(item).filter((k) => HTTP_METHODS.includes(k)).length,
       0,
     );
-    expect(opCount).toBe(12);
+    expect(opCount).toBe(16);
   });
 
   it("各オペレーションに summary と responses がある", () => {
@@ -83,6 +86,8 @@ describe("buildOpenApiDocument", () => {
         "ReorderBody",
         "EvaluationItem",
         "EvaluationItemList",
+        "EvaluationItemCreate",
+        "EvaluationItemUpdate",
         "EvaluationItemsImport",
         "EvaluationItemsImportResult",
         "Target",
