@@ -56,3 +56,23 @@ export function serializeEvaluationItem(item: SerializableEvaluationItem) {
     category: { id: item.category.id, no: item.category.no, name: item.category.name },
   };
 }
+
+type SerializableTarget = { id: number; name: string; no: number; index: number };
+
+/** 大分類を外部 API レスポンス形式に整形する。 */
+export function serializeTarget(t: SerializableTarget) {
+  return { id: t.id, name: t.name, no: t.no, index: t.index };
+}
+
+type SerializableCategory = {
+  id: number;
+  targetId: number;
+  name: string;
+  no: number;
+  index: number;
+};
+
+/** 中分類を外部 API レスポンス形式に整形する。 */
+export function serializeCategory(c: SerializableCategory) {
+  return { id: c.id, targetId: c.targetId, name: c.name, no: c.no, index: c.index };
+}

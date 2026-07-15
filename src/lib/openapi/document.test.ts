@@ -4,7 +4,15 @@ import { buildOpenApiDocument } from "./document";
 
 const doc = buildOpenApiDocument({ version: "9.9.9" });
 
-const EXPECTED_PATHS = ["/api/evaluation-items"];
+const EXPECTED_PATHS = [
+  "/api/evaluation-items",
+  "/api/targets",
+  "/api/targets/reorder",
+  "/api/targets/{id}",
+  "/api/categories",
+  "/api/categories/reorder",
+  "/api/categories/{id}",
+];
 
 const HTTP_METHODS = ["get", "post", "patch", "put", "delete"];
 
@@ -51,7 +59,7 @@ describe("buildOpenApiDocument", () => {
       (n, item) => n + Object.keys(item).filter((k) => HTTP_METHODS.includes(k)).length,
       0,
     );
-    expect(opCount).toBe(2);
+    expect(opCount).toBe(12);
   });
 
   it("各オペレーションに summary と responses がある", () => {
@@ -72,10 +80,19 @@ describe("buildOpenApiDocument", () => {
     expect(Object.keys(doc.components.schemas)).toEqual(
       expect.arrayContaining([
         "Error",
+        "ReorderBody",
         "EvaluationItem",
         "EvaluationItemList",
         "EvaluationItemsImport",
         "EvaluationItemsImportResult",
+        "Target",
+        "TargetList",
+        "TargetCreate",
+        "TargetUpdate",
+        "Category",
+        "CategoryList",
+        "CategoryCreate",
+        "CategoryUpdate",
       ]),
     );
   });

@@ -1,0 +1,100 @@
+// @vitest-environment node
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/apiAuth", () => ({ getAuthenticatedUser: vi.fn() }));
+vi.mock("@/lib/categories", () => ({ updateCategory: vi.fn(), deleteCategory: vi.fn() }));
+
+import { getAuthenticatedUser } from "@/lib/apiAuth";
+import { deleteCategory, updateCategory } from "@/lib/categories";
+import { ConflictError, NotFoundError } from "@/lib/errors";
+import { DELETE, PATCH } from "./route";
+
+const adminUser = { id: "u1", role: "ADMIN" as const, isActive: true };
+const memberUser = { id: "u2", role: "MEMBER" as const, isActive: true };
+const category = { id: 1, targetId: 1, name: "エンゲージメント", no: 2, index: 1 };
+
+function makeRequest(method: string, body?: unknown) {
+  return new Request("http://localhost/api/categories/1", {
+    method,
+    headers: { "Content-Type": "application/json", authorization: "Bearer key" },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  }) as import("next/server").NextRequest;
+}
+
+const ctx = (id = "1") => ({ params: Promise.resolve({ id }) });
+
+describe("PATCH /api/categories/[id]", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("更新して 200 を返す", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    vi.mocked(updateCategory).mockResolvedValue(category);
+
+    const res = await PATCH(makeRequest("PATCH", { name: "エンゲージメント", no: 2 }), ctx());
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body).toEqual(category);
+    expect(updateCategory).toHaveBeenCalledWith(1, { name: "エンゲージメント", no: 2 });
+  });
+
+  it("未存在は 404", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    vi.mocked(updateCategory).mockRejectedValue(new NotFoundError("中分類が見つかりません"));
+    expect((await PATCH(makeRequest("PATCH", { name: "x" }), ctx())).status).toBe(404);
+  });
+
+  it("no 重複は 409", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    vi.mocked(updateCategory).mockRejectedValue(
+      new ConflictError("同じ targetId と no の中分類がすでに存在します"),
+    );
+    expect((await PATCH(makeRequest("PATCH", { no: 3 }), ctx())).status).toBe(409);
+  });
+
+  it("id 不正は 400", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    expect((await PATCH(makeRequest("PATCH", { name: "x" }), ctx("abc"))).status).toBe(400);
+    expect(updateCategory).not.toHaveBeenCalled();
+  });
+
+  it("キー無効は 401 / MEMBER は 403", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(null);
+    expect((await PATCH(makeRequest("PATCH", { name: "x" }), ctx())).status).toBe(401);
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(memberUser);
+    expect((await PATCH(makeRequest("PATCH", { name: "x" }), ctx())).status).toBe(403);
+  });
+});
+
+describe("DELETE /api/categories/[id]", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("削除して 204 を返す", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    vi.mocked(deleteCategory).mockResolvedValue(undefined);
+
+    const res = await DELETE(makeRequest("DELETE"), ctx());
+    expect(res.status).toBe(204);
+    expect(deleteCategory).toHaveBeenCalledWith(1);
+  });
+
+  it("紐づく評価項目あり（ConflictError）は 409", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    vi.mocked(deleteCategory).mockRejectedValue(
+      new ConflictError("紐づく評価項目が存在するため削除できません"),
+    );
+    expect((await DELETE(makeRequest("DELETE"), ctx())).status).toBe(409);
+  });
+
+  it("未存在は 404", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    vi.mocked(deleteCategory).mockRejectedValue(new NotFoundError("中分類が見つかりません"));
+    expect((await DELETE(makeRequest("DELETE"), ctx())).status).toBe(404);
+  });
+
+  it("キー無効は 401 / MEMBER は 403", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(null);
+    expect((await DELETE(makeRequest("DELETE"), ctx())).status).toBe(401);
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(memberUser);
+    expect((await DELETE(makeRequest("DELETE"), ctx())).status).toBe(403);
+  });
+});
