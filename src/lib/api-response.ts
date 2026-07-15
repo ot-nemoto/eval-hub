@@ -23,6 +23,17 @@ export function statusForError(error: unknown): number {
   return 500;
 }
 
+/**
+ * catch した例外を `{ error }` レスポンスに変換する。
+ * 型付きエラー（400/403/404/409）は意図した日本語メッセージをそのまま返すが、
+ * 想定外エラー（500）は内部情報の露出を避けるため汎用文言に固定する。
+ */
+export function jsonErrorFromException(error: unknown) {
+  const status = statusForError(error);
+  const message = status === 500 ? "サーバーエラーが発生しました" : (error as Error).message;
+  return jsonError(message, status);
+}
+
 type SerializableEvaluationItem = {
   id: number;
   no: number;

@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import {
   jsonError,
+  jsonErrorFromException,
   serializeEvaluationItem,
-  statusForError,
   unauthorized,
 } from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
@@ -19,10 +19,7 @@ export async function GET(req: NextRequest) {
     const items = await getEvaluationItems();
     return NextResponse.json({ evaluationItems: items.map(serializeEvaluationItem) });
   } catch (e) {
-    return jsonError(
-      e instanceof Error ? e.message : "サーバーエラーが発生しました",
-      statusForError(e),
-    );
+    return jsonErrorFromException(e);
   }
 }
 
@@ -39,9 +36,6 @@ export async function POST(req: NextRequest) {
     const result = await bulkReplaceEvaluationItems(parsed.data);
     return NextResponse.json(result);
   } catch (e) {
-    return jsonError(
-      e instanceof Error ? e.message : "サーバーエラーが発生しました",
-      statusForError(e),
-    );
+    return jsonErrorFromException(e);
   }
 }

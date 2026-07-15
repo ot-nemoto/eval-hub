@@ -95,6 +95,18 @@ describe("GET /api/evaluation-items", () => {
     expect(res.status).toBe(403);
     expect(body.error).toBe("権限がありません");
   });
+
+  it("想定外エラーは 500 で内部メッセージを隠す", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    vi.mocked(prisma.evaluationItem.findMany).mockRejectedValue(
+      new Error("Prisma: connection refused at host db:5432"),
+    );
+
+    const res = await GET(makeRequest());
+    const body = await res.json();
+    expect(res.status).toBe(500);
+    expect(body.error).toBe("サーバーエラーが発生しました");
+  });
 });
 
 describe("POST /api/evaluation-items", () => {

@@ -1,6 +1,12 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { jsonError, serializeEvaluationItem, statusForError, unauthorized } from "./api-response";
+import {
+  jsonError,
+  jsonErrorFromException,
+  serializeEvaluationItem,
+  statusForError,
+  unauthorized,
+} from "./api-response";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "./errors";
 
 describe("jsonError", () => {
@@ -37,6 +43,22 @@ describe("statusForError", () => {
   it("未知のエラーは 500", () => {
     expect(statusForError(new Error("boom"))).toBe(500);
     expect(statusForError("string")).toBe(500);
+  });
+});
+
+describe("jsonErrorFromException", () => {
+  it("型付きエラーは意図した日本語メッセージと対応ステータスを返す", async () => {
+    const res = jsonErrorFromException(new ConflictError("no が重複しています"));
+    const body = await res.json();
+    expect(res.status).toBe(409);
+    expect(body).toEqual({ error: "no が重複しています" });
+  });
+
+  it("想定外エラー（500）は内部メッセージを隠して汎用文言に固定する", async () => {
+    const res = jsonErrorFromException(new Error("Prisma: connection refused at host db:5432"));
+    const body = await res.json();
+    expect(res.status).toBe(500);
+    expect(body).toEqual({ error: "サーバーエラーが発生しました" });
   });
 });
 
