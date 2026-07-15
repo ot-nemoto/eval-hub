@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
   try {
     await reorderCategories(parsed.data.orders);
-    return new NextResponse(null, { status: 200 });
+    return new NextResponse(null, { status: 204 });
   } catch (e) {
     return jsonErrorFromException(e);
   }

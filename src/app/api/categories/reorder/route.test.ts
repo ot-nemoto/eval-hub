@@ -35,7 +35,7 @@ describe("POST /api/categories/reorder", () => {
     vi.mocked(reorderCategories).mockResolvedValue(undefined);
 
     const res = await POST(makeRequest(validBody));
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(204);
     expect(reorderCategories).toHaveBeenCalledWith(validBody.orders);
   });
 

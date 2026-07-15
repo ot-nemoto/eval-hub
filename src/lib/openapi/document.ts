@@ -218,7 +218,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           tags: ["targets"],
           requestBody: jsonBody("ReorderBody"),
           responses: {
-            200: { description: "並び替え成功（ボディなし）" },
+            204: { description: "並び替え成功（ボディなし）" },
             400: errorResponse("バリデーションエラー"),
             401: errorResponse("認証エラー"),
             403: errorResponse("ADMIN 権限が必要"),
@@ -295,7 +295,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           tags: ["categories"],
           requestBody: jsonBody("ReorderBody"),
           responses: {
-            200: { description: "並び替え成功（ボディなし）" },
+            204: { description: "並び替え成功（ボディなし）" },
             400: errorResponse("バリデーションエラー"),
             401: errorResponse("認証エラー"),
             403: errorResponse("ADMIN 権限が必要"),
