@@ -83,6 +83,12 @@ describe("POST /api/categories", () => {
     expect(createCategory).not.toHaveBeenCalled();
   });
 
+  it("name 空文字は 400", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    expect((await POST(makePost({ targetId: 1, name: "  " }))).status).toBe(400);
+    expect(createCategory).not.toHaveBeenCalled();
+  });
+
   it("大分類が未存在は 404", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
     vi.mocked(createCategory).mockRejectedValue(new NotFoundError("大分類が見つかりません"));

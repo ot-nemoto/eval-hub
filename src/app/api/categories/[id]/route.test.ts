@@ -57,6 +57,12 @@ describe("PATCH /api/categories/[id]", () => {
     expect(updateCategory).not.toHaveBeenCalled();
   });
 
+  it("空 body（name・no とも欠落）は 400", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    expect((await PATCH(makeRequest("PATCH", {}), ctx())).status).toBe(400);
+    expect(updateCategory).not.toHaveBeenCalled();
+  });
+
   it("キー無効は 401 / MEMBER は 403", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(null);
     expect((await PATCH(makeRequest("PATCH", { name: "x" }), ctx())).status).toBe(401);

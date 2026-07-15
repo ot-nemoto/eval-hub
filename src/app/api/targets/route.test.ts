@@ -66,6 +66,13 @@ describe("POST /api/targets", () => {
     expect(createTarget).not.toHaveBeenCalled();
   });
 
+  it("name 空文字・空白のみは 400", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    expect((await POST(makeRequest({ name: "" }))).status).toBe(400);
+    expect((await POST(makeRequest({ name: "   " }))).status).toBe(400);
+    expect(createTarget).not.toHaveBeenCalled();
+  });
+
   it("no 重複（ConflictError）は 409", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
     vi.mocked(createTarget).mockRejectedValue(

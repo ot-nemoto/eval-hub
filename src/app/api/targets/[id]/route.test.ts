@@ -57,6 +57,18 @@ describe("PATCH /api/targets/[id]", () => {
     expect(updateTarget).not.toHaveBeenCalled();
   });
 
+  it("no が 0 以下は 400", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    expect((await PATCH(makeRequest("PATCH", { no: -1 }), ctx())).status).toBe(400);
+    expect(updateTarget).not.toHaveBeenCalled();
+  });
+
+  it("空 body（name・no とも欠落）は 400", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    expect((await PATCH(makeRequest("PATCH", {}), ctx())).status).toBe(400);
+    expect(updateTarget).not.toHaveBeenCalled();
+  });
+
   it("キー無効は 401 / MEMBER は 403", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(null);
     expect((await PATCH(makeRequest("PATCH", { name: "x" }), ctx())).status).toBe(401);
