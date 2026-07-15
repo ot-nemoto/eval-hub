@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { nameField, positiveIntField } from "@/lib/schemas/common";
 
 /**
- * 評価項目一括インポート（POST /api/evaluation-items）の body スキーマ。
+ * 評価項目一括インポート（POST /api/evaluation-items/import）の body スキーマ。
  * 大項目（Target）→ 中項目（Category）→ 評価項目（EvaluationItem）の階層構造。
  * route の責務は「型・構造の検証」のみ。no≥1・name 非空・no 重複(409) の判定は
  * lib（`bulkReplaceEvaluationItems`）が担う。
@@ -57,3 +58,33 @@ export const evaluationItemResponseSchema = z.object({
 export const evaluationItemListResponseSchema = z.object({
   evaluationItems: z.array(evaluationItemResponseSchema),
 });
+
+/**
+ * 評価項目の単体作成 body。所属（targetId・categoryId）と name が必須。
+ * no・index は lib（`createEvaluationItem`）が自動採番する。
+ * 所属の存在・categoryId と targetId の整合は lib が検証する（404 / 400）。
+ */
+export const evaluationItemCreateBodySchema = z.object(
+  {
+    targetId: positiveIntField("targetId"),
+    categoryId: positiveIntField("categoryId"),
+    name: nameField,
+    description: z.string().nullish(),
+    evalCriteria: z.string().nullish(),
+  },
+  { error: "リクエストボディが不正です" },
+);
+
+/**
+ * 評価項目の更新 body（すべて任意）。空 body は lib（`updateEvaluationItem`）が
+ * BadRequest→400 を返す。
+ */
+export const evaluationItemUpdateBodySchema = z.object(
+  {
+    name: nameField.optional(),
+    no: positiveIntField("no").optional(),
+    description: z.string().nullish(),
+    evalCriteria: z.string().nullish(),
+  },
+  { error: "リクエストボディが不正です" },
+);

@@ -7,10 +7,12 @@ import {
 } from "@/lib/schemas/category";
 import { errorResponseSchema, reorderBodySchema } from "@/lib/schemas/common";
 import {
+  evaluationItemCreateBodySchema,
   evaluationItemListResponseSchema,
   evaluationItemResponseSchema,
   evaluationItemsImportBodySchema,
   evaluationItemsImportResponseSchema,
+  evaluationItemUpdateBodySchema,
 } from "@/lib/schemas/evaluation-item";
 import {
   targetCreateBodySchema,
@@ -153,6 +155,8 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
         ReorderBody: toSchema(reorderBodySchema),
         EvaluationItem: toSchema(evaluationItemResponseSchema),
         EvaluationItemList: toSchema(evaluationItemListResponseSchema),
+        EvaluationItemCreate: toSchema(evaluationItemCreateBodySchema),
+        EvaluationItemUpdate: toSchema(evaluationItemUpdateBodySchema),
         EvaluationItemsImport: toSchema(evaluationItemsImportBodySchema),
         EvaluationItemsImportResult: toSchema(evaluationItemsImportResponseSchema),
         Target: toSchema(targetResponseSchema),
@@ -170,12 +174,44 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
         get: {
           summary: "評価項目一覧を取得",
           tags: ["evaluation-items"],
+          parameters: [
+            {
+              name: "targetId",
+              in: "query",
+              required: false,
+              schema: { type: "integer" },
+              description: "大分類 ID で絞り込む",
+            },
+            {
+              name: "categoryId",
+              in: "query",
+              required: false,
+              schema: { type: "integer" },
+              description: "中分類 ID で絞り込む",
+            },
+          ],
           responses: {
             200: jsonResponse("評価項目の一覧", ref("EvaluationItemList")),
+            400: errorResponse("クエリ不正"),
             401: errorResponse("認証エラー"),
             403: errorResponse("ADMIN 権限が必要"),
           },
         },
+        post: {
+          summary: "評価項目を作成",
+          tags: ["evaluation-items"],
+          requestBody: jsonBody("EvaluationItemCreate"),
+          responses: {
+            201: jsonResponse("作成された評価項目", ref("EvaluationItem")),
+            400: errorResponse("バリデーションエラー / categoryId が targetId と不整合"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("指定した大分類・中分類が未存在"),
+            409: errorResponse("no 重複"),
+          },
+        },
+      },
+      "/api/evaluation-items/import": {
         post: {
           summary: "評価項目マスタを一括インポート（全削除→INSERT）",
           tags: ["evaluation-items"],
@@ -186,6 +222,48 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             401: errorResponse("認証エラー"),
             403: errorResponse("ADMIN 権限が必要"),
             409: errorResponse("no が重複"),
+          },
+        },
+      },
+      "/api/evaluation-items/reorder": {
+        post: {
+          summary: "評価項目の表示順を一括更新",
+          tags: ["evaluation-items"],
+          requestBody: jsonBody("ReorderBody"),
+          responses: {
+            204: { description: "並び替え成功（ボディなし）" },
+            400: errorResponse("バリデーションエラー"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("並び替え対象が未存在"),
+          },
+        },
+      },
+      "/api/evaluation-items/{id}": {
+        patch: {
+          summary: "評価項目を更新",
+          tags: ["evaluation-items"],
+          parameters: [idParam],
+          requestBody: jsonBody("EvaluationItemUpdate"),
+          responses: {
+            200: jsonResponse("更新後の評価項目", ref("EvaluationItem")),
+            400: errorResponse("バリデーションエラー / 更新フィールドなし"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("未存在"),
+            409: errorResponse("no 重複"),
+          },
+        },
+        delete: {
+          summary: "評価項目を削除",
+          tags: ["evaluation-items"],
+          parameters: [idParam],
+          responses: {
+            204: { description: "削除成功（ボディなし）" },
+            400: errorResponse("id 不正"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("未存在"),
           },
         },
       },

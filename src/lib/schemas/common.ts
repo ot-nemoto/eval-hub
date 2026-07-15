@@ -3,6 +3,24 @@ import { z } from "zod";
 /** エラーレスポンス `{ error: string }`（OpenAPI ドキュメント用）。 */
 export const errorResponseSchema = z.object({ error: z.string() });
 
+/** 非空の名称フィールド（空文字・空白のみを弾く）。REST 各リソースで共用。 */
+export const nameField = z
+  .string({ error: "name は必須です" })
+  .refine((v) => v.trim().length > 0, { error: "name は必須です" });
+
+/**
+ * 1 以上の整数フィールド（`no`・`targetId`・`categoryId` 等で共用）。
+ * 未指定・型不一致・非整数・範囲外で文言を分ける。
+ */
+export const positiveIntField = (label: string) =>
+  z
+    .number({
+      error: (iss) =>
+        iss.input === undefined ? `${label} は必須です` : `${label} は数値で指定してください`,
+    })
+    .int({ error: `${label} は整数で指定してください` })
+    .min(1, { error: `${label} は 1 以上で指定してください` });
+
 /**
  * 並び替え（reorder）の body スキーマ。`{ orders: [{ id, index }] }`。
  * targets / categories / evaluation-items で共用する。id・index は整数。
