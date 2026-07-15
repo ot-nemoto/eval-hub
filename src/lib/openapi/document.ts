@@ -15,6 +15,13 @@ import {
   evaluationItemUpdateBodySchema,
 } from "@/lib/schemas/evaluation-item";
 import {
+  fiscalYearCreateBodySchema,
+  fiscalYearListResponseSchema,
+  fiscalYearLockBodySchema,
+  fiscalYearResponseSchema,
+  fiscalYearUpdateBodySchema,
+} from "@/lib/schemas/fiscal-year";
+import {
   targetCreateBodySchema,
   targetListResponseSchema,
   targetResponseSchema,
@@ -122,6 +129,15 @@ const idParam = {
   description: "対象リソースの ID",
 };
 
+/** 年度（PK）の path パラメータ定義。 */
+const yearParam = {
+  name: "year",
+  in: "path",
+  required: true,
+  schema: { type: "integer" },
+  description: "対象年度（例: 2025）",
+};
+
 /** OpenAPI 3.1 ドキュメントを組み立てる。`serverUrl`（アクセス元オリジン）があれば servers 先頭に置く。 */
 export function buildOpenApiDocument(options: { version?: string; serverUrl?: string } = {}) {
   const localhost = "http://localhost:3000";
@@ -167,6 +183,11 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
         CategoryList: toSchema(categoryListResponseSchema),
         CategoryCreate: toSchema(categoryCreateBodySchema),
         CategoryUpdate: toSchema(categoryUpdateBodySchema),
+        FiscalYear: toSchema(fiscalYearResponseSchema),
+        FiscalYearList: toSchema(fiscalYearListResponseSchema),
+        FiscalYearCreate: toSchema(fiscalYearCreateBodySchema),
+        FiscalYearUpdate: toSchema(fiscalYearUpdateBodySchema),
+        FiscalYearLock: toSchema(fiscalYearLockBodySchema),
       },
     },
     paths: {
@@ -407,6 +428,72 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
             409: errorResponse("紐づく評価項目が存在"),
+          },
+        },
+      },
+      "/api/fiscal-years": {
+        get: {
+          summary: "年度一覧を取得",
+          tags: ["fiscal-years"],
+          responses: {
+            200: jsonResponse("年度の一覧", ref("FiscalYearList")),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+          },
+        },
+        post: {
+          summary: "年度を作成",
+          tags: ["fiscal-years"],
+          requestBody: jsonBody("FiscalYearCreate"),
+          responses: {
+            201: jsonResponse("作成された年度", ref("FiscalYear")),
+            400: errorResponse("バリデーションエラー（year 範囲・日付・期間前後）"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            409: errorResponse("同じ年度が既に存在"),
+          },
+        },
+      },
+      "/api/fiscal-years/{year}": {
+        patch: {
+          summary: "年度を更新（名称・期間・現在年度フラグ）",
+          tags: ["fiscal-years"],
+          parameters: [yearParam],
+          requestBody: jsonBody("FiscalYearUpdate"),
+          responses: {
+            200: jsonResponse("更新後の年度", ref("FiscalYear")),
+            400: errorResponse("バリデーションエラー / 更新フィールドなし"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("未存在"),
+          },
+        },
+        delete: {
+          summary: "年度を削除",
+          tags: ["fiscal-years"],
+          parameters: [yearParam],
+          responses: {
+            204: { description: "削除成功（ボディなし）" },
+            400: errorResponse("year 不正"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("未存在"),
+            409: errorResponse("紐づくデータが存在"),
+          },
+        },
+      },
+      "/api/fiscal-years/{year}/lock": {
+        post: {
+          summary: "年度のロック状態を設定",
+          tags: ["fiscal-years"],
+          parameters: [yearParam],
+          requestBody: jsonBody("FiscalYearLock"),
+          responses: {
+            200: jsonResponse("更新後の年度", ref("FiscalYear")),
+            400: errorResponse("バリデーションエラー / year 不正"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("未存在"),
           },
         },
       },
