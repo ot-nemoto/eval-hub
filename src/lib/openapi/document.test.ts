@@ -73,6 +73,7 @@ describe("buildOpenApiDocument", () => {
       expect.arrayContaining([
         "Error",
         "EvaluationItem",
+        "EvaluationItemList",
         "EvaluationItemsImport",
         "EvaluationItemsImportResult",
       ]),
