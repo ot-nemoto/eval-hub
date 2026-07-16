@@ -18,6 +18,7 @@
 - 評価者コメントの追加・編集・削除
 - 年度ロック（評価編集の一括制限）
 - ユーザー管理（有効化・無効化・削除）
+- 外部 REST API（API キー認証で、UI を介さずドメイン操作を実行）
 
 詳細は [docs/product.md](docs/product.md) / [docs/ui.md](docs/ui.md) を参照。
 
