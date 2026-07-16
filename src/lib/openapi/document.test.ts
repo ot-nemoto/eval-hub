@@ -30,6 +30,8 @@ const EXPECTED_PATHS = [
   "/api/evaluations/manager-score",
   "/api/evaluations/comments",
   "/api/evaluations/comments/{id}",
+  "/api/users",
+  "/api/users/{id}",
 ];
 
 const HTTP_METHODS = ["get", "post", "patch", "put", "delete"];
@@ -77,7 +79,7 @@ describe("buildOpenApiDocument", () => {
       (n, item) => n + Object.keys(item).filter((k) => HTTP_METHODS.includes(k)).length,
       0,
     );
-    expect(opCount).toBe(36);
+    expect(opCount).toBe(39);
   });
 
   it("各オペレーションに summary と responses がある", () => {
@@ -137,6 +139,9 @@ describe("buildOpenApiDocument", () => {
         "EvaluationCommentCreate",
         "EvaluationCommentUpdate",
         "ManagerComment",
+        "UserList",
+        "UserUpdate",
+        "UserUpdateResult",
       ]),
     );
   });

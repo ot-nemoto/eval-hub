@@ -108,3 +108,28 @@ export function serializeFiscalYear(fy: SerializableFiscalYear) {
     evalItemVersionId: fy.evalItemVersionId,
   };
 }
+
+type SerializableUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: "ADMIN" | "MEMBER";
+  division: string | null;
+  joinedAt: Date | null;
+  createdAt: Date;
+  isActive: boolean;
+};
+
+/** ユーザーを外部 API レスポンス形式に整形する（joinedAt は YYYY-MM-DD、createdAt は ISO）。 */
+export function serializeUser(u: SerializableUser) {
+  return {
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    division: u.division,
+    joinedAt: u.joinedAt ? u.joinedAt.toISOString().slice(0, 10) : null,
+    createdAt: u.createdAt.toISOString(),
+    isActive: u.isActive,
+  };
+}
