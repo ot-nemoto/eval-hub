@@ -150,3 +150,21 @@ type SerializableUserUpdate = {
 export function serializeUserUpdate(u: SerializableUserUpdate) {
   return { id: u.id, name: u.name, email: u.email, role: u.role, isActive: u.isActive };
 }
+
+type SerializableEvalItemVersion = {
+  id: number;
+  name: string;
+  createdAt: Date;
+  _count: { details: number; fiscalYears: number };
+};
+
+/** 評価項目バージョンを外部 API レスポンス形式（_count を件数フィールドに展開）に整形する。 */
+export function serializeEvalItemVersion(v: SerializableEvalItemVersion) {
+  return {
+    id: v.id,
+    name: v.name,
+    createdAt: v.createdAt.toISOString(),
+    detailsCount: v._count.details,
+    fiscalYearsCount: v._count.fiscalYears,
+  };
+}

@@ -32,6 +32,11 @@ const EXPECTED_PATHS = [
   "/api/evaluations/comments/{id}",
   "/api/users",
   "/api/users/{id}",
+  "/api/eval-item-versions",
+  "/api/eval-item-versions/current",
+  "/api/eval-item-versions/{id}",
+  "/api/eval-item-versions/{id}/restore",
+  "/api/fiscal-years/{year}/version",
 ];
 
 const HTTP_METHODS = ["get", "post", "patch", "put", "delete"];
@@ -79,7 +84,7 @@ describe("buildOpenApiDocument", () => {
       (n, item) => n + Object.keys(item).filter((k) => HTTP_METHODS.includes(k)).length,
       0,
     );
-    expect(opCount).toBe(39);
+    expect(opCount).toBe(47);
   });
 
   it("各オペレーションに summary と responses がある", () => {
@@ -142,6 +147,13 @@ describe("buildOpenApiDocument", () => {
         "UserList",
         "UserUpdate",
         "UserUpdateResult",
+        "EvalItemVersionList",
+        "EvalItemVersionDetail",
+        "EvalItemVersionCreate",
+        "EvalItemVersionCreated",
+        "CurrentEvalItems",
+        "VersionAssign",
+        "VersionAssignResult",
       ]),
     );
   });

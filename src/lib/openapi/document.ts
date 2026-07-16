@@ -7,6 +7,15 @@ import {
 } from "@/lib/schemas/category";
 import { errorResponseSchema, reorderBodySchema } from "@/lib/schemas/common";
 import {
+  currentEvalItemsResponseSchema,
+  evalItemVersionCreateBodySchema,
+  evalItemVersionCreatedSchema,
+  evalItemVersionDetailResponseSchema,
+  evalItemVersionListResponseSchema,
+  versionAssignBodySchema,
+  versionAssignResultSchema,
+} from "@/lib/schemas/eval-item-version";
+import {
   evaluationCommentCreateBodySchema,
   evaluationCommentUpdateBodySchema,
   evaluationDetailResponseSchema,
@@ -267,6 +276,13 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
         UserList: toSchema(userListResponseSchema),
         UserUpdate: toSchema(userUpdateBodySchema),
         UserUpdateResult: toSchema(userUpdateResponseSchema),
+        EvalItemVersionList: toSchema(evalItemVersionListResponseSchema),
+        EvalItemVersionDetail: toSchema(evalItemVersionDetailResponseSchema),
+        EvalItemVersionCreate: toSchema(evalItemVersionCreateBodySchema),
+        EvalItemVersionCreated: toSchema(evalItemVersionCreatedSchema),
+        CurrentEvalItems: toSchema(currentEvalItemsResponseSchema),
+        VersionAssign: toSchema(versionAssignBodySchema),
+        VersionAssignResult: toSchema(versionAssignResultSchema),
       },
     },
     paths: {
@@ -872,6 +888,118 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             403: errorResponse("ADMIN 権限が必要 / 自分自身は削除不可"),
             404: errorResponse("未存在"),
             409: errorResponse("評価/アサインデータが存在"),
+          },
+        },
+      },
+      "/api/eval-item-versions": {
+        get: {
+          summary: "評価項目バージョン一覧を取得",
+          tags: ["eval-item-versions"],
+          responses: {
+            200: jsonResponse("バージョンの一覧", ref("EvalItemVersionList")),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+          },
+        },
+        post: {
+          summary: "現在のマスタからバージョンを作成（スナップショット）",
+          tags: ["eval-item-versions"],
+          requestBody: jsonBody("EvalItemVersionCreate"),
+          responses: {
+            201: jsonResponse("作成されたバージョン", ref("EvalItemVersionCreated")),
+            400: errorResponse("バリデーションエラー / 評価項目が存在しない"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+          },
+        },
+      },
+      "/api/eval-item-versions/current": {
+        get: {
+          summary: "現在のマスタのスナップショット相当を取得",
+          tags: ["eval-item-versions"],
+          responses: {
+            200: jsonResponse("現在のマスタ項目", ref("CurrentEvalItems")),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+          },
+        },
+      },
+      "/api/eval-item-versions/{id}": {
+        get: {
+          summary: "バージョン詳細を取得",
+          tags: ["eval-item-versions"],
+          parameters: [idParam],
+          responses: {
+            200: jsonResponse("バージョンと詳細", ref("EvalItemVersionDetail")),
+            400: errorResponse("id 不正"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("未存在"),
+          },
+        },
+        delete: {
+          summary: "バージョンを削除",
+          tags: ["eval-item-versions"],
+          parameters: [idParam],
+          responses: {
+            204: { description: "削除成功（ボディなし）" },
+            400: errorResponse("id 不正"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("未存在"),
+            409: errorResponse("年度に割り当て中"),
+          },
+        },
+      },
+      "/api/eval-item-versions/{id}/restore": {
+        post: {
+          summary: "バージョンを現在のマスタへ復元（破壊的・confirm=true 必須）",
+          tags: ["eval-item-versions"],
+          parameters: [
+            idParam,
+            {
+              name: "confirm",
+              in: "query",
+              required: true,
+              schema: { type: "string", enum: ["true"] },
+              description: "破壊的操作の確認。`true` を明示指定しないと 400",
+            },
+          ],
+          responses: {
+            204: { description: "復元成功（ボディなし）" },
+            400: errorResponse("id 不正 / confirm 未指定 / バージョンに詳細がない"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("未存在"),
+          },
+        },
+      },
+      "/api/fiscal-years/{year}/version": {
+        post: {
+          summary: "年度に評価項目バージョンを割り当てる",
+          tags: ["fiscal-years"],
+          parameters: [yearParam],
+          requestBody: jsonBody("VersionAssign"),
+          responses: {
+            200: jsonResponse("割当後の年度", ref("VersionAssignResult")),
+            400: errorResponse("バリデーションエラー / year 不正"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("年度・バージョンが未存在"),
+            409: errorResponse("年度がロック中"),
+          },
+        },
+        delete: {
+          summary: "年度のバージョン割当を解除",
+          tags: ["fiscal-years"],
+          parameters: [yearParam],
+          responses: {
+            204: { description: "解除成功（ボディなし）" },
+            400: errorResponse("year 不正"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("年度が未存在"),
+            409: errorResponse("年度がロック中"),
           },
         },
       },
