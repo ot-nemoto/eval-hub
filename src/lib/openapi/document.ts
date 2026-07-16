@@ -7,6 +7,12 @@ import {
 } from "@/lib/schemas/category";
 import { errorResponseSchema, reorderBodySchema } from "@/lib/schemas/common";
 import {
+  evaluationAssignmentCreateBodySchema,
+  evaluationAssignmentCreatedSchema,
+  evaluationAssignmentListResponseSchema,
+  evaluationAssignmentResponseSchema,
+} from "@/lib/schemas/evaluation-assignment";
+import {
   evaluationItemCreateBodySchema,
   evaluationItemListResponseSchema,
   evaluationItemResponseSchema,
@@ -14,6 +20,11 @@ import {
   evaluationItemsImportResponseSchema,
   evaluationItemUpdateBodySchema,
 } from "@/lib/schemas/evaluation-item";
+import {
+  evaluationSettingListResponseSchema,
+  evaluationSettingResponseSchema,
+  evaluationSettingUpsertBodySchema,
+} from "@/lib/schemas/evaluation-setting";
 import {
   fiscalYearCreateBodySchema,
   fiscalYearListResponseSchema,
@@ -188,6 +199,13 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
         FiscalYearCreate: toSchema(fiscalYearCreateBodySchema),
         FiscalYearUpdate: toSchema(fiscalYearUpdateBodySchema),
         FiscalYearLock: toSchema(fiscalYearLockBodySchema),
+        EvaluationAssignment: toSchema(evaluationAssignmentResponseSchema),
+        EvaluationAssignmentList: toSchema(evaluationAssignmentListResponseSchema),
+        EvaluationAssignmentCreate: toSchema(evaluationAssignmentCreateBodySchema),
+        EvaluationAssignmentCreated: toSchema(evaluationAssignmentCreatedSchema),
+        EvaluationSetting: toSchema(evaluationSettingResponseSchema),
+        EvaluationSettingList: toSchema(evaluationSettingListResponseSchema),
+        EvaluationSettingUpsert: toSchema(evaluationSettingUpsertBodySchema),
       },
     },
     paths: {
@@ -494,6 +512,101 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             401: errorResponse("認証エラー"),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
+          },
+        },
+      },
+      "/api/evaluation-assignments": {
+        get: {
+          summary: "評価者アサイン一覧を取得",
+          tags: ["evaluation-assignments"],
+          parameters: [
+            {
+              name: "fiscalYear",
+              in: "query",
+              required: false,
+              schema: { type: "integer" },
+              description: "年度で絞り込む",
+            },
+            {
+              name: "evaluateeId",
+              in: "query",
+              required: false,
+              schema: { type: "string" },
+              description: "被評価者 ID で絞り込む",
+            },
+          ],
+          responses: {
+            200: jsonResponse("アサインの一覧", ref("EvaluationAssignmentList")),
+            400: errorResponse("クエリ不正"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+          },
+        },
+        post: {
+          summary: "評価者アサインを作成",
+          tags: ["evaluation-assignments"],
+          requestBody: jsonBody("EvaluationAssignmentCreate"),
+          responses: {
+            201: jsonResponse("作成されたアサイン", ref("EvaluationAssignmentCreated")),
+            400: errorResponse("バリデーションエラー"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            409: errorResponse("同一年度・被評価者・評価者の組み合わせが既に存在"),
+          },
+        },
+      },
+      "/api/evaluation-assignments/{id}": {
+        delete: {
+          summary: "評価者アサインを削除",
+          tags: ["evaluation-assignments"],
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "アサイン ID（UUID）",
+            },
+          ],
+          responses: {
+            204: { description: "削除成功（ボディなし）" },
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("未存在"),
+          },
+        },
+      },
+      "/api/evaluation-settings": {
+        get: {
+          summary: "ユーザーの自己評価要否設定一覧を取得",
+          tags: ["evaluation-settings"],
+          parameters: [
+            {
+              name: "userId",
+              in: "query",
+              required: true,
+              schema: { type: "string" },
+              description: "対象ユーザー ID",
+            },
+          ],
+          responses: {
+            200: jsonResponse("年度別設定の一覧", ref("EvaluationSettingList")),
+            400: errorResponse("userId 未指定"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("ユーザー未存在"),
+          },
+        },
+        post: {
+          summary: "自己評価要否設定を作成/更新（upsert）",
+          tags: ["evaluation-settings"],
+          requestBody: jsonBody("EvaluationSettingUpsert"),
+          responses: {
+            200: jsonResponse("upsert 後の設定", ref("EvaluationSetting")),
+            400: errorResponse("バリデーションエラー"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("ユーザー未存在"),
           },
         },
       },
