@@ -10,6 +10,7 @@ import {
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
+    user: { findUnique: vi.fn() },
     evaluationAssignment: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -90,6 +91,7 @@ describe("createEvaluationAssignment", () => {
       evaluateeId: "user-1",
       evaluatorId: "user-2",
     };
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as never);
     vi.mocked(prisma.evaluationAssignment.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.evaluationAssignment.create).mockResolvedValue(mockCreated as never);
 
@@ -103,6 +105,19 @@ describe("createEvaluationAssignment", () => {
       data: { fiscalYear: 2024, evaluateeId: "user-1", evaluatorId: "user-2" },
     });
     expect(result).toEqual(mockCreated);
+  });
+
+  it("被評価者・評価者が存在しない場合は NotFoundError をスロー", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+    await expect(
+      createEvaluationAssignment({
+        fiscalYear: 2024,
+        evaluateeId: "missing",
+        evaluatorId: "user-2",
+      }),
+    ).rejects.toThrow(NotFoundError);
+    expect(prisma.evaluationAssignment.create).not.toHaveBeenCalled();
   });
 
   it("fiscalYear が範囲外の場合は BadRequestError をスロー", async () => {
@@ -128,6 +143,7 @@ describe("createEvaluationAssignment", () => {
   });
 
   it("同一の組み合わせが存在する場合は ConflictError をスロー", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as never);
     vi.mocked(prisma.evaluationAssignment.findUnique).mockResolvedValue(mockAssignment as never);
 
     await expect(
@@ -140,6 +156,7 @@ describe("createEvaluationAssignment", () => {
   });
 
   it("DB の P2002（同時実行競合）の場合は ConflictError をスロー", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as never);
     vi.mocked(prisma.evaluationAssignment.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.evaluationAssignment.create).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {

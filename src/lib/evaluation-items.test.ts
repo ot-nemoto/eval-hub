@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BadRequestError, ConflictError, NotFoundError } from "./errors";
 import {
+  bulkReplaceEvaluationItems,
   createEvaluationItem,
   deleteEvaluationItem,
   getEvaluationItems,
@@ -12,8 +13,8 @@ import {
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    target: { findUnique: vi.fn() },
-    category: { findUnique: vi.fn() },
+    target: { findUnique: vi.fn(), create: vi.fn(), deleteMany: vi.fn() },
+    category: { findUnique: vi.fn(), create: vi.fn(), deleteMany: vi.fn() },
     evaluationItem: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
@@ -21,11 +22,25 @@ vi.mock("@/lib/prisma", () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      createMany: vi.fn(),
+      deleteMany: vi.fn(),
     },
     evalItemVersionDetail: { count: vi.fn() },
     $transaction: vi.fn((cb: (tx: unknown) => Promise<unknown>) =>
       cb({
-        evaluationItem: { update: vi.mocked(prisma.evaluationItem.update) },
+        target: {
+          create: vi.mocked(prisma.target.create),
+          deleteMany: vi.mocked(prisma.target.deleteMany),
+        },
+        category: {
+          create: vi.mocked(prisma.category.create),
+          deleteMany: vi.mocked(prisma.category.deleteMany),
+        },
+        evaluationItem: {
+          update: vi.mocked(prisma.evaluationItem.update),
+          createMany: vi.mocked(prisma.evaluationItem.createMany),
+          deleteMany: vi.mocked(prisma.evaluationItem.deleteMany),
+        },
       }),
     ),
   },
@@ -292,5 +307,89 @@ describe("deleteEvaluationItem", () => {
     vi.mocked(prisma.evaluationItem.findUnique).mockResolvedValue(null);
 
     await expect(deleteEvaluationItem(99)).rejects.toThrow(NotFoundError);
+  });
+});
+
+describe("bulkReplaceEvaluationItems", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const validTree = [
+    {
+      no: 1,
+      name: "社員",
+      categories: [
+        {
+          no: 1,
+          name: "エンゲージメント",
+          items: [
+            { no: 1, name: "item A", description: null, evalCriteria: null },
+            { no: 2, name: "item B" },
+          ],
+        },
+      ],
+    },
+  ];
+
+  it("全削除→INSERT を実行し作成件数を返す", async () => {
+    vi.mocked(prisma.target.create).mockResolvedValue({ id: 1, no: 1, name: "社員" } as never);
+    vi.mocked(prisma.category.create).mockResolvedValue({
+      id: 1,
+      targetId: 1,
+      no: 1,
+      name: "エンゲージメント",
+    } as never);
+    vi.mocked(prisma.evaluationItem.createMany).mockResolvedValue({ count: 2 } as never);
+
+    const result = await bulkReplaceEvaluationItems(validTree);
+
+    expect(result).toEqual({ created: 2 });
+    expect(prisma.evaluationItem.deleteMany).toHaveBeenCalledTimes(1);
+    expect(prisma.category.deleteMany).toHaveBeenCalledTimes(1);
+    expect(prisma.target.deleteMany).toHaveBeenCalledTimes(1);
+    expect(prisma.target.create).toHaveBeenCalledTimes(1);
+    expect(prisma.category.create).toHaveBeenCalledTimes(1);
+    expect(prisma.evaluationItem.createMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("index は送信順に採番される", async () => {
+    vi.mocked(prisma.target.create).mockResolvedValue({ id: 1, no: 1, name: "社員" } as never);
+    vi.mocked(prisma.category.create).mockResolvedValue({ id: 1, no: 1, name: "C" } as never);
+    vi.mocked(prisma.evaluationItem.createMany).mockResolvedValue({ count: 2 } as never);
+
+    await bulkReplaceEvaluationItems(validTree);
+
+    expect(prisma.target.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ index: 1 }) }),
+    );
+    const [createManyArg] = vi.mocked(prisma.evaluationItem.createMany).mock.calls[0] ?? [];
+    expect(createManyArg?.data).toEqual([
+      expect.objectContaining({ no: 1, index: 1 }),
+      expect.objectContaining({ no: 2, index: 2 }),
+    ]);
+  });
+
+  it("大項目の no が 0 以下の場合は BadRequestError をスロー", async () => {
+    await expect(
+      bulkReplaceEvaluationItems([{ no: 0, name: "T", categories: [] }]),
+    ).rejects.toThrow(BadRequestError);
+  });
+
+  it("評価項目の name が空の場合は BadRequestError をスロー", async () => {
+    await expect(
+      bulkReplaceEvaluationItems([
+        { no: 1, name: "T", categories: [{ no: 1, name: "C", items: [{ no: 1, name: "  " }] }] },
+      ]),
+    ).rejects.toThrow(BadRequestError);
+  });
+
+  it("no 重複（P2002）は ConflictError をスロー", async () => {
+    vi.mocked(prisma.target.create).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+        code: "P2002",
+        clientVersion: "5",
+      }),
+    );
+
+    await expect(bulkReplaceEvaluationItems(validTree)).rejects.toThrow(ConflictError);
   });
 });
