@@ -1,6 +1,19 @@
-import type { Score } from "@prisma/client";
+import type { ManagerComment, Score } from "@prisma/client";
 import { BadRequestError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
+
+/** 評価者コメントを明示 projection で返す（将来の列追加による無言の漏れを防ぐ）。 */
+function serializeComment(c: ManagerComment) {
+  return {
+    id: c.id,
+    evaluationId: c.evaluationId,
+    evaluatorId: c.evaluatorId,
+    score: c.score,
+    reason: c.reason,
+    createdAt: c.createdAt,
+    updatedAt: c.updatedAt,
+  };
+}
 
 export async function getEvaluationProgress(fiscalYear: number) {
   if (!Number.isInteger(fiscalYear) || fiscalYear < 1900 || fiscalYear > 9999)
@@ -339,20 +352,22 @@ export async function addManagerComment(
     update: {},
   });
 
-  return prisma.managerComment.create({
+  const comment = await prisma.managerComment.create({
     data: {
       evaluationId: evaluation.id,
       evaluatorId,
       reason: data.reason,
     },
   });
+  return serializeComment(comment);
 }
 
 export async function updateManagerComment(commentId: string, data: { reason?: string | null }) {
-  return prisma.managerComment.update({
+  const comment = await prisma.managerComment.update({
     where: { id: commentId },
     data,
   });
+  return serializeComment(comment);
 }
 
 export async function deleteManagerComment(commentId: string) {

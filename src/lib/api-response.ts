@@ -33,6 +33,9 @@ export function statusForError(error: unknown): number {
 export function jsonErrorFromException(error: unknown) {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     if (error.code === "P2025") return jsonError("対象のデータが見つかりません", 404);
+    // P2003 は「作成/更新時に参照先の親が存在しない」ケースを 404 とする。
+    // 削除時の子依存（本来 409）は各 lib が事前に count()→ConflictError で弾いており、
+    // ここに P2003-on-delete は到達しない前提（この invariant が崩れる削除を書く場合は要見直し）。
     if (error.code === "P2003") return jsonError("参照先のデータが見つかりません", 404);
   }
   const status = statusForError(error);
