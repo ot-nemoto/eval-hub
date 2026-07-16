@@ -551,6 +551,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             400: errorResponse("バリデーションエラー"),
             401: errorResponse("認証エラー"),
             403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("指定した被評価者・評価者が未存在"),
             409: errorResponse("同一年度・被評価者・評価者の組み合わせが既に存在"),
           },
         },

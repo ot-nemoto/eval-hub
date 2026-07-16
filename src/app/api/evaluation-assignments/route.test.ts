@@ -8,7 +8,7 @@ vi.mock("@/lib/evaluation-assignments", () => ({
 }));
 
 import { getAuthenticatedUser } from "@/lib/apiAuth";
-import { ConflictError } from "@/lib/errors";
+import { ConflictError, NotFoundError } from "@/lib/errors";
 import { createEvaluationAssignment, getEvaluationAssignments } from "@/lib/evaluation-assignments";
 import { GET, POST } from "./route";
 
@@ -98,6 +98,14 @@ describe("POST /api/evaluation-assignments", () => {
     expect((await POST(makePost({ ...validBody, fiscalYear: 1800 }))).status).toBe(400);
     expect((await POST(makePost({ ...validBody, evaluateeId: "" }))).status).toBe(400);
     expect(createEvaluationAssignment).not.toHaveBeenCalled();
+  });
+
+  it("存在しないユーザー（NotFoundError）は 404", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    vi.mocked(createEvaluationAssignment).mockRejectedValue(
+      new NotFoundError("被評価者が見つかりません"),
+    );
+    expect((await POST(makePost(validBody))).status).toBe(404);
   });
 
   it("重複は 409", async () => {
