@@ -22,6 +22,7 @@ vi.mock("@/lib/prisma", () => ({
     evaluationAssignment: { count: vi.fn() },
     evaluation: { count: vi.fn() },
     evaluationSetting: { count: vi.fn() },
+    managerComment: { count: vi.fn() },
   },
 }));
 
@@ -147,6 +148,7 @@ describe("deleteUser", () => {
     vi.mocked(prisma.evaluationAssignment.count).mockResolvedValue(0);
     vi.mocked(prisma.evaluation.count).mockResolvedValue(0);
     vi.mocked(prisma.evaluationSetting.count).mockResolvedValue(0);
+    vi.mocked(prisma.managerComment.count).mockResolvedValue(0);
 
     await deleteUser("user-1", "current-user");
 
@@ -188,6 +190,17 @@ describe("deleteUser", () => {
     vi.mocked(prisma.evaluationSetting.count).mockResolvedValue(1);
 
     await expect(deleteUser("user-1", "current-user")).rejects.toThrow(ConflictError);
+  });
+
+  it("評価者コメントが存在する場合は ConflictError をスロー", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never);
+    vi.mocked(prisma.evaluationAssignment.count).mockResolvedValue(0);
+    vi.mocked(prisma.evaluation.count).mockResolvedValue(0);
+    vi.mocked(prisma.evaluationSetting.count).mockResolvedValue(0);
+    vi.mocked(prisma.managerComment.count).mockResolvedValue(1);
+
+    await expect(deleteUser("user-1", "current-user")).rejects.toThrow(ConflictError);
+    expect(prisma.user.delete).not.toHaveBeenCalled();
   });
 });
 
