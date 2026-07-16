@@ -953,12 +953,21 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
       },
       "/api/eval-item-versions/{id}/restore": {
         post: {
-          summary: "バージョンを現在のマスタへ復元（破壊的）",
+          summary: "バージョンを現在のマスタへ復元（破壊的・confirm=true 必須）",
           tags: ["eval-item-versions"],
-          parameters: [idParam],
+          parameters: [
+            idParam,
+            {
+              name: "confirm",
+              in: "query",
+              required: true,
+              schema: { type: "string", enum: ["true"] },
+              description: "破壊的操作の確認。`true` を明示指定しないと 400",
+            },
+          ],
           responses: {
             204: { description: "復元成功（ボディなし）" },
-            400: errorResponse("id 不正 / バージョンに詳細がない"),
+            400: errorResponse("id 不正 / confirm 未指定 / バージョンに詳細がない"),
             401: errorResponse("認証エラー"),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),

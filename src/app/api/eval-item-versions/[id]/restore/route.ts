@@ -20,6 +20,10 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   const versionId = parseId(id);
   if (versionId === null) return jsonError("id は正の整数で指定してください", 400);
 
+  // 現在マスタを全消しする不可逆操作のため、明示的な confirm=true を要求して誤爆を防ぐ。
+  if (new URL(req.url).searchParams.get("confirm") !== "true")
+    return jsonError("破壊的操作のため confirm=true を指定してください", 400);
+
   try {
     await restoreEvalItemVersion(versionId);
     return new NextResponse(null, { status: 204 });

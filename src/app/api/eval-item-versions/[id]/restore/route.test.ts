@@ -12,8 +12,8 @@ import { POST } from "./route";
 const adminUser = { id: "u1", role: "ADMIN" as const, isActive: true };
 const memberUser = { id: "u2", role: "MEMBER" as const, isActive: true };
 
-function makeRequest() {
-  return new Request("http://localhost/api/eval-item-versions/1/restore", {
+function makeRequest(query = "?confirm=true") {
+  return new Request(`http://localhost/api/eval-item-versions/1/restore${query}`, {
     method: "POST",
     headers: { authorization: "Bearer key" },
   }) as import("next/server").NextRequest;
@@ -52,6 +52,13 @@ describe("POST /api/eval-item-versions/[id]/restore", () => {
   it("id 不正は 400", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
     expect((await POST(makeRequest(), ctx("abc"))).status).toBe(400);
+    expect(restoreEvalItemVersion).not.toHaveBeenCalled();
+  });
+
+  it("confirm=true がないと 400（破壊的操作ガード）", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    expect((await POST(makeRequest(""), ctx())).status).toBe(400);
+    expect((await POST(makeRequest("?confirm=false"), ctx())).status).toBe(400);
     expect(restoreEvalItemVersion).not.toHaveBeenCalled();
   });
 
