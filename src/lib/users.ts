@@ -82,15 +82,16 @@ export async function deleteUser(id: string, currentUserId: string) {
   const target = await prisma.user.findUnique({ where: { id } });
   if (!target) throw new NotFoundError("ユーザーが見つかりません");
 
-  const [assignmentCount, evaluationCount, settingCount] = await Promise.all([
+  const [assignmentCount, evaluationCount, settingCount, commentCount] = await Promise.all([
     prisma.evaluationAssignment.count({
       where: { OR: [{ evaluateeId: id }, { evaluatorId: id }] },
     }),
     prisma.evaluation.count({ where: { evaluateeId: id } }),
     prisma.evaluationSetting.count({ where: { userId: id } }),
+    prisma.managerComment.count({ where: { evaluatorId: id } }),
   ]);
 
-  if (assignmentCount > 0 || evaluationCount > 0 || settingCount > 0)
+  if (assignmentCount > 0 || evaluationCount > 0 || settingCount > 0 || commentCount > 0)
     throw new ConflictError("評価データまたはアサインデータが存在するため削除できません");
 
   await prisma.user.delete({ where: { id } });

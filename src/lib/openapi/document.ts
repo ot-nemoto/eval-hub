@@ -52,6 +52,11 @@ import {
   targetResponseSchema,
   targetUpdateBodySchema,
 } from "@/lib/schemas/target";
+import {
+  userListResponseSchema,
+  userUpdateBodySchema,
+  userUpdateResponseSchema,
+} from "@/lib/schemas/user";
 
 /**
  * `info.description`（Markdown）に流し込む API 全体のナラティブ。
@@ -259,6 +264,9 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
         EvaluationCommentCreate: toSchema(evaluationCommentCreateBodySchema),
         EvaluationCommentUpdate: toSchema(evaluationCommentUpdateBodySchema),
         ManagerComment: toSchema(managerCommentResponseSchema),
+        UserList: toSchema(userListResponseSchema),
+        UserUpdate: toSchema(userUpdateBodySchema),
+        UserUpdateResult: toSchema(userUpdateResponseSchema),
       },
     },
     paths: {
@@ -810,6 +818,60 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             401: errorResponse("認証エラー"),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
+          },
+        },
+      },
+      "/api/users": {
+        get: {
+          summary: "ユーザー一覧を取得",
+          tags: ["users"],
+          responses: {
+            200: jsonResponse("ユーザーの一覧", ref("UserList")),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+          },
+        },
+      },
+      "/api/users/{id}": {
+        patch: {
+          summary: "ユーザーのロール・有効フラグを更新",
+          tags: ["users"],
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "ユーザー ID（UUID）",
+            },
+          ],
+          requestBody: jsonBody("UserUpdate"),
+          responses: {
+            200: jsonResponse("更新後のユーザー", ref("UserUpdateResult")),
+            400: errorResponse("バリデーションエラー / 更新フィールドなし"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要 / 自分自身は変更不可"),
+            404: errorResponse("未存在"),
+          },
+        },
+        delete: {
+          summary: "ユーザーを削除",
+          tags: ["users"],
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "ユーザー ID（UUID）",
+            },
+          ],
+          responses: {
+            204: { description: "削除成功（ボディなし）" },
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要 / 自分自身は削除不可"),
+            404: errorResponse("未存在"),
+            409: errorResponse("評価/アサインデータが存在"),
           },
         },
       },
