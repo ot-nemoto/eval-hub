@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
 
@@ -25,10 +26,18 @@ export function statusForError(error: unknown): number {
 
 /**
  * catch した例外を `{ error }` レスポンスに変換する。
- * 型付きエラー（400/403/404/409）は意図した日本語メッセージをそのまま返すが、
- * 想定外エラー（500）は内部情報の露出を避けるため汎用文言に固定する。
+ * 型付きエラー（400/403/404/409）は意図した日本語メッセージをそのまま返す。
+ * Prisma の対象/参照欠落（P2025/P2003）は 404 に、想定外エラー（500）は
+ * 内部情報の露出を避けるため汎用文言に固定する。
  */
 export function jsonErrorFromException(error: unknown) {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === "P2025") return jsonError("対象のデータが見つかりません", 404);
+    // P2003 は「作成/更新時に参照先の親が存在しない」ケースを 404 とする。
+    // 削除時の子依存（本来 409）は各 lib が事前に count()→ConflictError で弾いており、
+    // ここに P2003-on-delete は到達しない前提（この invariant が崩れる削除を書く場合は要見直し）。
+    if (error.code === "P2003") return jsonError("参照先のデータが見つかりません", 404);
+  }
   const status = statusForError(error);
   const message = status === 500 ? "サーバーエラーが発生しました" : (error as Error).message;
   return jsonError(message, status);
