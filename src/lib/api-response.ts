@@ -133,3 +133,20 @@ export function serializeUser(u: SerializableUser) {
     isActive: u.isActive,
   };
 }
+
+type SerializableUserUpdate = {
+  id: string;
+  name: string;
+  email: string;
+  role: "ADMIN" | "MEMBER";
+  isActive: boolean;
+};
+
+/**
+ * ユーザー更新レスポンスをホワイトリスト整形する。
+ * secret（apiKey・clerkId）非露出を lib の select だけに依存させず、
+ * 応答経路の単一チョークポイントで担保する。
+ */
+export function serializeUserUpdate(u: SerializableUserUpdate) {
+  return { id: u.id, name: u.name, email: u.email, role: u.role, isActive: u.isActive };
+}

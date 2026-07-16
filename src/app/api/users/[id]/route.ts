@@ -1,5 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { jsonError, jsonErrorFromException, unauthorized } from "@/lib/api-response";
+import {
+  jsonError,
+  jsonErrorFromException,
+  serializeUserUpdate,
+  unauthorized,
+} from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { firstZodError } from "@/lib/schemas/_zod-error";
 import { userUpdateBodySchema } from "@/lib/schemas/user";
@@ -20,7 +25,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
 
   try {
     const updated = await updateUser(id, parsed.data, user.id);
-    return NextResponse.json(updated);
+    return NextResponse.json(serializeUserUpdate(updated));
   } catch (e) {
     return jsonErrorFromException(e);
   }
