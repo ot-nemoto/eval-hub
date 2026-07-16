@@ -21,6 +21,15 @@ const EXPECTED_PATHS = [
   "/api/evaluation-assignments",
   "/api/evaluation-assignments/{id}",
   "/api/evaluation-settings",
+  "/api/evaluations",
+  "/api/evaluations/matrix",
+  "/api/evaluations/progress",
+  "/api/evaluations/self",
+  "/api/evaluations/manager",
+  "/api/evaluations/self-score",
+  "/api/evaluations/manager-score",
+  "/api/evaluations/comments",
+  "/api/evaluations/comments/{id}",
 ];
 
 const HTTP_METHODS = ["get", "post", "patch", "put", "delete"];
@@ -68,7 +77,7 @@ describe("buildOpenApiDocument", () => {
       (n, item) => n + Object.keys(item).filter((k) => HTTP_METHODS.includes(k)).length,
       0,
     );
-    expect(opCount).toBe(26);
+    expect(opCount).toBe(36);
   });
 
   it("各オペレーションに summary と responses がある", () => {
@@ -116,6 +125,18 @@ describe("buildOpenApiDocument", () => {
         "EvaluationSetting",
         "EvaluationSettingList",
         "EvaluationSettingUpsert",
+        "EvaluationDetail",
+        "EvaluationMatrix",
+        "EvaluationProgress",
+        "SelfEvaluationList",
+        "ManagerEvaluationList",
+        "EvaluationSelfUpsert",
+        "EvaluationSelfUpsertResult",
+        "EvaluationManagerScore",
+        "EvaluationManagerScoreResult",
+        "EvaluationCommentCreate",
+        "EvaluationCommentUpdate",
+        "ManagerComment",
       ]),
     );
   });

@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { Prisma } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 import {
   jsonError,
@@ -59,6 +60,30 @@ describe("jsonErrorFromException", () => {
     const body = await res.json();
     expect(res.status).toBe(500);
     expect(body).toEqual({ error: "サーバーエラーが発生しました" });
+  });
+
+  it("Prisma P2025（対象なし）は 404", async () => {
+    const res = jsonErrorFromException(
+      new Prisma.PrismaClientKnownRequestError("Record not found", {
+        code: "P2025",
+        clientVersion: "5",
+      }),
+    );
+    const body = await res.json();
+    expect(res.status).toBe(404);
+    expect(body).toEqual({ error: "対象のデータが見つかりません" });
+  });
+
+  it("Prisma P2003（FK 参照先なし）は 404", async () => {
+    const res = jsonErrorFromException(
+      new Prisma.PrismaClientKnownRequestError("FK failed", {
+        code: "P2003",
+        clientVersion: "5",
+      }),
+    );
+    const body = await res.json();
+    expect(res.status).toBe(404);
+    expect(body).toEqual({ error: "参照先のデータが見つかりません" });
   });
 });
 

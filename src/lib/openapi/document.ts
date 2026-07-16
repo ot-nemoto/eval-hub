@@ -7,6 +7,20 @@ import {
 } from "@/lib/schemas/category";
 import { errorResponseSchema, reorderBodySchema } from "@/lib/schemas/common";
 import {
+  evaluationCommentCreateBodySchema,
+  evaluationCommentUpdateBodySchema,
+  evaluationDetailResponseSchema,
+  evaluationManagerScoreBodySchema,
+  evaluationManagerScoreResponseSchema,
+  evaluationMatrixResponseSchema,
+  evaluationProgressResponseSchema,
+  evaluationSelfUpsertBodySchema,
+  evaluationSelfUpsertResponseSchema,
+  managerCommentResponseSchema,
+  managerEvaluationListResponseSchema,
+  selfEvaluationListResponseSchema,
+} from "@/lib/schemas/evaluation";
+import {
   evaluationAssignmentCreateBodySchema,
   evaluationAssignmentCreatedSchema,
   evaluationAssignmentListResponseSchema,
@@ -149,6 +163,33 @@ const yearParam = {
   description: "対象年度（例: 2025）",
 };
 
+/** fiscalYear クエリパラメータ定義。 */
+const fiscalYearQuery = (required: boolean) => ({
+  name: "fiscalYear",
+  in: "query",
+  required,
+  schema: { type: "integer" },
+  description: "対象年度（例: 2025）",
+});
+
+/** evaluateeId クエリパラメータ定義（必須）。 */
+const evaluateeIdQuery = {
+  name: "evaluateeId",
+  in: "query",
+  required: true,
+  schema: { type: "string" },
+  description: "被評価者 ID",
+};
+
+/** userId クエリパラメータ定義（任意・絞り込み）。 */
+const userIdQuery = {
+  name: "userId",
+  in: "query",
+  required: false,
+  schema: { type: "string" },
+  description: "ユーザー ID で絞り込む",
+};
+
 /** OpenAPI 3.1 ドキュメントを組み立てる。`serverUrl`（アクセス元オリジン）があれば servers 先頭に置く。 */
 export function buildOpenApiDocument(options: { version?: string; serverUrl?: string } = {}) {
   const localhost = "http://localhost:3000";
@@ -206,6 +247,18 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
         EvaluationSetting: toSchema(evaluationSettingResponseSchema),
         EvaluationSettingList: toSchema(evaluationSettingListResponseSchema),
         EvaluationSettingUpsert: toSchema(evaluationSettingUpsertBodySchema),
+        EvaluationDetail: toSchema(evaluationDetailResponseSchema),
+        EvaluationMatrix: toSchema(evaluationMatrixResponseSchema),
+        EvaluationProgress: toSchema(evaluationProgressResponseSchema),
+        SelfEvaluationList: toSchema(selfEvaluationListResponseSchema),
+        ManagerEvaluationList: toSchema(managerEvaluationListResponseSchema),
+        EvaluationSelfUpsert: toSchema(evaluationSelfUpsertBodySchema),
+        EvaluationSelfUpsertResult: toSchema(evaluationSelfUpsertResponseSchema),
+        EvaluationManagerScore: toSchema(evaluationManagerScoreBodySchema),
+        EvaluationManagerScoreResult: toSchema(evaluationManagerScoreResponseSchema),
+        EvaluationCommentCreate: toSchema(evaluationCommentCreateBodySchema),
+        EvaluationCommentUpdate: toSchema(evaluationCommentUpdateBodySchema),
+        ManagerComment: toSchema(managerCommentResponseSchema),
       },
     },
     paths: {
@@ -608,6 +661,155 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             401: errorResponse("認証エラー"),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("ユーザー未存在"),
+          },
+        },
+      },
+      "/api/evaluations": {
+        get: {
+          summary: "被評価者の項目別評価詳細を取得",
+          tags: ["evaluations"],
+          parameters: [fiscalYearQuery(true), evaluateeIdQuery],
+          responses: {
+            200: jsonResponse("項目別の評価詳細（コメント含む）", ref("EvaluationDetail")),
+            400: errorResponse("クエリ不正"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+          },
+        },
+      },
+      "/api/evaluations/matrix": {
+        get: {
+          summary: "評価マトリクス（ユーザー×項目）を取得",
+          tags: ["evaluations"],
+          parameters: [fiscalYearQuery(true)],
+          responses: {
+            200: jsonResponse("スコアマトリクス", ref("EvaluationMatrix")),
+            400: errorResponse("クエリ不正"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+          },
+        },
+      },
+      "/api/evaluations/progress": {
+        get: {
+          summary: "評価進捗（被評価者別）を取得",
+          tags: ["evaluations"],
+          parameters: [fiscalYearQuery(true)],
+          responses: {
+            200: jsonResponse("被評価者別の進捗", ref("EvaluationProgress")),
+            400: errorResponse("クエリ不正"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+          },
+        },
+      },
+      "/api/evaluations/self": {
+        get: {
+          summary: "自己評価一覧を取得",
+          tags: ["evaluations"],
+          parameters: [fiscalYearQuery(true), userIdQuery],
+          responses: {
+            200: jsonResponse("自己評価の一覧", ref("SelfEvaluationList")),
+            400: errorResponse("クエリ不正"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+          },
+        },
+      },
+      "/api/evaluations/manager": {
+        get: {
+          summary: "上長評価一覧を取得",
+          tags: ["evaluations"],
+          parameters: [fiscalYearQuery(true), userIdQuery],
+          responses: {
+            200: jsonResponse("上長評価の一覧", ref("ManagerEvaluationList")),
+            400: errorResponse("クエリ不正"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+          },
+        },
+      },
+      "/api/evaluations/self-score": {
+        post: {
+          summary: "自己採点を作成/更新（upsert）",
+          tags: ["evaluations"],
+          requestBody: jsonBody("EvaluationSelfUpsert"),
+          responses: {
+            200: jsonResponse("upsert 後の自己採点", ref("EvaluationSelfUpsertResult")),
+            400: errorResponse("バリデーションエラー"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("参照先（年度・被評価者・項目）が未存在"),
+          },
+        },
+      },
+      "/api/evaluations/manager-score": {
+        post: {
+          summary: "上長スコアを作成/更新（upsert）",
+          tags: ["evaluations"],
+          requestBody: jsonBody("EvaluationManagerScore"),
+          responses: {
+            200: jsonResponse("upsert 後の上長スコア", ref("EvaluationManagerScoreResult")),
+            400: errorResponse("バリデーションエラー"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("参照先（年度・被評価者・項目）が未存在"),
+          },
+        },
+      },
+      "/api/evaluations/comments": {
+        post: {
+          summary: "評価者コメントを追加",
+          tags: ["evaluations"],
+          requestBody: jsonBody("EvaluationCommentCreate"),
+          responses: {
+            201: jsonResponse("作成されたコメント", ref("ManagerComment")),
+            400: errorResponse("バリデーションエラー"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("参照先（年度・被評価者・項目・評価者）が未存在"),
+          },
+        },
+      },
+      "/api/evaluations/comments/{id}": {
+        patch: {
+          summary: "評価者コメントを更新",
+          tags: ["evaluations"],
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "コメント ID（UUID）",
+            },
+          ],
+          requestBody: jsonBody("EvaluationCommentUpdate"),
+          responses: {
+            200: jsonResponse("更新後のコメント", ref("ManagerComment")),
+            400: errorResponse("バリデーションエラー"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("未存在"),
+          },
+        },
+        delete: {
+          summary: "評価者コメントを削除",
+          tags: ["evaluations"],
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "コメント ID（UUID）",
+            },
+          ],
+          responses: {
+            204: { description: "削除成功（ボディなし）" },
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 権限が必要"),
+            404: errorResponse("未存在"),
           },
         },
       },
