@@ -21,6 +21,20 @@ export const positiveIntField = (label: string) =>
     .int({ error: `${label} は整数で指定してください` })
     .min(1, { error: `${label} は 1 以上で指定してください` });
 
+/** 年度フィールド（1900〜9999 の整数）。assignment・setting 等で共用。 */
+export const fiscalYearField = z
+  .number({
+    error: (iss) =>
+      iss.input === undefined ? "fiscalYear は必須です" : "fiscalYear は数値で指定してください",
+  })
+  .int({ error: "fiscalYear は整数で指定してください" })
+  .min(1900, { error: "fiscalYear は 1900〜9999 で指定してください" })
+  .max(9999, { error: "fiscalYear は 1900〜9999 で指定してください" });
+
+/** 非空の ID 文字列フィールド（UUID 等）。 */
+export const nonEmptyIdField = (label: string) =>
+  z.string({ error: `${label} は必須です` }).min(1, { error: `${label} は必須です` });
+
 /**
  * 並び替え（reorder）の body スキーマ。`{ orders: [{ id, index }] }`。
  * targets / categories / evaluation-items で共用する。id・index は整数。
