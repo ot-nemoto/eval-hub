@@ -15,6 +15,9 @@ const EXPECTED_PATHS = [
   "/api/categories",
   "/api/categories/reorder",
   "/api/categories/{id}",
+  "/api/fiscal-years",
+  "/api/fiscal-years/{year}",
+  "/api/fiscal-years/{year}/lock",
 ];
 
 const HTTP_METHODS = ["get", "post", "patch", "put", "delete"];
@@ -62,7 +65,7 @@ describe("buildOpenApiDocument", () => {
       (n, item) => n + Object.keys(item).filter((k) => HTTP_METHODS.includes(k)).length,
       0,
     );
-    expect(opCount).toBe(16);
+    expect(opCount).toBe(21);
   });
 
   it("各オペレーションに summary と responses がある", () => {
@@ -98,6 +101,11 @@ describe("buildOpenApiDocument", () => {
         "CategoryList",
         "CategoryCreate",
         "CategoryUpdate",
+        "FiscalYear",
+        "FiscalYearList",
+        "FiscalYearCreate",
+        "FiscalYearUpdate",
+        "FiscalYearLock",
       ]),
     );
   });

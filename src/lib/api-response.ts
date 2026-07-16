@@ -76,3 +76,26 @@ type SerializableCategory = {
 export function serializeCategory(c: SerializableCategory) {
   return { id: c.id, targetId: c.targetId, name: c.name, no: c.no, index: c.index };
 }
+
+type SerializableFiscalYear = {
+  year: number;
+  name: string;
+  startDate: Date;
+  endDate: Date;
+  isCurrent: boolean;
+  isLocked: boolean;
+  evalItemVersionId: number | null;
+};
+
+/** 年度を外部 API レスポンス形式（日付は YYYY-MM-DD）に整形する。 */
+export function serializeFiscalYear(fy: SerializableFiscalYear) {
+  return {
+    year: fy.year,
+    name: fy.name,
+    startDate: fy.startDate.toISOString().slice(0, 10),
+    endDate: fy.endDate.toISOString().slice(0, 10),
+    isCurrent: fy.isCurrent,
+    isLocked: fy.isLocked,
+    evalItemVersionId: fy.evalItemVersionId,
+  };
+}
