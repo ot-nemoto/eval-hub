@@ -54,7 +54,15 @@ Client (Browser)
 - **writes（書き込み操作）**: Server Actions（`actions.ts`）に集約する。REST API は原則使用しない
 - ビジネスロジックは `src/lib/` に集約し、Server Actions はできるだけ薄く保つ
 - Server Actions の仕様は [`docs/actions.md`](actions.md) を参照
-- 外部 REST API の方針は [`docs/api.md`](api.md) を参照
+- 外部 REST API は API キー認証で提供する。検証は Zod スキーマ（`src/lib/schemas/`）を単一ソースとし、そこから OpenAPI 3.1 を実行時生成してアプリ内 `/openapi.json`・`/api-reference`（Stoplight・ログイン必須）で配信する。仕様の正はこの配信 spec とし、別途 `docs/api.md` は持たない
+
+### 外部 REST API の契約・規約
+
+- **認可**: 操作対象ユーザーは常にサーバ側（API キー）から解決する（`getAuthenticatedUser`）。マスタ・管理系は ADMIN 限定。API キーの発行/失効とログインは UI 専用で API 化しない（PAT モデル）。
+- **UI と REST の分離**: UI の書き込みは Server Actions を経由し、REST API とは別入口。両者は同じ `src/lib/` のドメイン関数を呼ぶ薄いアダプタとする（ロジックを二重に持たない）。
+- **エラー契約**: すべて `{ error: string }` を返す。型付きエラー（`NotFound`/`Forbidden`/`Conflict`/`BadRequest`）を `statusForError` で 404/403/409/400 にマッピングし、Prisma の参照/対象欠落（P2003/P2025）は `jsonErrorFromException` で 404 に、想定外は 500（内部情報は隠蔽）に集約する。
+- **CORS**: `/api/*` は API キー認証・Cookie 不使用のため任意オリジン許可（`Access-Control-Allow-Origin: *`）。プリフライト `OPTIONS` は 204（`src/proxy.ts`）。
+- **REST エンドポイント追加手順**: ①ドメイン関数を `src/lib/` に用意（or 既存を再利用）→ ②`src/lib/schemas/` に Zod の body/response スキーマ → ③`src/app/api/**/route.ts` に lib 委譲の薄いアダプタ（認可・Zod 検証・`jsonErrorFromException`）→ ④`src/lib/openapi/document.ts` に paths・schemas を追記。エンドポイント一覧は docs に列挙せず spec を正とする。
 
 ### 機能追加時のガイドライン
 

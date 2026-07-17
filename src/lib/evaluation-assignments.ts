@@ -46,6 +46,13 @@ export async function createEvaluationAssignment(data: {
   if (!data.evaluateeId) throw new BadRequestError("evaluateeId は必須です");
   if (!data.evaluatorId) throw new BadRequestError("evaluatorId は必須です");
 
+  const [evaluatee, evaluator] = await Promise.all([
+    prisma.user.findUnique({ where: { id: data.evaluateeId }, select: { id: true } }),
+    prisma.user.findUnique({ where: { id: data.evaluatorId }, select: { id: true } }),
+  ]);
+  if (!evaluatee) throw new NotFoundError("被評価者が見つかりません");
+  if (!evaluator) throw new NotFoundError("評価者が見つかりません");
+
   const existing = await prisma.evaluationAssignment.findUnique({
     where: {
       fiscalYear_evaluateeId_evaluatorId: {
@@ -58,7 +65,13 @@ export async function createEvaluationAssignment(data: {
   if (existing) throw new ConflictError("同一年度・被評価者・評価者の組み合わせがすでに存在します");
 
   try {
-    return await prisma.evaluationAssignment.create({ data });
+    const created = await prisma.evaluationAssignment.create({ data });
+    return {
+      id: created.id,
+      fiscalYear: created.fiscalYear,
+      evaluateeId: created.evaluateeId,
+      evaluatorId: created.evaluatorId,
+    };
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002")
       throw new ConflictError("同一年度・被評価者・評価者の組み合わせがすでに存在します");
