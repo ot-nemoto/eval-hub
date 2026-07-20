@@ -14,7 +14,6 @@
     "start": "next start",
     "lint": "biome check .",
     "format": "biome check --write .",
-    "check": "biome check --write .",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
