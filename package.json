@@ -1,6 +1,6 @@
 {
   "name": "eval-hub",
-  "version": "0.26.2",
+  "version": "0.26.3",
   "private": true,
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -12,9 +12,8 @@
     "build": "next build",
     "vercel-build": "prisma migrate deploy && next build",
     "start": "next start",
-    "lint": "biome lint .",
-    "format": "biome format --write .",
-    "check": "biome check --write .",
+    "lint": "biome check .",
+    "format": "biome check --write .",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
