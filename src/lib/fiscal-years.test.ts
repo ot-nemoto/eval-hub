@@ -165,7 +165,7 @@ describe("updateFiscalYear", () => {
           update: vi.fn().mockResolvedValue({ ...mockFy, name: "更新後" }),
         },
       };
-      return fn(tx);
+      return fn(tx as never);
     });
 
     const result = await updateFiscalYear(2024, { name: "更新後" });
