@@ -117,11 +117,10 @@ async function main() {
   //      マスタデータも含めて全削除し、seed JSON から完全に再構築する
   //      ユーザー・年度マスタ（fiscal_years）は保持する
   //
-  //      ※ この削除はシード済み DB では成立しない。eval_item_version_details が
-  //        evaluation_items / targets / categories を ON DELETE RESTRICT で参照しており、
-  //        本シードは詳細行を削除しないため、2 回目の実行は FK 違反で落ちる。
-  //        本シードは `prisma migrate reset` 直後に 1 回流す前提（docs/development.md 参照）。
-  //        再実行可能にする対応は別 Issue。
+  //      ※ 評価項目バージョン（eval_item_versions / eval_item_version_details）は削除しない。
+  //        詳細から評価項目への FK は無いため再実行は完走するが、旧バージョンと詳細が
+  //        削除済みの評価項目を指す孤児として残る（docs/development.md 参照）。
+  //        旧バージョンも削除する対応は別 Issue。
   // =========================================================================
   await prisma.evaluation.deleteMany({});
   await prisma.evaluationAssignment.deleteMany({});

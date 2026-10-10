@@ -86,17 +86,11 @@ npx prisma migrate status
 
 #### DB を完全リセットしてシードを投入し直す場合
 
-本リポジトリは `prisma.config.ts` に `seed` を定義しているため、**`migrate reset` はシードを自動実行する**。リセット直後の DB は空でシードユーザーが 0 件になるため、2 つのフラグを両方前置する必要がある。
+Prisma 7 の `migrate reset` はシードを自動実行しない（`--skip-seed` オプションも廃止されている）ため、リセット後にシードを明示的に実行する。リセット直後の DB は空でシードユーザーが 0 件になるため、2 つのフラグを両方前置する必要がある。
 
 ```bash
-npx prisma migrate reset --force --skip-seed
+npx prisma migrate reset --force
 SEED_ALLOW_DESTRUCTIVE=1 SEED_ALLOW_UNSEEDED_DB=1 npx prisma db seed
-```
-
-`--skip-seed` を付けずに一度で済ませる場合は、環境変数がシードのサブプロセスに引き継がれるため以下でもよい。
-
-```bash
-SEED_ALLOW_DESTRUCTIVE=1 SEED_ALLOW_UNSEEDED_DB=1 npx prisma migrate reset --force
 ```
 
 > **注意: マイグレーション履歴の一本化について**
@@ -117,7 +111,7 @@ SEED_ALLOW_DESTRUCTIVE=1 SEED_ALLOW_UNSEEDED_DB=1 npx prisma migrate reset --for
 SEED_ALLOW_DESTRUCTIVE=1 npx prisma db seed
 ```
 
-> **現状、シードはリセット直後の空 DB に対してしか成立しない。** `eval_item_version_details` が `evaluation_items` / `targets` / `categories` を `ON DELETE RESTRICT` で参照している一方、シードは詳細行を削除しないため、シード済み DB に対する 2 回目の実行はクリーンアップ中に FK 違反で落ちる。したがって実際には上記「DB を完全リセットしてシードを投入し直す場合」の手順を使うことになる。再実行可能にする対応は別 Issue。
+> **シード済み DB への再実行は完走するが、旧データが残る。** シードは評価項目バージョン（`eval_item_versions` / `eval_item_version_details`）を削除せず実行のたびに新規作成するため、旧バージョンとその詳細が、削除済みの評価項目を指す孤児として蓄積する（詳細から評価項目への FK は存在しないため削除は失敗しない）。クリーンな状態にしたい場合は上記「DB を完全リセットしてシードを投入し直す場合」の手順を使う。旧バージョンも削除する対応は別 Issue。
 
 #### 誤実行に対する歯止め
 
@@ -129,9 +123,9 @@ SEED_ALLOW_DESTRUCTIVE=1 npx prisma db seed
 
 > **バイパスフラグ（`SEED_ALLOW_DESTRUCTIVE` / `SEED_ALLOW_UNSEEDED_DB`）は `.env` に書かない。** `.env` に置くと恒久的に有効になり、「毎回明示的に意図を示す」というガードの前提が崩れる。実行時にコマンドラインで前置する。`.env` に置くのは `SEED_PASSWORD` のみ。
 > `SEED_ALLOW_UNSEEDED_DB=1` は新規 DB の初回シードでのみ必要。2 回目以降は不要なので付けない。
-> **2 段目が本シードの最終防衛線である。** 本シードは `syncClerkUser` で既存ユーザーのパスワードを上書きし、`deleteClerkUser` では**ユーザー自体を Clerk から削除する**。Clerk アプリは daily-hub / link-hub と共有しており、誤実行は 3 リポジトリのユーザーに波及する。
+> **2 段目が本シードの最終防衛線である。** 本シードは `syncClerkUser` で既存 Clerk ユーザーのパスワードを上書きする。Clerk アプリは daily-hub / link-hub と共有しており、誤実行は 3 リポジトリのユーザーに波及する。
 > 3 段目は「定義外ユーザーの存在」ではなく「シード済みでないこと」で判定する。開発者本人のアカウントが混在しうるため、定義外ユーザーの存在自体は正常とみなす必要がある。空の DB も通さない（削除対象が無くても、テストユーザーを既知のパスワードで作ってしまうため）。
-> ただし 3 段目は万全ではない。シードユーザー行はアプリがサインイン時にも作る（`src/lib/auth.ts`）ため「シードが作った証拠」にはならない。本シードは所有者を持たないマスタデータ（`targets` / `categories` / `evaluation_items` / `fiscal_year_items`）も全削除するため、daily-hub のような削除範囲の絞り込みでは被害を限定できない。
+> ただし 3 段目は万全ではない。シードユーザー行はアプリがサインイン時にも作る（`src/lib/auth.ts`）ため「シードが作った証拠」にはならない。本シードは所有者を持たないマスタデータ（`targets` / `categories` / `evaluation_items`）も全削除するため、daily-hub のような削除範囲の絞り込みでは被害を限定できない。
 
 シードで作成されるユーザーは以下の通り（開発用）：
 
