@@ -95,9 +95,11 @@ SEED_ALLOW_DESTRUCTIVE=1 npx prisma db seed
 >
 > 2026-04-08 (T34) に、旧マイグレーション（複数ファイル）を `20260408151219_init` 1本に統合しました。
 >
-> **背景**: 手動作成した `uppercase_role_enum` マイグレーションが shadow DB に非対応の SQL を含んでおり、`prisma migrate dev` が通らない状態でした。本プロジェクトは開発環境のみで本番 DB への適用環境はないため、DB リセットを前提に一本化しました。
+> **背景**: 手動作成した `uppercase_role_enum` マイグレーションが shadow DB に非対応の SQL を含んでおり、`prisma migrate dev` が通らない状態でした。当時の開発 DB をリセットする前提で一本化しました。
 >
-> この変更以前の環境からセットアップし直す場合は、**`npx prisma migrate reset` で DB を完全リセットしてから** `npx prisma db seed` を実行してください。
+> この変更以前の環境からセットアップし直す場合は、**`npx prisma migrate reset` で DB を完全リセットしてから** `SEED_ALLOW_DESTRUCTIVE=1 npx prisma db seed` を実行してください。
+>
+> **注意**: ここでの DB リセットは**ローカル開発用 DB に対する操作**です。本番 DB は実在し、`develop` / `master` への push で Vercel が `prisma migrate deploy` を実行して適用します（環境構成は `.claude/project.md` 参照）。`migrate reset` を本番に対して実行してはなりません。
 
 ### テストデータ投入（Seed・ローカル専用）
 
