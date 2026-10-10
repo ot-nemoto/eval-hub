@@ -86,9 +86,17 @@ npx prisma migrate status
 
 #### DB を完全リセットしてシードを投入し直す場合
 
+本リポジトリは `prisma.config.ts` に `seed` を定義しているため、**`migrate reset` はシードを自動実行する**。リセット直後の DB は空でシードユーザーが 0 件になるため、2 つのフラグを両方前置する必要がある。
+
 ```bash
-npx prisma migrate reset --force
-SEED_ALLOW_DESTRUCTIVE=1 npx prisma db seed
+npx prisma migrate reset --force --skip-seed
+SEED_ALLOW_DESTRUCTIVE=1 SEED_ALLOW_UNSEEDED_DB=1 npx prisma db seed
+```
+
+`--skip-seed` を付けずに一度で済ませる場合は、環境変数がシードのサブプロセスに引き継がれるため以下でもよい。
+
+```bash
+SEED_ALLOW_DESTRUCTIVE=1 SEED_ALLOW_UNSEEDED_DB=1 npx prisma migrate reset --force
 ```
 
 > **注意: マイグレーション履歴の一本化について**
@@ -108,6 +116,8 @@ SEED_ALLOW_DESTRUCTIVE=1 npx prisma db seed
 ```bash
 SEED_ALLOW_DESTRUCTIVE=1 npx prisma db seed
 ```
+
+> **現状、シードはリセット直後の空 DB に対してしか成立しない。** `eval_item_version_details` が `evaluation_items` / `targets` / `categories` を `ON DELETE RESTRICT` で参照している一方、シードは詳細行を削除しないため、シード済み DB に対する 2 回目の実行はクリーンアップ中に FK 違反で落ちる。したがって実際には上記「DB を完全リセットしてシードを投入し直す場合」の手順を使うことになる。再実行可能にする対応は別 Issue。
 
 #### 誤実行に対する歯止め
 
