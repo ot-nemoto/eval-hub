@@ -59,14 +59,13 @@ async function main() {
   //        FK 制約によるユーザー削除失敗を防ぐ
   // =========================================================================
   await prisma.evaluation.deleteMany({});
-  await prisma.fiscalYearItem.deleteMany({});
   await prisma.evaluationAssignment.deleteMany({});
   await prisma.evaluationSetting.deleteMany({});
   await prisma.evaluationItem.deleteMany({});
   await prisma.category.deleteMany({});
   await prisma.target.deleteMany({});
   console.log(
-    "all data cleared (evaluations / fiscal_year_items / assignments / settings / items / categories / targets)",
+    "all data cleared (evaluations / assignments / settings / items / categories / targets)",
   );
 
   // =========================================================================
