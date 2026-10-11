@@ -23,6 +23,10 @@ erDiagram
         ENUM role
         BOOLEAN wants_president_meeting
         BOOLEAN is_active
+        VARCHAR api_key_hash UK
+        VARCHAR api_key_prefix
+        TIMESTAMP api_key_created_at
+        TIMESTAMP api_key_last_used_at
         TIMESTAMP created_at
         TIMESTAMP updated_at
     }
@@ -148,7 +152,10 @@ erDiagram
 | role | ENUM | NOT NULL | `ADMIN` / `MEMBER` |
 | wants_president_meeting | BOOLEAN | DEFAULT false | 社長面談希望 |
 | is_active | BOOLEAN | DEFAULT true | 有効フラグ（false: ログイン不可） |
-| api_key | VARCHAR(255) | UNIQUE, NULLABLE | 外部 API 認証用キー（UUID v4）。ユーザー自身が個人設定モーダルから発行・失効する |
+| api_key_hash | VARCHAR(64) | UNIQUE, NULLABLE | 外部 API 認証用キーの SHA-256（hex・ソルト無し）。**平文は保存しない**（生値は発行直後に一度だけ返す）。未発行は null。ユーザー自身が個人設定モーダルから発行・失効する |
+| api_key_prefix | VARCHAR(8) | NULLABLE | キーの先頭 8 文字（`eh_` + 5 文字。平文保存からの移行分は旧キーの先頭 8 文字）。どのキーかを識別する表示用。未発行は null |
+| api_key_created_at | TIMESTAMP | NULLABLE | キーの発行日時（棚卸し用）。平文保存からの移行分は移行時刻 |
+| api_key_last_used_at | TIMESTAMP | NULLABLE | キーで最後に認証した日時（棚卸し用）。書き込み抑制のため前回更新から 1 時間以上経過時のみ更新するので、最大 1 時間古い。更新失敗は認証結果に影響させず握りつぶす（次回リクエストで再試行）ため、その場合はさらに古くなり得る |
 | created_at | TIMESTAMP | DEFAULT now() | |
 | updated_at | TIMESTAMP | | |
 
@@ -329,6 +336,7 @@ erDiagram
 |---|---|---|---|
 | `users` | UNIQUE | `clerk_id` | Clerk ID による検索・重複防止 |
 | `users` | UNIQUE | `email` | メールアドレスによる検索・重複防止 |
+| `users` | UNIQUE | `api_key_hash` | API キー認証時のハッシュによる検索・重複防止 |
 | `eval_item_version_details` | UNIQUE（複合） | `(version_id, evaluation_item_id)` | バージョン内の評価項目重複防止 |
 | `evaluation_settings` | UNIQUE（複合） | `(user_id, fiscal_year)` | ユーザー×年度で1レコード |
 | `evaluation_assignments` | UNIQUE（複合） | `(fiscal_year, evaluatee_id, evaluator_id)` | 重複アサイン防止 |

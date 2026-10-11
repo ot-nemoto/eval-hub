@@ -33,7 +33,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     getCurrentFiscalYear(),
     prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { email: true, apiKey: true },
+      select: { email: true, apiKeyHash: true },
     }),
   ]);
 
@@ -53,7 +53,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <SettingsModalTrigger
               name={session.user.name}
               email={dbUser?.email ?? ""}
-              hasInitialApiKey={dbUser?.apiKey != null}
+              hasInitialApiKey={dbUser?.apiKeyHash != null}
             />
             <LogoutButton />
           </div>

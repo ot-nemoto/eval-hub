@@ -144,7 +144,7 @@ type SerializableUserUpdate = {
 
 /**
  * ユーザー更新レスポンスをホワイトリスト整形する。
- * secret（apiKey・clerkId）非露出を lib の select だけに依存させず、
+ * secret（apiKeyHash・clerkId）非露出を lib の select だけに依存させず、
  * 応答経路の単一チョークポイントで担保する。
  */
 export function serializeUserUpdate(u: SerializableUserUpdate) {
