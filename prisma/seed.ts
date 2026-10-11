@@ -117,19 +117,22 @@ async function main() {
   //      マスタデータも含めて全削除し、seed JSON から完全に再構築する
   //      ユーザー・年度マスタ（fiscal_years）は保持する
   //
-  //      ※ 評価項目バージョン（eval_item_versions / eval_item_version_details）は削除しない。
-  //        詳細から評価項目への FK は無いため再実行は完走するが、旧バージョンと詳細が
-  //        削除済みの評価項目を指す孤児として残る（docs/development.md 参照）。
-  //        旧バージョンも削除する対応は別 Issue。
+  //      評価項目バージョンは後段で毎回新規作成するため、旧バージョンも削除する
+  //      （残すと削除済みの評価項目を指す孤児として蓄積する）。
+  //      評価 → 詳細 → バージョンの順（いずれも ON DELETE RESTRICT）。
+  //      fiscal_years.eval_item_version_id は ON DELETE SET NULL のため自動で null になり、
+  //      後段で新バージョンに付け替える。
   // =========================================================================
   await prisma.evaluation.deleteMany({});
+  await prisma.evalItemVersionDetail.deleteMany({});
+  await prisma.evalItemVersion.deleteMany({});
   await prisma.evaluationAssignment.deleteMany({});
   await prisma.evaluationSetting.deleteMany({});
   await prisma.evaluationItem.deleteMany({});
   await prisma.category.deleteMany({});
   await prisma.target.deleteMany({});
   console.log(
-    "all data cleared (evaluations / assignments / settings / items / categories / targets)",
+    "all data cleared (evaluations / eval item versions / assignments / settings / items / categories / targets)",
   );
 
   // =========================================================================
