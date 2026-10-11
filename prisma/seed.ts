@@ -101,7 +101,8 @@ async function main() {
   //
   // なおこの判定は万全ではない。シードユーザー行はアプリがサインイン時にも作る
   // （src/lib/auth.ts）ため「シードが作った証拠」にはならない。本シードは所有者を持たない
-  // マスタデータ（targets / categories / evaluation_items）も全削除するため、
+  // マスタデータ（targets / categories / evaluation_items）と評価項目バージョン
+  // （eval_item_versions / eval_item_version_details。年度への割り当ても外れる）も全削除するため、
   // daily-hub のような削除範囲の絞り込みでは被害を限定できない。
   // そのため上の Clerk インスタンス検証が実質的な最終防衛線になる。
   const seedUserCount = await prisma.user.count({ where: { email: { in: SEED_EMAILS } } });
