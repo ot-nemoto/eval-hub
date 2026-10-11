@@ -6,12 +6,47 @@ import evaluationItemsData from "./seeds/evaluation_items.json";
 
 dotenv.config({ path: ".env" });
 
+// 全評価データ・マスタデータの削除とユーザーの upsert を伴うため、明示的なオプトインを
+// 必須にする。本番を向いた .env のまま誤実行する事故に対する第一の歯止め
+// （第二は Clerk インスタンス検証、第三は main() のシード済み判定）。
+if (process.env.SEED_ALLOW_DESTRUCTIVE !== "1") {
+  throw new Error(
+    "このスクリプトは全評価データ・マスタデータを削除します。実行するには SEED_ALLOW_DESTRUCTIVE=1 を設定してください。",
+  );
+}
+
+/** 実行に必須の環境変数を取得する（未設定なら中断） */
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} が未設定です。.env を確認してください（.env.example 参照）。`);
+  }
+  return value;
+}
+
+const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+
+// Clerk アプリは daily-hub / link-hub と共有している。本シードは syncClerkUser で
+// 既存ユーザーのパスワードを無条件に上書きするため、DB を見るガード（Postgres しか
+// 見ない）では「DB は dev・Clerk キーは本番」の組み合わせを止められない。キーの種別で弾く。
+// オプトインフラグは設けない（.env に居座ってガードを無効化するフラグを自ら増やさない）。
+if (clerkSecretKey && !clerkSecretKey.startsWith("sk_test_")) {
+  throw new Error(
+    "CLERK_SECRET_KEY が開発インスタンス（sk_test_）ではありません。シードは開発インスタンスに対してのみ実行してください。",
+  );
+}
+
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
-const clerkClient = process.env.CLERK_SECRET_KEY
-  ? createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY })
-  : null;
+const clerkClient = clerkSecretKey ? createClerkClient({ secretKey: clerkSecretKey }) : null;
+
+// テストユーザーの共通パスワード。手動ログインでも使うため実行ごとの生成ではなく環境変数で固定する。
+// 既存 Clerk ユーザーには syncClerkUser が毎回同期する（値を変えたら次回シードで反映される）。
+//
+// 注意: Clerk アプリとテストユーザーは daily-hub / link-hub と共有している。
+// この値を変更すると他 2 リポジトリの認証も変わるため、変更は 3 リポジトリ揃えて行う。
+const SEED_PASSWORD = requireEnv("SEED_PASSWORD");
 
 // ─── Clerk ヘルパー ────────────────────────────────────────────────────────────
 
@@ -21,71 +56,81 @@ async function syncClerkUser(email: string): Promise<string | null> {
     return null;
   }
   const existing = await clerkClient.users.getUserList({ emailAddress: [email] });
-  if (existing.data.length > 0) return existing.data[0].id;
+  if (existing.data.length > 0) {
+    // 既存ユーザーにもパスワードを同期する。作成時のみ渡す実装では SEED_PASSWORD を
+    // 変えても旧パスワードが残り続け、環境変数化の意味が無くなる。
+    // skipPasswordChecks は createUser 側と揃える（テスト用の弱いパスワードを許容する）。
+    await clerkClient.users.updateUser(existing.data[0].id, {
+      password: SEED_PASSWORD,
+      skipPasswordChecks: true,
+    });
+    return existing.data[0].id;
+  }
   const created = await clerkClient.users.createUser({
     emailAddress: [email],
-    password: "Yakitori2026",
+    password: SEED_PASSWORD,
     skipPasswordChecks: true,
   });
   return created.id;
 }
 
-async function deleteClerkUser(email: string): Promise<void> {
-  if (!clerkClient) return;
-  const existing = await clerkClient.users.getUserList({ emailAddress: [email] });
-  for (const u of existing.data) {
-    await clerkClient.users.deleteUser(u.id);
-  }
-}
+// ─── シード定義 ────────────────────────────────────────────────────────────────
 
-// ─── クリーンアップ ────────────────────────────────────────────────────────────
+// シードが投入するユーザー。詳細な検証シナリオは main() 内のコメント表を参照。
+const usersData = [
+  { email: "bonjiri@example.com", name: "bonjiri", role: "ADMIN" as const, isActive: true },
+  { email: "tsukune@example.com", name: "tsukune", role: "ADMIN" as const, isActive: true },
+  { email: "tebasaki@example.com", name: "tebasaki", role: "MEMBER" as const, isActive: true },
+  { email: "nankotsu@example.com", name: "nankotsu", role: "MEMBER" as const, isActive: true },
+  { email: "sunagimo@example.com", name: "sunagimo", role: "MEMBER" as const, isActive: false },
+  { email: "torikawa@example.com", name: "torikawa", role: "MEMBER" as const, isActive: true },
+];
 
-async function cleanupUser(email: string): Promise<void> {
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return;
-  await prisma.user.delete({ where: { email } });
-  await deleteClerkUser(email);
-  console.log(`  deleted: ${email}`);
-}
+/** シード定義に含まれる全ユーザーの email（シード済み判定に使う） */
+const SEED_EMAILS = usersData.map((d) => d.email);
 
 // ─── メイン ────────────────────────────────────────────────────────────────────
 
 async function main() {
+  // 本番 DB で誤実行した場合の安全網（SEED_ALLOW_DESTRUCTIVE は .env に残りやすいため
+  // 接続先をデータで判定する）。シードユーザーが 1 件も居ない DB は「このシードが作った
+  // DB ではない」= 本番・ステージングの可能性がある。
+  // 空の DB も通さない: 削除対象が無くても、テストユーザーを既知のパスワードで作ってしまう。
+  // 新規 DB の初回シードもここで止まるが、意図的な操作なのでオプトインで明示させる。
+  // 定義外ユーザーの存在自体は許容する（開発者本人のアカウントが混在しうるため）。
+  //
+  // なおこの判定は万全ではない。シードユーザー行はアプリがサインイン時にも作る
+  // （src/lib/auth.ts）ため「シードが作った証拠」にはならない。本シードは所有者を持たない
+  // マスタデータ（targets / categories / evaluation_items）も全削除するため、
+  // daily-hub のような削除範囲の絞り込みでは被害を限定できない。
+  // そのため上の Clerk インスタンス検証が実質的な最終防衛線になる。
+  const seedUserCount = await prisma.user.count({ where: { email: { in: SEED_EMAILS } } });
+  if (seedUserCount === 0 && process.env.SEED_ALLOW_UNSEEDED_DB !== "1") {
+    throw new Error(
+      "シード定義のユーザーが 1 件も存在しません（本番 DB・未シードの新規 DB の可能性）。\n" +
+        "意図した実行であれば SEED_ALLOW_UNSEEDED_DB=1 を設定してください。",
+    );
+  }
+
   // =========================================================================
   // 0. 全データをクリーンアップ（FK 順に削除）
   //      マスタデータも含めて全削除し、seed JSON から完全に再構築する
   //      ユーザー・年度マスタ（fiscal_years）は保持する
-  //      ※ 旧ユーザー削除（ステップ 0-2）より先に実行することで、
-  //        FK 制約によるユーザー削除失敗を防ぐ
+  //
+  //      ※ 評価項目バージョン（eval_item_versions / eval_item_version_details）は削除しない。
+  //        詳細から評価項目への FK は無いため再実行は完走するが、旧バージョンと詳細が
+  //        削除済みの評価項目を指す孤児として残る（docs/development.md 参照）。
+  //        旧バージョンも削除する対応は別 Issue。
   // =========================================================================
   await prisma.evaluation.deleteMany({});
-  await prisma.fiscalYearItem.deleteMany({});
   await prisma.evaluationAssignment.deleteMany({});
   await prisma.evaluationSetting.deleteMany({});
   await prisma.evaluationItem.deleteMany({});
   await prisma.category.deleteMany({});
   await prisma.target.deleteMany({});
   console.log(
-    "all data cleared (evaluations / fiscal_year_items / assignments / settings / items / categories / targets)",
+    "all data cleared (evaluations / assignments / settings / items / categories / targets)",
   );
-
-  // =========================================================================
-  // 0-2. 旧 seed ユーザーのクリーンアップ（旧メールアドレスのユーザーを DB・Clerk から削除）
-  //      ステップ 0 の全削除後に実行するため、FK 制約なしで安全に削除できる
-  // =========================================================================
-  const oldEmails = [
-    // 旧ユーザー（ドカベンキャラクター）
-    "doigaki@example.com",
-    "shiranui@example.com",
-    "yamada@example.com",
-    "satonaka@example.com",
-    "iwaki@example.com",
-    // さらに旧ユーザー
-    "tanaka@example.com",
-    "suzuki@example.com",
-    "sato@example.com",
-  ];
-  for (const email of oldEmails) await cleanupUser(email);
 
   // =========================================================================
   // 1. ユーザー
@@ -102,16 +147,8 @@ async function main() {
   // │ torikawa@example.com     │ MEMBER │ true     │ 評価なし・アサインなし（削除テスト用）         │
   // └──────────────────────────┴────────┴──────────┴───────────────────────────────────────────────┘
   //
-  // 共通パスワード: Yakitori2026
+  // 共通パスワードは環境変数 SEED_PASSWORD の値（ファイル冒頭を参照）
   // =========================================================================
-  const usersData = [
-    { email: "bonjiri@example.com", name: "bonjiri", role: "ADMIN" as const, isActive: true },
-    { email: "tsukune@example.com", name: "tsukune", role: "ADMIN" as const, isActive: true },
-    { email: "tebasaki@example.com", name: "tebasaki", role: "MEMBER" as const, isActive: true },
-    { email: "nankotsu@example.com", name: "nankotsu", role: "MEMBER" as const, isActive: true },
-    { email: "sunagimo@example.com", name: "sunagimo", role: "MEMBER" as const, isActive: false },
-    { email: "torikawa@example.com", name: "torikawa", role: "MEMBER" as const, isActive: true },
-  ];
 
   const u: Record<string, { id: string }> = {};
   for (const data of usersData) {
