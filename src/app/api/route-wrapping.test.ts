@@ -42,21 +42,31 @@ describe("API ルートのエラーハンドリング", () => {
     const files = findRouteFiles(API_DIR);
     expect(files.length).toBeGreaterThan(0);
 
+    // 並列に読み込み、1 ファイルの読み込み失敗で残りの検査が止まらないようにする
+    const results = await Promise.allSettled(files.map((file) => import(file)));
+
     const unwrapped: string[] = [];
-    for (const file of files) {
-      const mod = (await import(file)) as Record<string, unknown>;
+    for (const [i, result] of results.entries()) {
+      const file = relative(process.cwd(), files[i]);
+      if (result.status === "rejected") {
+        // 読み込み時に実 DB・外部サービスへ触れるモジュールを引き込んだ場合など。必要なら vi.mock を足す
+        unwrapped.push(`${file}: 読み込みに失敗 (${String(result.reason)})`);
+        continue;
+      }
+      const mod = result.value as Record<string, unknown>;
       for (const method of HTTP_METHODS) {
         const handler = mod[method];
         if (handler === undefined) continue;
         const marked =
-          typeof handler === "function" && (handler as unknown as Record<symbol, unknown>)[WRAPPED];
-        if (!marked) unwrapped.push(`${relative(process.cwd(), file)}: ${method}`);
+          typeof handler === "function" &&
+          (handler as unknown as Record<symbol, unknown>)[WRAPPED] === true;
+        if (!marked) unwrapped.push(`${file}: ${method}`);
       }
     }
 
     expect(
       unwrapped,
-      `withApiErrorHandling で包まれていないハンドラ:\n${unwrapped.join("\n")}`,
+      `withApiErrorHandling で包まれていない（または読み込めない）ハンドラ:\n${unwrapped.join("\n")}`,
     ).toEqual([]);
   });
 });
