@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { hashApiKey } from "./apiKey";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "./errors";
 import {
   deleteUser,
@@ -207,16 +208,21 @@ describe("deleteUser", () => {
 describe("generateApiKey", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("API キーを生成して返す", async () => {
+  it("生値を返し、DB にはハッシュと prefix のみ保存する", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never);
     vi.mocked(prisma.user.update).mockResolvedValue({ id: "user-1" } as never);
 
     const result = await generateApiKey({ id: "user-1" });
 
-    expect(result.apiKey).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+    expect(result.apiKey).toMatch(/^eh_[A-Za-z0-9_-]{43}$/);
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: "user-1" },
-      data: { apiKey: result.apiKey },
+      data: {
+        apiKeyHash: await hashApiKey(result.apiKey),
+        apiKeyPrefix: result.apiKey.slice(0, 8),
+        apiKeyCreatedAt: expect.any(Date),
+        apiKeyLastUsedAt: null,
+      },
     });
   });
 
@@ -231,14 +237,19 @@ describe("generateApiKey", () => {
 describe("revokeApiKey", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("API キーを null に更新する", async () => {
+  it("キー関連のカラムをすべて null に更新する", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never);
     vi.mocked(prisma.user.update).mockResolvedValue({ id: "user-1" } as never);
 
     await expect(revokeApiKey({ id: "user-1" })).resolves.toBeUndefined();
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: "user-1" },
-      data: { apiKey: null },
+      data: {
+        apiKeyHash: null,
+        apiKeyPrefix: null,
+        apiKeyCreatedAt: null,
+        apiKeyLastUsedAt: null,
+      },
     });
   });
 

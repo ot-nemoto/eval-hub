@@ -82,6 +82,7 @@ Authorization: Bearer <api_key>
 \`\`\`
 
 - API キーは個人設定モーダルから発行・失効する（発行のみ UI・ログイン必須）。API 経由でのキー発行は行わない。
+- キーの書式は \`eh_\` + base64url（43 文字）。サーバーはハッシュのみ保存するため、生値は発行直後の一度しか表示されない（紛失時は再生成する）。
 - キーが無効・未一致、または対象ユーザーが \`isActive: false\` の場合は 401。
 - マスタ操作系は \`role: ADMIN\` 以外のユーザーは 403。
 
@@ -229,7 +230,8 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
         bearerAuth: {
           type: "http",
           scheme: "bearer",
-          description: "個人設定モーダルで発行した API キー（ADMIN 権限が必要）",
+          description:
+            "個人設定モーダルで発行した API キー（書式: `eh_` + base64url 43 文字。ADMIN 権限が必要）。ハッシュ化して保存されるため、発行直後の一度しか表示されない",
         },
       },
       schemas: {

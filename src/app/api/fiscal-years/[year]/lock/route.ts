@@ -1,9 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
 import {
   jsonError,
-  jsonErrorFromException,
   serializeFiscalYear,
   unauthorized,
+  withApiErrorHandling,
 } from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { toggleFiscalYearLock } from "@/lib/fiscal-years";
@@ -17,7 +17,7 @@ function parseYear(year: string): number | null {
   return Number.isInteger(n) ? n : null;
 }
 
-export async function POST(req: NextRequest, { params }: RouteContext) {
+export const POST = withApiErrorHandling(async (req: NextRequest, { params }: RouteContext) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
   if (user.role !== "ADMIN") return jsonError("権限がありません", 403);
@@ -30,10 +30,6 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   const parsed = fiscalYearLockBodySchema.safeParse(body);
   if (!parsed.success) return jsonError(firstZodError(parsed.error), 400);
 
-  try {
-    const fy = await toggleFiscalYearLock(y, parsed.data.isLocked);
-    return NextResponse.json(serializeFiscalYear(fy));
-  } catch (e) {
-    return jsonErrorFromException(e);
-  }
-}
+  const fy = await toggleFiscalYearLock(y, parsed.data.isLocked);
+  return NextResponse.json(serializeFiscalYear(fy));
+});

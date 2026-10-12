@@ -1,12 +1,15 @@
 // @vitest-environment node
 import { Prisma } from "@prisma/client";
-import { describe, expect, it } from "vitest";
+import { notFound, redirect } from "next/navigation";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   jsonError,
   jsonErrorFromException,
   serializeEvaluationItem,
   statusForError,
   unauthorized,
+  WRAPPED,
+  withApiErrorHandling,
 } from "./api-response";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "./errors";
 
@@ -84,6 +87,138 @@ describe("jsonErrorFromException", () => {
     const body = await res.json();
     expect(res.status).toBe(404);
     expect(body).toEqual({ error: "参照先のデータが見つかりません" });
+  });
+});
+
+describe("withApiErrorHandling", () => {
+  const req = new Request("http://localhost/api/targets/1?x=1", { method: "PATCH" });
+  let consoleError: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => consoleError.mockRestore());
+
+  /** 例外を投げるハンドラを包み、レスポンスを jsonErrorFromException の結果と比較できる形で返す */
+  async function callThrowing(error: unknown) {
+    const res = await withApiErrorHandling(async (_req: Request) => {
+      throw error;
+    })(req);
+    return { status: res.status, body: await res.json() };
+  }
+
+  async function expected(error: unknown) {
+    const res = jsonErrorFromException(error);
+    return { status: res.status, body: await res.json() };
+  }
+
+  describe("正常系", () => {
+    it("ハンドラのレスポンスをそのまま返す", async () => {
+      const response = new Response(null, { status: 204 });
+      const handler = vi.fn(
+        async (_req: Request, _ctx: { params: Promise<{ id: string }> }) => response,
+      );
+      const ctx = { params: Promise.resolve({ id: "1" }) };
+
+      const res = await withApiErrorHandling(handler)(req, ctx);
+
+      expect(res).toBe(response);
+      expect(handler).toHaveBeenCalledWith(req, ctx);
+      expect(consoleError).not.toHaveBeenCalled();
+    });
+
+    it("戻り値に包まれていることを示す印（WRAPPED）が付き、元のハンドラには付かない", () => {
+      const handler = async (_req: Request) => new Response(null);
+
+      const wrapped = withApiErrorHandling(handler) as unknown as Record<symbol, unknown>;
+
+      expect(wrapped[WRAPPED]).toBe(true);
+      expect((handler as unknown as Record<symbol, unknown>)[WRAPPED]).toBeUndefined();
+    });
+
+    it("ハンドラが返したエラーレスポンス（400 等）もそのまま返し、ログは出さない", async () => {
+      const response = jsonError("name を入力してください", 400);
+
+      const res = await withApiErrorHandling(async (_req: Request) => response)(req);
+
+      expect(res).toBe(response);
+      expect(consoleError).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("異常系", () => {
+    it.each([
+      ["NotFoundError", new NotFoundError("目標が見つかりません"), 404],
+      ["ForbiddenError", new ForbiddenError("自分自身は削除できません"), 403],
+      ["ConflictError", new ConflictError("no が重複しています"), 409],
+      ["BadRequestError", new BadRequestError("name を入力してください"), 400],
+      [
+        "Prisma P2025",
+        new Prisma.PrismaClientKnownRequestError("Record not found", {
+          code: "P2025",
+          clientVersion: "7",
+        }),
+        404,
+      ],
+      [
+        "Prisma P2003",
+        new Prisma.PrismaClientKnownRequestError("FK failed", {
+          code: "P2003",
+          clientVersion: "7",
+        }),
+        404,
+      ],
+    ])(
+      "%s は jsonErrorFromException と同じレスポンスを返し、ログは出さない",
+      async (_, error, status) => {
+        const actual = await callThrowing(error);
+
+        expect(actual).toEqual(await expected(error));
+        expect(actual.status).toBe(status);
+        expect(consoleError).not.toHaveBeenCalled();
+      },
+    );
+
+    it("想定外の例外は 500 の汎用文言を返し、メソッド・パスと例外をログに残す", async () => {
+      const error = new Error("Prisma: connection refused at host db:5432");
+
+      const actual = await callThrowing(error);
+
+      expect(actual).toEqual({ status: 500, body: { error: "サーバーエラーが発生しました" } });
+      expect(consoleError).toHaveBeenCalledWith("[api] 500 PATCH /api/targets/1", error);
+    });
+
+    it.each([
+      ["redirect()", () => redirect("/login")],
+      ["notFound()", () => notFound()],
+    ])("Next.js の制御用の例外（%s）は 500 に変えず投げ直す", async (_, interrupt) => {
+      let thrown: unknown;
+      try {
+        interrupt();
+      } catch (e) {
+        thrown = e;
+      }
+
+      await expect(
+        withApiErrorHandling(async (_req: Request) => {
+          throw thrown;
+        })(req),
+      ).rejects.toBe(thrown);
+      expect(consoleError).not.toHaveBeenCalled();
+    });
+
+    it("第 1 引数が Request でなくても 500 を返す", async () => {
+      const error = new Error("boom");
+
+      const res = await withApiErrorHandling(async () => {
+        throw error;
+      })();
+
+      expect(res.status).toBe(500);
+      expect(consoleError).toHaveBeenCalledWith("[api] 500", error);
+    });
   });
 });
 

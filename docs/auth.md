@@ -1,6 +1,6 @@
 # auth.md — 認証フロー・移行手順
 
-最終更新: 2026-04-05（初回ユーザーを admin として自動作成する仕様を追記）
+最終更新: 2026-10-11（外部 REST API の API キー認証を追記）
 
 ---
 
@@ -75,6 +75,21 @@ const userId = session?.user?.id;
 `getSession()` が `null` を返した場合：
 - API ルート → 401 を返す
 - ページ（dashboard layout）→ Clerk セッションがなければ `/login`、あれば `/auth-error` へリダイレクト
+
+---
+
+## 外部 REST API の API キー認証
+
+外部 REST API（`/api/*`）は Clerk ではなく `Authorization: Bearer <api-key>` で認証する（`getAuthenticatedUser`）。
+
+- **書式**: `eh_` + base64url(32 bytes)。prefix はキー種別・発行元の識別と、自前スキャナ（gitleaks 等）でのルール化のため（GitHub secret scanning の検出対象にはならない）
+- **旧書式**: 平文保存時代の UUID 書式のキーは、マイグレーションでハッシュ化して移行済みでそのまま使える。認証時に書式チェックはしない（入れると移行済みキーが一律 401 になる）
+- **保存**: DB には SHA-256（hex）のみ保存し、平文は保存しない。生値は発行・再生成の直後に一度だけ返す（show-once）。個人設定モーダルも発行直後のみ実値を表示する
+- **ソルト無しの理由**: キーは高エントロピー乱数で辞書攻撃が成立しない。ソルト付き（bcrypt / argon2 等）にすると `where` で一意に引けず全件照合になるため使わない（GitHub / Stripe 等と同方式）
+- **照合**: 受け取ったキーをハッシュ化し、`api_key_hash` の UNIQUE インデックスで引く（DB の等価比較のため timing-safe 比較は不要）
+- **ハッシュ実装**: Web Crypto（`crypto.subtle.digest`）を使い Edge / Node 両対応。移行 SQL の `encode(sha256(convert_to(api_key, 'UTF8')), 'hex')` と同じ値になる。`api_key::bytea` は text からの I/O 変換キャストとして bytea の入力書式で解析され（`\x` で始まる値は hex 解釈・バックスラッシュはエスケープ扱い）、エラーにならずに別のハッシュになり得るため使わない
+- 1 ユーザー 1 キー。再生成で旧キーは即時無効、失効で未発行に戻る。有効期限は持たず、`api_key_last_used_at` での棚卸しで代替する。`api_key_last_used_at` は 1 時間に 1 回まで更新し、更新失敗で認証済みリクエストを落とさない（付随情報のため握りつぶして次回に委ねる）
+- 非アクティブ（`is_active: false`）のユーザーはキーが一致しても 401
 
 ---
 

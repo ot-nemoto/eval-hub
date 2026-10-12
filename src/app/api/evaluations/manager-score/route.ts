@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { jsonError, jsonErrorFromException, unauthorized } from "@/lib/api-response";
+import { jsonError, unauthorized, withApiErrorHandling } from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { upsertManagerScore } from "@/lib/evaluations";
 import { firstZodError } from "@/lib/schemas/_zod-error";
 import { evaluationManagerScoreBodySchema } from "@/lib/schemas/evaluation";
 
-export async function POST(req: NextRequest) {
+export const POST = withApiErrorHandling(async (req: NextRequest) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
   if (user.role !== "ADMIN") return jsonError("権限がありません", 403);
@@ -16,15 +16,11 @@ export async function POST(req: NextRequest) {
 
   const { evaluateeId, fiscalYear, evalItemVersionDetailId, managerScore } = parsed.data;
 
-  try {
-    const result = await upsertManagerScore(
-      evaluateeId,
-      fiscalYear,
-      evalItemVersionDetailId,
-      managerScore,
-    );
-    return NextResponse.json(result);
-  } catch (e) {
-    return jsonErrorFromException(e);
-  }
-}
+  const result = await upsertManagerScore(
+    evaluateeId,
+    fiscalYear,
+    evalItemVersionDetailId,
+    managerScore,
+  );
+  return NextResponse.json(result);
+});

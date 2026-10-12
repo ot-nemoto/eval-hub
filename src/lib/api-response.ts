@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { unstable_rethrow } from "next/navigation";
 import { NextResponse } from "next/server";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
 
@@ -41,6 +42,37 @@ export function jsonErrorFromException(error: unknown) {
   const status = statusForError(error);
   const message = status === 500 ? "サーバーエラーが発生しました" : (error as Error).message;
   return jsonError(message, status);
+}
+
+/** 包まれていることを実行時に判定するための印（`src/app/api/route-wrapping.test.ts` が参照する） */
+export const WRAPPED = Symbol.for("eval-hub.withApiErrorHandling");
+
+/**
+ * ルートハンドラを包み、throw された例外を `jsonErrorFromException()` で `{ error }` レスポンスに変換する。
+ * `src/app/api/` 配下の全ハンドラはこれで包む（`src/app/api/route-wrapping.test.ts` が包み漏れを検査する）。
+ * 500 のときだけ例外をサーバーログに残す（レスポンスには内部情報を出さない）。
+ * Next.js の制御用の例外（redirect() / notFound() 等）は 500 に変えず、そのまま投げ直す。
+ */
+export function withApiErrorHandling<Args extends unknown[]>(
+  handler: (...args: Args) => Promise<Response>,
+): (...args: Args) => Promise<Response> {
+  const wrapped = async (...args: Args) => {
+    try {
+      return await handler(...args);
+    } catch (e) {
+      unstable_rethrow(e);
+      const res = jsonErrorFromException(e);
+      if (res.status === 500) {
+        const req = args[0];
+        const where = req instanceof Request ? `${req.method} ${new URL(req.url).pathname}` : "";
+        console.error(`[api] 500 ${where}`.trimEnd(), e);
+      }
+      return res;
+    }
+  };
+  // 包み漏れの検査をソースの文字列マッチではなく実体で行えるようにする。
+  // export の書き方（export * / 再 export / 別ファイル定義）に依存せず判定できる。
+  return Object.defineProperty(wrapped, WRAPPED, { value: true });
 }
 
 type SerializableEvaluationItem = {
@@ -144,7 +176,7 @@ type SerializableUserUpdate = {
 
 /**
  * ユーザー更新レスポンスをホワイトリスト整形する。
- * secret（apiKey・clerkId）非露出を lib の select だけに依存させず、
+ * secret（apiKeyHash・clerkId）非露出を lib の select だけに依存させず、
  * 応答経路の単一チョークポイントで担保する。
  */
 export function serializeUserUpdate(u: SerializableUserUpdate) {
