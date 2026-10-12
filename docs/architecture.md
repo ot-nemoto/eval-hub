@@ -60,9 +60,9 @@ Client (Browser)
 
 - **認可**: 操作対象ユーザーは常にサーバ側（API キー）から解決する（`getAuthenticatedUser`）。マスタ・管理系は ADMIN 限定。API キーの発行/失効とログインは UI 専用で API 化しない（PAT モデル）。
 - **UI と REST の分離**: UI の書き込みは Server Actions を経由し、REST API とは別入口。両者は同じ `src/lib/` のドメイン関数を呼ぶ薄いアダプタとする（ロジックを二重に持たない）。
-- **エラー契約**: すべて `{ error: string }` を返す。型付きエラー（`NotFound`/`Forbidden`/`Conflict`/`BadRequest`）を `statusForError` で 404/403/409/400 にマッピングし、Prisma の参照/対象欠落（P2003/P2025）は `jsonErrorFromException` で 404 に、想定外は 500（内部情報は隠蔽）に集約する。
+- **エラー契約**: すべて `{ error: string }` を返す。型付きエラー（`NotFound`/`Forbidden`/`Conflict`/`BadRequest`）を `statusForError` で 404/403/409/400 にマッピングし、Prisma の参照/対象欠落（P2003/P2025）は `jsonErrorFromException` で 404 に、想定外は 500（内部情報は隠蔽）に集約する。ルートは try/catch を書かず、throw された例外は `withApiErrorHandling()` が受けて `jsonErrorFromException()` に委ねる（500 のときだけメソッド・パスと例外をサーバーログに残す）。**`src/app/api/` 配下の全ハンドラはこのラッパーで包む**（`src/app/api/route-wrapping.test.ts` が包み漏れを検査する）。全ハンドラが通る唯一の挿入点でもある（成功・失敗いずれのレスポンスも通る。認証済みユーザーはハンドラ内で解決しているためラッパーからは見えない。監査ログの載せ方は #461 で設計する）。Next.js の制御用の例外（`redirect()` / `notFound()` 等）は `unstable_rethrow()` で投げ直し、500 に変えない。`/openapi.json` と `/api-reference` は外部 API の契約（`{ error }`）の対象外で、JSON エラーを返すのが適切ではないため包まない
 - **CORS**: `/api/*` は API キー認証・Cookie 不使用のため任意オリジン許可（`Access-Control-Allow-Origin: *`）。プリフライト `OPTIONS` は 204（`src/proxy.ts`）。
-- **REST エンドポイント追加手順**: ①ドメイン関数を `src/lib/` に用意（or 既存を再利用）→ ②`src/lib/schemas/` に Zod の body/response スキーマ → ③`src/app/api/**/route.ts` に lib 委譲の薄いアダプタ（認可・Zod 検証・`jsonErrorFromException`）→ ④`src/lib/openapi/document.ts` に paths・schemas を追記。エンドポイント一覧は docs に列挙せず spec を正とする。
+- **REST エンドポイント追加手順**: ①ドメイン関数を `src/lib/` に用意（or 既存を再利用）→ ②`src/lib/schemas/` に Zod の body/response スキーマ → ③`src/app/api/**/route.ts` に lib 委譲の薄いアダプタ（`withApiErrorHandling` で包み、認可・Zod 検証のみ書く）→ ④`src/lib/openapi/document.ts` に paths・schemas を追記。エンドポイント一覧は docs に列挙せず spec を正とする。
 
 ### 機能追加時のガイドライン
 

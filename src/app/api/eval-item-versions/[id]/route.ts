@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { jsonError, jsonErrorFromException, unauthorized } from "@/lib/api-response";
+import { jsonError, unauthorized, withApiErrorHandling } from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { deleteEvalItemVersion, getEvalItemVersionDetails } from "@/lib/eval-item-versions";
 
@@ -10,7 +10,7 @@ function parseId(id: string): number | null {
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
-export async function GET(req: NextRequest, { params }: RouteContext) {
+export const GET = withApiErrorHandling(async (req: NextRequest, { params }: RouteContext) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
   if (user.role !== "ADMIN") return jsonError("権限がありません", 403);
@@ -19,14 +19,10 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   const versionId = parseId(id);
   if (versionId === null) return jsonError("id は正の整数で指定してください", 400);
 
-  try {
-    return NextResponse.json(await getEvalItemVersionDetails(versionId));
-  } catch (e) {
-    return jsonErrorFromException(e);
-  }
-}
+  return NextResponse.json(await getEvalItemVersionDetails(versionId));
+});
 
-export async function DELETE(req: NextRequest, { params }: RouteContext) {
+export const DELETE = withApiErrorHandling(async (req: NextRequest, { params }: RouteContext) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
   if (user.role !== "ADMIN") return jsonError("権限がありません", 403);
@@ -35,10 +31,6 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
   const versionId = parseId(id);
   if (versionId === null) return jsonError("id は正の整数で指定してください", 400);
 
-  try {
-    await deleteEvalItemVersion(versionId);
-    return new NextResponse(null, { status: 204 });
-  } catch (e) {
-    return jsonErrorFromException(e);
-  }
-}
+  await deleteEvalItemVersion(versionId);
+  return new NextResponse(null, { status: 204 });
+});

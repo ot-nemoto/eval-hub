@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { unstable_rethrow } from "next/navigation";
 import { NextResponse } from "next/server";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
 
@@ -41,6 +42,31 @@ export function jsonErrorFromException(error: unknown) {
   const status = statusForError(error);
   const message = status === 500 ? "サーバーエラーが発生しました" : (error as Error).message;
   return jsonError(message, status);
+}
+
+/**
+ * ルートハンドラを包み、throw された例外を `jsonErrorFromException()` で `{ error }` レスポンスに変換する。
+ * `src/app/api/` 配下の全ハンドラはこれで包む（`src/app/api/route-wrapping.test.ts` が包み漏れを検査する）。
+ * 500 のときだけ例外をサーバーログに残す（レスポンスには内部情報を出さない）。
+ * Next.js の制御用の例外（redirect() / notFound() 等）は 500 に変えず、そのまま投げ直す。
+ */
+export function withApiErrorHandling<Args extends unknown[]>(
+  handler: (...args: Args) => Promise<Response>,
+): (...args: Args) => Promise<Response> {
+  return async (...args) => {
+    try {
+      return await handler(...args);
+    } catch (e) {
+      unstable_rethrow(e);
+      const res = jsonErrorFromException(e);
+      if (res.status === 500) {
+        const req = args[0];
+        const where = req instanceof Request ? `${req.method} ${new URL(req.url).pathname}` : "";
+        console.error(`[api] 500 ${where}`.trimEnd(), e);
+      }
+      return res;
+    }
+  };
 }
 
 type SerializableEvaluationItem = {

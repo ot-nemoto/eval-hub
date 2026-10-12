@@ -1,16 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server";
 import {
   jsonError,
-  jsonErrorFromException,
   serializeCategory,
   unauthorized,
+  withApiErrorHandling,
 } from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { createCategory, getCategories } from "@/lib/categories";
 import { firstZodError } from "@/lib/schemas/_zod-error";
 import { categoryCreateBodySchema } from "@/lib/schemas/category";
 
-export async function GET(req: NextRequest) {
+export const GET = withApiErrorHandling(async (req: NextRequest) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
   if (user.role !== "ADMIN") return jsonError("権限がありません", 403);
@@ -24,15 +24,11 @@ export async function GET(req: NextRequest) {
     targetId = n;
   }
 
-  try {
-    const categories = await getCategories(targetId);
-    return NextResponse.json({ categories: categories.map(serializeCategory) });
-  } catch (e) {
-    return jsonErrorFromException(e);
-  }
-}
+  const categories = await getCategories(targetId);
+  return NextResponse.json({ categories: categories.map(serializeCategory) });
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withApiErrorHandling(async (req: NextRequest) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
   if (user.role !== "ADMIN") return jsonError("権限がありません", 403);
@@ -41,10 +37,6 @@ export async function POST(req: NextRequest) {
   const parsed = categoryCreateBodySchema.safeParse(body);
   if (!parsed.success) return jsonError(firstZodError(parsed.error), 400);
 
-  try {
-    const category = await createCategory(parsed.data);
-    return NextResponse.json(serializeCategory(category), { status: 201 });
-  } catch (e) {
-    return jsonErrorFromException(e);
-  }
-}
+  const category = await createCategory(parsed.data);
+  return NextResponse.json(serializeCategory(category), { status: 201 });
+});
