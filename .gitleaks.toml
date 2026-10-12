@@ -18,7 +18,7 @@
 useDefault = true
 
 [allowlist]
-description = "ビルド生成物と、T223 (#460) のテストに流用した無効化済みの開発用 APIキー"
+description = "ビルド生成物"
 
 # ローカルで `gitleaks dir` を使うとビルド生成物のハッシュ値を大量に拾うため除外する
 # （git スキャンでは gitignore 済みのため元々現れない）。
@@ -36,22 +36,25 @@ paths = [
   '''^test-results/''',
 ]
 
-# T223 (#460) の実機確認で開発 DB に発行した移行前の APIキー（UUID 書式）。
-# 確認後に src/lib/apiAuth.test.ts のフィクスチャへ流用し、c191968 で履歴に入った
-# （フィクスチャは T228 (#474) で低エントロピーの値に差し替え済み）。
-# 公開リポジトリの履歴からは消せず、PR #469 のスキャン範囲と週次の全履歴スキャンで
-# 検出され続けるため allowlist する。
-# 発行先は開発 DB のシードユーザーで、本番 DB・本番 Clerk では未使用。
-# その後の再発行で上書きされ無効化済み。
-regexes = [
-  '''6510b9a5-d70b-4377-841c-84ca8bbd0345''',
-]
+# 履歴に残る既知の値は、値を書かずに済むよう `.gitleaksignore` に Fingerprint
+# （<commit>:<file>:<rule>:<line>）で記載している（gitleaks は既定でリポジトリ直下のものを読む）。
+# ここ（regexes）に値を書くと、無効化済みでも値が現行ツリーに平文で残り、
+# 例外もすべてのコミット・ファイル・ルールに及ぶため使わない。
 
-# 外部連携 APIキー（T223 (#460) で導入した eh_ prefix 付きの書式: eh_ + base64url(32 bytes)）。
+# 外部連携 APIキー（T223 (#460) で導入した eh_ prefix 付きの書式: eh_ + base64url(32 bytes) = 43 文字）。
 # 既定ルールは自前の接頭辞を知らないため、接頭辞を実際の検出へ結びつけるのはこのルール。
 # GitHub の secret scanning でこれを行うには custom patterns（有料）が必要。
+#
+# 誤検知を抑えるため、長さを 43 文字ちょうどに固定し、前後が [A-Za-z0-9_-] 以外（行頭・行末を含む）で
+# あることを条件にする（`eh_build_display_prefix…` のような識別子や、単語途中の `…eh_…` を拾わない）。
+# gitleaks の正規表現は RE2 で先読み・後読みが使えないため、キー部分を secretGroup で取り出す。
+# \b は使わない（base64url は `-` を含み、`-` と非単語文字の間では境界が成立しない）。
+# entropy は繰り返しのダミー値（eh_aaaa…）を除く下限。実キーは 20 万本の実測で最小 4.33。
+# なお、43 文字ちょうど・境界あり・エントロピー 3.5 超の識別子は形だけでは区別できず検知される。
 [[rules]]
 id = "eval-hub-api-key"
 description = "eval-hub の外部連携 APIキー（eh_ prefix）"
-regex = '''eh_[A-Za-z0-9_-]{20,}'''
+regex = '''(?:^|[^A-Za-z0-9_-])(eh_[A-Za-z0-9_-]{43})(?:[^A-Za-z0-9_-]|$)'''
+secretGroup = 1
+entropy = 3.5
 keywords = ["eh_"]
