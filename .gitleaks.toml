@@ -1,0 +1,60 @@
+# gitleaks（秘密情報スキャナ）の設定。
+#
+# このファイルは **このリポジトリ所有**。カスタムルールの接頭辞や allowlist の対象は
+# リポジトリ固有のため、dev-commons からは配布しない（`.claude/project.md` と同じ扱い）。
+# 実行するワークフローは `.github/workflows/secret-scan.yml`（dev-commons が配布）。
+# 雛形は dev-commons の `scaffold/.gitleaks.toml`。
+#
+# ローカル実行:
+#   gitleaks git . --redact -v                                   # 全履歴
+#   gitleaks git . --redact -v --log-opts="--no-merges origin/develop..HEAD"  # PR 相当の差分
+#   gitleaks dir . --redact -v                                   # 作業ツリー（未コミット分も含む）
+#
+# -v を付けないと検出時に件数しか出ない（--redact 併用で値は REDACTED になる）。
+# なお git log -p はマージコミットの patch を既定で出さないため、コンフリクト解決時にのみ
+# 混入した値は `gitleaks git` では拾えない。CI の週次実行は `gitleaks dir` も併せて走らせている。
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "ビルド生成物"
+
+# ローカルで `gitleaks dir` を使うとビルド生成物のハッシュ値を大量に拾うため除外する
+# （git スキャンでは gitignore 済みのため元々現れない）。
+#
+# 注意: `.env` は**除外しない**。gitignore 済みで git スキャンには現れないが、除外すると
+# 万一コミットされた場合に検出できなくなる。`gitleaks dir` では常に検出されるが、既知として読み飛ばす。
+paths = [
+  '''^\.next/''',
+  '''^dist/''',
+  '''^out/''',
+  '''^build/''',
+  '''^coverage/''',
+  '''^node_modules/''',
+  '''^playwright-report/''',
+  '''^test-results/''',
+]
+
+# 履歴に残る既知の値は、値を書かずに済むよう `.gitleaksignore` に Fingerprint
+# （<commit>:<file>:<rule>:<line>）で記載している（gitleaks は既定でリポジトリ直下のものを読む）。
+# ここ（regexes）に値を書くと、無効化済みでも値が現行ツリーに平文で残り、
+# 例外もすべてのコミット・ファイル・ルールに及ぶため使わない。
+
+# 外部連携 APIキー（T223 (#460) で導入した eh_ prefix 付きの書式: eh_ + base64url(32 bytes) = 43 文字）。
+# 既定ルールは自前の接頭辞を知らないため、接頭辞を実際の検出へ結びつけるのはこのルール。
+# GitHub の secret scanning でこれを行うには custom patterns（有料）が必要。
+#
+# 誤検知を抑えるため、長さを 43 文字ちょうどに固定し、前後が [A-Za-z0-9_-] 以外（行頭・行末を含む）で
+# あることを条件にする（`eh_build_display_prefix…` のような識別子や、単語途中の `…eh_…` を拾わない）。
+# gitleaks の正規表現は RE2 で先読み・後読みが使えないため、キー部分を secretGroup で取り出す。
+# \b は使わない（base64url は `-` を含み、`-` と非単語文字の間では境界が成立しない）。
+# entropy は繰り返しのダミー値（eh_aaaa…）を除く下限。実キーは 20 万本の実測で最小 4.33。
+# なお、43 文字ちょうど・境界あり・エントロピー 3.5 超の識別子は形だけでは区別できず検知される。
+[[rules]]
+id = "eval-hub-api-key"
+description = "eval-hub の外部連携 APIキー（eh_ prefix）"
+regex = '''(?:^|[^A-Za-z0-9_-])(eh_[A-Za-z0-9_-]{43})(?:[^A-Za-z0-9_-]|$)'''
+secretGroup = 1
+entropy = 3.5
+keywords = ["eh_"]

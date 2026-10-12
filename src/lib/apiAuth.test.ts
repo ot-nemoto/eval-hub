@@ -47,7 +47,7 @@ describe("getAuthenticatedUser", () => {
 
     it("旧書式（UUID）のキーも書式で弾かずハッシュで検索する", async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(recentlyUsed as never);
-      const legacyKey = "6510b9a5-d70b-4377-841c-84ca8bbd0345";
+      const legacyKey = "11111111-1111-4111-8111-111111111111";
 
       const result = await getAuthenticatedUser(makeRequest(`Bearer ${legacyKey}`));
 
