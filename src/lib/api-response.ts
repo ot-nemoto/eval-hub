@@ -44,6 +44,9 @@ export function jsonErrorFromException(error: unknown) {
   return jsonError(message, status);
 }
 
+/** 包まれていることを実行時に判定するための印（`src/app/api/route-wrapping.test.ts` が参照する） */
+export const WRAPPED = Symbol.for("eval-hub.withApiErrorHandling");
+
 /**
  * ルートハンドラを包み、throw された例外を `jsonErrorFromException()` で `{ error }` レスポンスに変換する。
  * `src/app/api/` 配下の全ハンドラはこれで包む（`src/app/api/route-wrapping.test.ts` が包み漏れを検査する）。
@@ -53,7 +56,7 @@ export function jsonErrorFromException(error: unknown) {
 export function withApiErrorHandling<Args extends unknown[]>(
   handler: (...args: Args) => Promise<Response>,
 ): (...args: Args) => Promise<Response> {
-  return async (...args) => {
+  const wrapped = async (...args: Args) => {
     try {
       return await handler(...args);
     } catch (e) {
@@ -67,6 +70,9 @@ export function withApiErrorHandling<Args extends unknown[]>(
       return res;
     }
   };
+  // 包み漏れの検査をソースの文字列マッチではなく実体で行えるようにする。
+  // export の書き方（export * / 再 export / 別ファイル定義）に依存せず判定できる。
+  return Object.defineProperty(wrapped, WRAPPED, { value: true });
 }
 
 type SerializableEvaluationItem = {

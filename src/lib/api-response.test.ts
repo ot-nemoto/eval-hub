@@ -8,6 +8,7 @@ import {
   serializeEvaluationItem,
   statusForError,
   unauthorized,
+  WRAPPED,
   withApiErrorHandling,
 } from "./api-response";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "./errors";
@@ -126,6 +127,15 @@ describe("withApiErrorHandling", () => {
       expect(res).toBe(response);
       expect(handler).toHaveBeenCalledWith(req, ctx);
       expect(consoleError).not.toHaveBeenCalled();
+    });
+
+    it("戻り値に包まれていることを示す印（WRAPPED）が付き、元のハンドラには付かない", () => {
+      const handler = async (_req: Request) => new Response(null);
+
+      const wrapped = withApiErrorHandling(handler) as unknown as Record<symbol, unknown>;
+
+      expect(wrapped[WRAPPED]).toBe(true);
+      expect((handler as unknown as Record<symbol, unknown>)[WRAPPED]).toBeUndefined();
     });
 
     it("ハンドラが返したエラーレスポンス（400 等）もそのまま返し、ログは出さない", async () => {
