@@ -55,3 +55,7 @@ PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION='yes' npx prisma migrate reset --for
 
 - コミット時はファイルを指定して `git add` する（`git add -A` / `git commit -a` を使わない）
 - 作業ツリーから消すときは `git checkout CLAUDE.md`
+
+## Next.js の agent rules
+
+@../AGENTS.md
