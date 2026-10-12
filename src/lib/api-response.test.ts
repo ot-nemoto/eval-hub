@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { Prisma } from "@prisma/client";
+import { notFound, redirect } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   jsonError,
@@ -177,6 +178,25 @@ describe("withApiErrorHandling", () => {
 
       expect(actual).toEqual({ status: 500, body: { error: "サーバーエラーが発生しました" } });
       expect(consoleError).toHaveBeenCalledWith("[api] 500 PATCH /api/targets/1", error);
+    });
+
+    it.each([
+      ["redirect()", () => redirect("/login")],
+      ["notFound()", () => notFound()],
+    ])("Next.js の制御用の例外（%s）は 500 に変えず投げ直す", async (_, interrupt) => {
+      let thrown: unknown;
+      try {
+        interrupt();
+      } catch (e) {
+        thrown = e;
+      }
+
+      await expect(
+        withApiErrorHandling(async (_req: Request) => {
+          throw thrown;
+        })(req),
+      ).rejects.toBe(thrown);
+      expect(consoleError).not.toHaveBeenCalled();
     });
 
     it("第 1 引数が Request でなくても 500 を返す", async () => {

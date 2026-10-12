@@ -15,12 +15,12 @@ import { describe, expect, it } from "vitest";
  */
 const HTTP_METHODS = ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS", "HEAD"] as const;
 
-/** 配下の route.ts をすべて列挙する（追加ライブラリに依存しない） */
+/** 配下のルートファイル（route.ts / route.tsx / route.js 等）をすべて列挙する（追加ライブラリに依存しない） */
 function findRouteFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) return findRouteFiles(path);
-    return entry.name === "route.ts" ? [path] : [];
+    return /^route\.(?:ts|tsx|js|jsx|mts|mjs)$/.test(entry.name) ? [path] : [];
   });
 }
 
