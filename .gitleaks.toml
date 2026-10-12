@@ -1,0 +1,57 @@
+# gitleaks（秘密情報スキャナ）の設定。
+#
+# このファイルは **このリポジトリ所有**。カスタムルールの接頭辞や allowlist の対象は
+# リポジトリ固有のため、dev-commons からは配布しない（`.claude/project.md` と同じ扱い）。
+# 実行するワークフローは `.github/workflows/secret-scan.yml`（dev-commons が配布）。
+# 雛形は dev-commons の `scaffold/.gitleaks.toml`。
+#
+# ローカル実行:
+#   gitleaks git . --redact -v                                   # 全履歴
+#   gitleaks git . --redact -v --log-opts="--no-merges origin/develop..HEAD"  # PR 相当の差分
+#   gitleaks dir . --redact -v                                   # 作業ツリー（未コミット分も含む）
+#
+# -v を付けないと検出時に件数しか出ない（--redact 併用で値は REDACTED になる）。
+# なお git log -p はマージコミットの patch を既定で出さないため、コンフリクト解決時にのみ
+# 混入した値は `gitleaks git` では拾えない。CI の週次実行は `gitleaks dir` も併せて走らせている。
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "ビルド生成物と、T223 (#460) のテストに流用した無効化済みの開発用 APIキー"
+
+# ローカルで `gitleaks dir` を使うとビルド生成物のハッシュ値を大量に拾うため除外する
+# （git スキャンでは gitignore 済みのため元々現れない）。
+#
+# 注意: `.env` は**除外しない**。gitignore 済みで git スキャンには現れないが、除外すると
+# 万一コミットされた場合に検出できなくなる。`gitleaks dir` では常に検出されるが、既知として読み飛ばす。
+paths = [
+  '''^\.next/''',
+  '''^dist/''',
+  '''^out/''',
+  '''^build/''',
+  '''^coverage/''',
+  '''^node_modules/''',
+  '''^playwright-report/''',
+  '''^test-results/''',
+]
+
+# T223 (#460) の実機確認で開発 DB に発行した移行前の APIキー（UUID 書式）。
+# 確認後に src/lib/apiAuth.test.ts のフィクスチャへ流用し、c191968 で履歴に入った
+# （フィクスチャは T228 (#474) で低エントロピーの値に差し替え済み）。
+# 公開リポジトリの履歴からは消せず、PR #469 のスキャン範囲と週次の全履歴スキャンで
+# 検出され続けるため allowlist する。
+# 発行先は開発 DB のシードユーザーで、本番 DB・本番 Clerk では未使用。
+# その後の再発行で上書きされ無効化済み。
+regexes = [
+  '''6510b9a5-d70b-4377-841c-84ca8bbd0345''',
+]
+
+# 外部連携 APIキー（T223 (#460) で導入した eh_ prefix 付きの書式: eh_ + base64url(32 bytes)）。
+# 既定ルールは自前の接頭辞を知らないため、接頭辞を実際の検出へ結びつけるのはこのルール。
+# GitHub の secret scanning でこれを行うには custom patterns（有料）が必要。
+[[rules]]
+id = "eval-hub-api-key"
+description = "eval-hub の外部連携 APIキー（eh_ prefix）"
+regex = '''eh_[A-Za-z0-9_-]{20,}'''
+keywords = ["eh_"]
