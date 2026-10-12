@@ -43,6 +43,29 @@ export function jsonErrorFromException(error: unknown) {
   return jsonError(message, status);
 }
 
+/**
+ * ルートハンドラを包み、throw された例外を `jsonErrorFromException()` で `{ error }` レスポンスに変換する。
+ * `src/app/api/` 配下の全ハンドラはこれで包む（`src/app/api/route-wrapping.test.ts` が包み漏れを検査する）。
+ * 500 のときだけ例外をサーバーログに残す（レスポンスには内部情報を出さない）。
+ */
+export function withApiErrorHandling<Args extends unknown[]>(
+  handler: (...args: Args) => Promise<Response>,
+): (...args: Args) => Promise<Response> {
+  return async (...args) => {
+    try {
+      return await handler(...args);
+    } catch (e) {
+      const res = jsonErrorFromException(e);
+      if (res.status === 500) {
+        const req = args[0];
+        const where = req instanceof Request ? `${req.method} ${new URL(req.url).pathname}` : "";
+        console.error(`[api] 500 ${where}`.trimEnd(), e);
+      }
+      return res;
+    }
+  };
+}
+
 type SerializableEvaluationItem = {
   id: number;
   no: number;
