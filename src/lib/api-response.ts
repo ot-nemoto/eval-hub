@@ -11,7 +11,19 @@ export function jsonError(message: string, status: number) {
 
 /** 認証失敗（401）レスポンス。 */
 export function unauthorized() {
-  return jsonError("API キーが無効です", 401);
+  const res = jsonError("API キーが無効です", 401);
+  // RFC 9110 は 401 応答に WWW-Authenticate を含めることを求める。
+  // これが無いとクライアントは応答から認証方式を判断できない。
+  //
+  // Basic は使わない（ブラウザがネイティブの認証ダイアログを出す）。Bearer は出さない。
+  // RFC 6750 の error="invalid_token" は付けない: トークン未指定と無効を区別するには
+  // 認証関数が理由を返す必要があり、現状はいずれも null を返すため区別できない。
+  //
+  // CORS 応答ではブラウザの JS から既定で読めない（Access-Control-Expose-Headers が必要）。
+  // 外部連携のクライアントは curl / サーバーサイドが主で最初から読めるため、
+  // 露出ヘッダは増やさない。必要になった時点で追加する。
+  res.headers.set("WWW-Authenticate", "Bearer");
+  return res;
 }
 
 /**

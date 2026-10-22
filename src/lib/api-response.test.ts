@@ -23,6 +23,14 @@ describe("jsonError", () => {
 });
 
 describe("unauthorized", () => {
+  // RFC 9110 は 401 応答に WWW-Authenticate を含めることを求める。
+  // 全 API ルートがこのヘルパーを経由するため、ここで固定すれば全ルートに効く。
+  it("WWW-Authenticate: Bearer を付ける", () => {
+    const res = unauthorized();
+
+    expect(res.headers.get("WWW-Authenticate")).toBe("Bearer");
+  });
+
   it("401 で { error } を返す", async () => {
     const res = unauthorized();
     const body = await res.json();
