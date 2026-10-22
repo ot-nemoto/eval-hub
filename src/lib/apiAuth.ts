@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { hashApiKey } from "@/lib/apiKey";
+import { setAuditUserId } from "@/lib/auditLog";
 import { prisma } from "@/lib/prisma";
 
 // 棚卸し用途には時間単位の粒度で足りるため、毎リクエストの書き込みを避ける
@@ -15,6 +16,11 @@ export async function getAuthenticatedUser(req: NextRequest) {
     where: { apiKeyHash: await hashApiKey(apiKey) },
     select: { id: true, role: true, isActive: true, apiKeyLastUsedAt: true },
   });
+  // isActive の判定より前に記録する。無効化済みユーザーの未失効キーが使われた場合、
+  // サーバーは「誰のキーか」を知っている。401 を返すとしてもそれを記録しないと、
+  // 退職者の漏洩キーと当てずっぽうの総当たりがログ上で区別できなくなる。
+  if (user) setAuditUserId(req, user.id);
+
   if (!user?.isActive) return null;
 
   const { apiKeyLastUsedAt, ...authUser } = user;

@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getAuthenticatedUser } from "./apiAuth";
 import { hashApiKey } from "./apiKey";
+import { buildAuditRecord } from "./auditLog";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -143,5 +144,51 @@ describe("getAuthenticatedUser", () => {
       expect(result).toBeNull();
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
+  });
+});
+
+// 監査ログのラッパーは認証ユーザーを知らないため、getAuthenticatedUser が
+// Request インスタンスをキーに受け渡す。その経路を固定する。
+describe("監査ログへの userId 受け渡し", () => {
+  it("正常系: 認証が通ったユーザーが監査レコードに載る", async () => {
+    // @ts-expect-error モックのため一部フィールドのみ
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user-uuid",
+      role: "MEMBER",
+      isActive: true,
+      apiKeyLastUsedAt: new Date(),
+    });
+    const req = makeRequest("Bearer valid-key");
+
+    await getAuthenticatedUser(req);
+
+    expect(buildAuditRecord(req, 200).userId).toBe("user-uuid");
+  });
+
+  // 退職者の未失効キーが漏洩した場合と、当てずっぽうの総当たりを
+  // ログ上で区別できるようにする。サーバーは「誰のキーか」を知っている。
+  it("異常系: 無効化済みユーザーのキーでも userId を記録する（401 は変わらない）", async () => {
+    // @ts-expect-error モックのため一部フィールドのみ
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "deactivated-user",
+      role: "MEMBER",
+      isActive: false,
+      apiKeyLastUsedAt: new Date(),
+    });
+    const req = makeRequest("Bearer deactivated-key");
+
+    const result = await getAuthenticatedUser(req);
+
+    expect(result).toBeNull();
+    expect(buildAuditRecord(req, 401).userId).toBe("deactivated-user");
+  });
+
+  it("異常系: キーが一致しなければ userId は null のまま", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    const req = makeRequest("Bearer invalid-key");
+
+    await getAuthenticatedUser(req);
+
+    expect(buildAuditRecord(req, 401).userId).toBeNull();
   });
 });
