@@ -154,6 +154,21 @@ const jsonResponse = (description: string, schema: object) => ({
 /** `{ error }` を返す 4xx レスポンス定義。 */
 const errorResponse = (description: string) => jsonResponse(description, ref("Error"));
 
+/**
+ * 401 レスポンス定義。RFC 9110 が求める `WWW-Authenticate` チャレンジを宣言する。
+ * 配信 spec を仕様の唯一の正とするため、実装が返すヘッダは spec にも載せる。
+ */
+const unauthorizedResponse = () => ({
+  ...errorResponse("認証エラー"),
+  headers: {
+    "WWW-Authenticate": {
+      description: "認証方式（RFC 6750 の Bearer）",
+      schema: { type: "string" },
+      example: "Bearer",
+    },
+  },
+});
+
 /** JSON リクエストボディ定義。 */
 const jsonBody = (name: string) => ({
   required: true,
@@ -311,7 +326,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("評価項目の一覧", ref("EvaluationItemList")),
             400: errorResponse("クエリ不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
           },
         },
@@ -322,7 +337,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             201: jsonResponse("作成された評価項目", ref("EvaluationItem")),
             400: errorResponse("バリデーションエラー / categoryId が targetId と不整合"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("指定した大分類・中分類が未存在"),
             409: errorResponse("no 重複"),
@@ -337,7 +352,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("作成件数", ref("EvaluationItemsImportResult")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             409: errorResponse("no が重複"),
           },
@@ -351,7 +366,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             204: { description: "並び替え成功（ボディなし）" },
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("並び替え対象が未存在"),
           },
@@ -366,7 +381,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("更新後の評価項目", ref("EvaluationItem")),
             400: errorResponse("バリデーションエラー / 更新フィールドなし"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
             409: errorResponse("no 重複"),
@@ -379,7 +394,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             204: { description: "削除成功（ボディなし）" },
             400: errorResponse("id 不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
           },
@@ -391,7 +406,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           tags: ["targets"],
           responses: {
             200: jsonResponse("大分類の一覧", ref("TargetList")),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
           },
         },
@@ -402,7 +417,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             201: jsonResponse("作成された大分類", ref("Target")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             409: errorResponse("no 重複"),
           },
@@ -416,7 +431,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             204: { description: "並び替え成功（ボディなし）" },
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("並び替え対象が未存在"),
           },
@@ -431,7 +446,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("更新後の大分類", ref("Target")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
             409: errorResponse("no 重複"),
@@ -444,7 +459,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             204: { description: "削除成功（ボディなし）" },
             400: errorResponse("id 不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
             409: errorResponse("紐づく中分類が存在"),
@@ -467,7 +482,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("中分類の一覧", ref("CategoryList")),
             400: errorResponse("targetId 不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
           },
         },
@@ -478,7 +493,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             201: jsonResponse("作成された中分類", ref("Category")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("指定した targetId の大分類が未存在"),
             409: errorResponse("no 重複"),
@@ -493,7 +508,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             204: { description: "並び替え成功（ボディなし）" },
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("並び替え対象が未存在"),
           },
@@ -508,7 +523,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("更新後の中分類", ref("Category")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
             409: errorResponse("no 重複"),
@@ -521,7 +536,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             204: { description: "削除成功（ボディなし）" },
             400: errorResponse("id 不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
             409: errorResponse("紐づく評価項目が存在"),
@@ -534,7 +549,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           tags: ["fiscal-years"],
           responses: {
             200: jsonResponse("年度の一覧", ref("FiscalYearList")),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
           },
         },
@@ -545,7 +560,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             201: jsonResponse("作成された年度", ref("FiscalYear")),
             400: errorResponse("バリデーションエラー（year 範囲・日付・期間前後）"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             409: errorResponse("同じ年度が既に存在"),
           },
@@ -560,7 +575,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("更新後の年度", ref("FiscalYear")),
             400: errorResponse("バリデーションエラー / 更新フィールドなし"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
           },
@@ -572,7 +587,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             204: { description: "削除成功（ボディなし）" },
             400: errorResponse("year 不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
             409: errorResponse("紐づくデータが存在"),
@@ -588,7 +603,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("更新後の年度", ref("FiscalYear")),
             400: errorResponse("バリデーションエラー / year 不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
           },
@@ -617,7 +632,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("アサインの一覧", ref("EvaluationAssignmentList")),
             400: errorResponse("クエリ不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
           },
         },
@@ -628,7 +643,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             201: jsonResponse("作成されたアサイン", ref("EvaluationAssignmentCreated")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("指定した被評価者・評価者が未存在"),
             409: errorResponse("同一年度・被評価者・評価者の組み合わせが既に存在"),
@@ -650,7 +665,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           ],
           responses: {
             204: { description: "削除成功（ボディなし）" },
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
           },
@@ -672,7 +687,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("年度別設定の一覧", ref("EvaluationSettingList")),
             400: errorResponse("userId 未指定"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("ユーザー未存在"),
           },
@@ -684,7 +699,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("upsert 後の設定", ref("EvaluationSetting")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("ユーザー未存在"),
           },
@@ -698,7 +713,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("項目別の評価詳細（コメント含む）", ref("EvaluationDetail")),
             400: errorResponse("クエリ不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
           },
         },
@@ -711,7 +726,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("スコアマトリクス", ref("EvaluationMatrix")),
             400: errorResponse("クエリ不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
           },
         },
@@ -724,7 +739,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("被評価者別の進捗", ref("EvaluationProgress")),
             400: errorResponse("クエリ不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
           },
         },
@@ -737,7 +752,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("自己評価の一覧", ref("SelfEvaluationList")),
             400: errorResponse("クエリ不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
           },
         },
@@ -750,7 +765,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("上長評価の一覧", ref("ManagerEvaluationList")),
             400: errorResponse("クエリ不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
           },
         },
@@ -763,7 +778,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("upsert 後の自己採点", ref("EvaluationSelfUpsertResult")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("参照先（年度・被評価者・項目）が未存在"),
           },
@@ -777,7 +792,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("upsert 後の上長スコア", ref("EvaluationManagerScoreResult")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("参照先（年度・被評価者・項目）が未存在"),
           },
@@ -791,7 +806,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             201: jsonResponse("作成されたコメント", ref("ManagerComment")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("参照先（年度・被評価者・項目・評価者）が未存在"),
           },
@@ -814,7 +829,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("更新後のコメント", ref("ManagerComment")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
           },
@@ -833,7 +848,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           ],
           responses: {
             204: { description: "削除成功（ボディなし）" },
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
           },
@@ -845,7 +860,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           tags: ["users"],
           responses: {
             200: jsonResponse("ユーザーの一覧", ref("UserList")),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
           },
         },
@@ -867,7 +882,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("更新後のユーザー", ref("UserUpdateResult")),
             400: errorResponse("バリデーションエラー / 更新フィールドなし"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要 / 自分自身は変更不可"),
             404: errorResponse("未存在"),
           },
@@ -886,7 +901,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           ],
           responses: {
             204: { description: "削除成功（ボディなし）" },
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要 / 自分自身は削除不可"),
             404: errorResponse("未存在"),
             409: errorResponse("評価/アサインデータが存在"),
@@ -899,7 +914,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           tags: ["eval-item-versions"],
           responses: {
             200: jsonResponse("バージョンの一覧", ref("EvalItemVersionList")),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
           },
         },
@@ -910,7 +925,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             201: jsonResponse("作成されたバージョン", ref("EvalItemVersionCreated")),
             400: errorResponse("バリデーションエラー / 評価項目が存在しない"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
           },
         },
@@ -921,7 +936,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           tags: ["eval-item-versions"],
           responses: {
             200: jsonResponse("現在のマスタ項目", ref("CurrentEvalItems")),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
           },
         },
@@ -934,7 +949,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("バージョンと詳細", ref("EvalItemVersionDetail")),
             400: errorResponse("id 不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
           },
@@ -946,7 +961,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             204: { description: "削除成功（ボディなし）" },
             400: errorResponse("id 不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
             409: errorResponse("年度に割り当て中"),
@@ -970,7 +985,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             204: { description: "復元成功（ボディなし）" },
             400: errorResponse("id 不正 / confirm 未指定 / バージョンに詳細がない"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
           },
@@ -985,7 +1000,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("割当後の年度", ref("VersionAssignResult")),
             400: errorResponse("バリデーションエラー / year 不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("年度・バージョンが未存在"),
             409: errorResponse("年度がロック中"),
@@ -998,7 +1013,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             204: { description: "解除成功（ボディなし）" },
             400: errorResponse("year 不正"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("年度が未存在"),
             409: errorResponse("年度がロック中"),
