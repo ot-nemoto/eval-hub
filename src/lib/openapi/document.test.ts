@@ -162,6 +162,25 @@ describe("buildOpenApiDocument", () => {
     expect(JSON.stringify(doc.components.schemas)).not.toContain("additionalProperties");
   });
 
+  // 実装（unauthorized()）が返す WWW-Authenticate を spec にも載せる。
+  // 配信 spec を仕様の唯一の正とするため、片方だけ消えるのを防ぐ。
+  it("401 を定義する全 operation が WWW-Authenticate ヘッダを宣言する", () => {
+    const { paths } = buildOpenApiDocument();
+    let checked = 0;
+    for (const item of Object.values(paths)) {
+      for (const op of Object.values(item as Record<string, unknown>)) {
+        const o = op as {
+          operationId?: string;
+          responses?: Record<string, { headers?: Record<string, unknown> }>;
+        };
+        if (!o.responses?.["401"]) continue;
+        checked += 1;
+        expect(o.responses["401"].headers?.["WWW-Authenticate"], o.operationId).toBeTruthy();
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+
   it("全 $ref が components.schemas に解決できる（参照切れなし）", () => {
     const refs = [...JSON.stringify(doc).matchAll(/"#\/components\/schemas\/([A-Za-z0-9]+)"/g)].map(
       (m) => m[1],
