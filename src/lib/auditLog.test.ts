@@ -74,6 +74,35 @@ describe("buildAuditRecord", () => {
     expect(buildAuditRecord(req(), 200).bytes).toBeNull();
   });
 
+  // Number() だと "" が 0、"1e3" が 1000、"0x10" が 16 になり、
+  // クライアントが送った不正な値から数値をでっち上げてしまう。
+  it.each([
+    ["空文字", ""],
+    ["指数表記", "1e3"],
+    ["16 進数", "0x10"],
+    ["符号付き", "+5"],
+    ["小数", "1.5"],
+    ["負数", "-1"],
+  ])("異常系: content-length が %s なら null", (_label, value) => {
+    const r = buildAuditRecord(
+      req("https://example.com/api/me", { headers: { "content-length": value } }),
+      200,
+    );
+
+    expect(r.bytes).toBeNull();
+  });
+
+  // Headers は Fetch 仕様に従って値の前後の空白を取り除くため、
+  // " 10 " は get() の時点で "10" になる。アプリ側で trim する必要はない。
+  it("境界値: content-length の前後の空白は Headers が正規化する", () => {
+    const r = buildAuditRecord(
+      req("https://example.com/api/me", { headers: { "content-length": " 10 " } }),
+      200,
+    );
+
+    expect(r.bytes).toBe(10);
+  });
+
   it("異常系: content-length が数値でなければ null", () => {
     const r = buildAuditRecord(
       req("https://example.com/api/me", { headers: { "content-length": "abc" } }),
@@ -135,6 +164,19 @@ describe("logAudit", () => {
   });
 
   // 監査ログの出力失敗でリクエストを落とさない（fail-open）。
+  // 標準出力が書けない状況では標準エラーも書けないことがある。ここで例外が
+  // 漏れると withApiErrorHandling の try 内で捕まり、成功応答が 500 に化ける。
+  it("異常系: console.error も失敗してもスローしない", () => {
+    vi.spyOn(console, "log").mockImplementation(() => {
+      throw new Error("stdout closed");
+    });
+    vi.spyOn(console, "error").mockImplementation(() => {
+      throw new Error("stderr closed");
+    });
+
+    expect(() => logAudit(req(), 200)).not.toThrow();
+  });
+
   it("異常系: 出力が失敗してもスローしない", () => {
     vi.spyOn(console, "log").mockImplementation(() => {
       throw new Error("stdout closed");

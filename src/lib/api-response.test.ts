@@ -91,6 +91,11 @@ describe("jsonErrorFromException", () => {
 });
 
 describe("withApiErrorHandling", () => {
+  // console.log の spy を残すとこのファイルの後続テストに漏れる
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("正常系: 監査ログを 1 件出力する（ステータスはハンドラの戻り値）", async () => {
     const spy = vi.spyOn(console, "log").mockImplementation(() => {});
     const handler = withApiErrorHandling(
@@ -124,6 +129,23 @@ describe("withApiErrorHandling", () => {
       userId: null,
       ip: "203.0.113.9",
     });
+  });
+
+  // logAudit は成功応答を返した後・try 内で呼ばれる。ここで例外が漏れると
+  // ラッパーの catch に捕まり、成功済みの 200 が 500 に化ける。
+  it("異常系: 監査ログの出力が全滅しても応答のステータスを変えない", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {
+      throw new Error("stdout closed");
+    });
+    vi.spyOn(console, "error").mockImplementation(() => {
+      throw new Error("stderr closed");
+    });
+    const handler = withApiErrorHandling(async (_req: Request) => new Response("ok"));
+
+    const res = await handler(new Request("https://example.com/api/items"));
+
+    expect(res.status).toBe(200);
+    await expect(res.text()).resolves.toBe("ok");
   });
 
   it("異常系: 500 に化けた場合も記録する", async () => {

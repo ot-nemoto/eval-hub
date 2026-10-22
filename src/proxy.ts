@@ -52,10 +52,13 @@ export default clerkMiddleware(async (auth, request) => {
   //
   // ここはハンドラに到達しないため withApiErrorHandling の記録が効かない。
   // 未登録パスへの連続アクセスはエンドポイント列挙の主要な痕跡なので、ここで残す。
-  // Edge Runtime では DB を引けないため userId は null になる（IP で追う）。
+  // userId は null になる（IP で追う）。proxy.ts は Next 16 では Node.js ランタイムで
+  // 動くため DB は引けるが、未認証の総当たりに DB クエリを与えたくないので引かない。
   if (!isPublicRoute(request) && request.nextUrl.pathname.startsWith("/api/")) {
     logAudit(request, 404);
-    return NextResponse.json({ error: "Not Found" }, { status: 404 });
+    // 他の API 応答と同様に CORS を付ける。付けないとブラウザからは
+    // 不透明なエラーになり、{ error } の本文が読めない。
+    return withCors(NextResponse.json({ error: "Not Found" }, { status: 404 }));
   }
 
   // 非本番環境: MOCK_USER_ID / MOCK_USER_EMAIL が設定されている場合はバイパス

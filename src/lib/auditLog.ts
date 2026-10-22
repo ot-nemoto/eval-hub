@@ -39,12 +39,18 @@ function clientIp(req: Request): string | null {
   return first || req.headers.get("x-real-ip") || null;
 }
 
-/** リクエスト本文のバイト数。欠落・不正な値は null にする。 */
+/**
+ * リクエスト本文のバイト数。欠落・不正な値は null にする。
+ *
+ * Number() を使わない: `""` が 0、`"1e3"` が 1000、`"0x10"` が 16 になり、
+ * クライアントが送った不正な content-length から値をでっち上げてしまう。
+ * RFC 9110 の Content-Length は 10 進数字列のみなので、その形だけを受ける。
+ */
 function contentLength(req: Request): number | null {
   const raw = req.headers.get("content-length");
-  if (raw === null) return null;
+  if (raw === null || !/^\d+$/.test(raw)) return null;
   const n = Number(raw);
-  return Number.isInteger(n) && n >= 0 ? n : null;
+  return Number.isSafeInteger(n) ? n : null;
 }
 
 /** 監査ログ 1 件の形。保存先を決めるときの契約になる。 */
@@ -90,6 +96,11 @@ export function logAudit(req: Request, status: number) {
   try {
     console.log(JSON.stringify(buildAuditRecord(req, status)));
   } catch (e) {
-    console.error("[audit] 監査ログの出力に失敗した", e);
+    // 標準出力が書けない状況では標準エラーも書けないことがある。ここで例外が
+    // 漏れると、呼び出し元（withApiErrorHandling の try 内）に捕まって
+    // 成功済みの応答が 500 に化ける。fail-open を実際に成立させるため二重に飲む。
+    try {
+      console.error("[audit] 監査ログの出力に失敗した", e);
+    } catch {}
   }
 }
