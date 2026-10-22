@@ -12,7 +12,6 @@ export const isPublicRoute = createRouteMatcher(["/login(.*)", "/auth-error"]);
 // /api/(.*) の総覧一致だと未登録パスも素通りし、列挙の痕跡が残らない。
 // 登録漏れは proxy.test.ts が実ルートの列挙と突き合わせて検出する。
 export const isApiRoute = createRouteMatcher([
-  "/api/auth(.*)",
   "/api/categories(.*)",
   "/api/eval-item-versions(.*)",
   "/api/evaluation-assignments(.*)",

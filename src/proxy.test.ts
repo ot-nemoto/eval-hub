@@ -105,6 +105,18 @@ describe("middleware の分岐順", () => {
     await expect(res?.json()).resolves.toEqual({ error: "Not Found" });
   });
 
+  // NextAuth 時代の stub（/api/auth/[...nextauth]）は T224 で削除した。
+  // isApiRoute に /api/auth(.*) を戻すと、ルートが無いまま素通りして
+  // 列挙の痕跡が残らなくなるため、未登録パス扱いであることを固定する。
+  it("削除済みの /api/auth は未登録パスとして JSON 404 を返す", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+
+    const res = await callMiddleware(req("/api/auth/callback"));
+
+    expect(res?.status).toBe(404);
+    await expect(res?.json()).resolves.toEqual({ error: "Not Found" });
+  });
+
   it("登録済み API ルートは mock バイパスに関係なく CORS を付けて通す", async () => {
     vi.stubEnv("MOCK_USER_ID", "mock-user-id");
 
