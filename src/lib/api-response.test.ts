@@ -91,6 +91,105 @@ describe("jsonErrorFromException", () => {
 });
 
 describe("withApiErrorHandling", () => {
+  it("正常系: 監査ログを 1 件出力する（ステータスはハンドラの戻り値）", async () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const handler = withApiErrorHandling(
+      async (_req: Request) => new Response(null, { status: 204 }),
+    );
+
+    await handler(new Request("https://example.com/api/items/x1", { method: "DELETE" }));
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(spy.mock.calls[0][0] as string)).toMatchObject({
+      type: "audit",
+      method: "DELETE",
+      path: "/api/items/x1",
+      status: 204,
+    });
+  });
+
+  // 認証失敗も記録する。userId が取れないため、総当たりの検知は IP に依存する。
+  it("正常系: 401 でも記録し、userId は null になる", async () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const handler = withApiErrorHandling(async (_req: Request) => unauthorized());
+
+    await handler(
+      new Request("https://example.com/api/items", {
+        headers: { "x-forwarded-for": "203.0.113.9" },
+      }),
+    );
+
+    expect(JSON.parse(spy.mock.calls[0][0] as string)).toMatchObject({
+      status: 401,
+      userId: null,
+      ip: "203.0.113.9",
+    });
+  });
+
+  // logAudit は成功応答を返した後・try 内で呼ばれる。ここで例外が漏れると
+  // ラッパーの catch に捕まり、成功済みの 200 が 500 に化ける。
+  it("異常系: 監査ログの出力が全滅しても応答のステータスを変えない", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {
+      throw new Error("stdout closed");
+    });
+    vi.spyOn(console, "error").mockImplementation(() => {
+      throw new Error("stderr closed");
+    });
+    const handler = withApiErrorHandling(async (_req: Request) => new Response("ok"));
+
+    const res = await handler(new Request("https://example.com/api/items"));
+
+    expect(res.status).toBe(200);
+    await expect(res.text()).resolves.toBe("ok");
+  });
+
+  it("異常系: 500 に化けた場合も記録する", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const handler = withApiErrorHandling(async (_req: Request) => {
+      throw new Error("DB connection lost");
+    });
+
+    await handler(new Request("https://example.com/api/items", { method: "POST" }));
+
+    expect(JSON.parse(spy.mock.calls[0][0] as string)).toMatchObject({ status: 500 });
+  });
+
+  // 制御フロー例外は再 throw するため、ステータスが確定しない。記録しない。
+  it("異常系: redirect() の再 throw 時は記録しない", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const handler = withApiErrorHandling(async (_req: Request) => {
+      redirect("/login");
+    });
+
+    await expect(handler(new Request("https://example.com/api/me"))).rejects.toThrow();
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("異常系: Request が渡っていなければ記録しない", async () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const handler = withApiErrorHandling(async () => new Response("ok"));
+
+    await handler();
+
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  // eval-hub のラッパーは jsonErrorFromException で型付きエラーを 404 / 403 / 409 にも
+  // 変換する。500 固定で記録すると実態とズレるため、実際のステータスを記録する。
+  it("異常系: 型付きエラーで 500 以外になった場合は実際のステータスを記録する", async () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const handler = withApiErrorHandling(async (_req: Request) => {
+      throw new NotFoundError();
+    });
+
+    const res = await handler(new Request("https://example.com/api/items/missing"));
+
+    expect(res.status).toBe(404);
+    expect(JSON.parse(spy.mock.calls[0][0] as string)).toMatchObject({ status: 404 });
+  });
+
   const req = new Request("http://localhost/api/targets/1?x=1", { method: "PATCH" });
   let consoleError: ReturnType<typeof vi.spyOn>;
 
@@ -99,7 +198,10 @@ describe("withApiErrorHandling", () => {
     consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
-  afterEach(() => consoleError.mockRestore());
+  // console.log の spy も含めて戻す。残すとこのファイルの後続テストに漏れる
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
   /** 例外を投げるハンドラを包み、レスポンスを jsonErrorFromException の結果と比較できる形で返す */
   async function callThrowing(error: unknown) {
