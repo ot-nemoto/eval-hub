@@ -65,8 +65,9 @@ export type AuditRecord = {
   ip: string | null;
   bytes: number | null;
   /**
-   * この IP からの未認証リクエストがこの窓の上限に達したことを示す。
-   * これ以降この窓では記録しない。未認証の洪水を検知するための印。
+   * この `IP:ステータス` の組がこの窓の上限に達したことを示す。
+   * これ以降この窓では**この組の**記録をしない（同じ IP の別ステータスは記録し続ける
+   * ため、1 窓に複数の `throttled` が出ることはある）。未認証の洪水を検知するための印。
    */
   throttled?: true;
 };
@@ -91,7 +92,7 @@ export function buildAuditRecord(req: Request, status: number): AuditRecord {
 }
 
 /**
- * 未認証リクエストの記録を IP ごとに抑制する。
+ * 未認証リクエストの記録を `IP:ステータス` ごとに抑制する。
  *
  * 404 を返す経路（`src/proxy.ts` とキャッチオール）は認証より前・認証なしで通るため、
  * **キーを持たない誰でも記録を 1 行ずつ増やせる**。レート制限が無いと、
@@ -105,8 +106,11 @@ export function buildAuditRecord(req: Request, status: number): AuditRecord {
  */
 const WINDOW_MS = 60 * 1000;
 
-/** IP あたり 1 窓の記録上限。未認証の正常トラフィックは実質ゼロ（クライアントはキーを使う）。 */
-const MAX_PER_IP = 30;
+/**
+ * `IP:ステータス` あたり 1 窓の記録上限。
+ * 未認証の正常トラフィックは実質ゼロ（クライアントはキーを使う）。
+ */
+const MAX_PER_KEY = 30;
 
 /**
  * 追跡する鍵（`IP:ステータス`）の上限。IP を変えながらの攻撃でメモリが膨らむのを防ぐ。
@@ -156,8 +160,8 @@ function classify(ip: string | null, status: number): "record" | "throttle" | "s
   const recorded = counters.get(key) ?? 0;
   counters.set(key, recorded + 1);
 
-  if (recorded < MAX_PER_IP) return "record";
-  return recorded === MAX_PER_IP ? "throttle" : "skip";
+  if (recorded < MAX_PER_KEY) return "record";
+  return recorded === MAX_PER_KEY ? "throttle" : "skip";
 }
 
 /** テスト用に内部状態を初期化する。 */
