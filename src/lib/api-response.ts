@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { unstable_rethrow } from "next/navigation";
 import { NextResponse } from "next/server";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import { logAudit } from "./auditLog";
 
 /** `{ error }` ボディ付きのエラーレスポンスを返す。 */
 export function jsonError(message: string, status: number) {
@@ -10,7 +11,19 @@ export function jsonError(message: string, status: number) {
 
 /** 認証失敗（401）レスポンス。 */
 export function unauthorized() {
-  return jsonError("API キーが無効です", 401);
+  const res = jsonError("API キーが無効です", 401);
+  // RFC 9110 は 401 応答に WWW-Authenticate を含めることを求める。
+  // これが無いとクライアントは応答から認証方式を判断できない。
+  //
+  // Basic は使わない（ブラウザがネイティブの認証ダイアログを出す）。Bearer は出さない。
+  // RFC 6750 の error="invalid_token" は付けない: トークン未指定と無効を区別するには
+  // 認証関数が理由を返す必要があり、現状はいずれも null を返すため区別できない。
+  //
+  // CORS 応答ではブラウザの JS から既定で読めない（Access-Control-Expose-Headers が必要）。
+  // 外部連携のクライアントは curl / サーバーサイドが主で最初から読めるため、
+  // 露出ヘッダは増やさない。必要になった時点で追加する。
+  res.headers.set("WWW-Authenticate", "Bearer");
+  return res;
 }
 
 /**
@@ -57,16 +70,21 @@ export function withApiErrorHandling<Args extends unknown[]>(
   handler: (...args: Args) => Promise<Response>,
 ): (...args: Args) => Promise<Response> {
   const wrapped = async (...args: Args) => {
+    const req = args[0] instanceof Request ? args[0] : null;
     try {
-      return await handler(...args);
+      const res = await handler(...args);
+      if (req) logAudit(req, res.status);
+      return res;
     } catch (e) {
       unstable_rethrow(e);
       const res = jsonErrorFromException(e);
       if (res.status === 500) {
-        const req = args[0];
-        const where = req instanceof Request ? `${req.method} ${new URL(req.url).pathname}` : "";
+        const where = req ? `${req.method} ${new URL(req.url).pathname}` : "";
         console.error(`[api] 500 ${where}`.trimEnd(), e);
       }
+      // jsonErrorFromException は型付きエラーを 404 / 403 / 409 にも変換するため、
+      // 500 固定にせず実際のステータスを記録する。
+      if (req) logAudit(req, res.status);
       return res;
     }
   };

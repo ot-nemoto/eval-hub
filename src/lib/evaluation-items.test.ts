@@ -290,6 +290,29 @@ describe("reorderEvaluationItems", () => {
       data: { index: 1 },
     });
   });
+  // reorder は OFFSET を使う 2 段更新で、同じ catch 節が P2025 と P2002 を分けている。
+  // どちらも API では 404 / 409 として spec に宣言しているため、分岐を固定する。
+  it("並び替え対象が存在しない（P2025）場合は NotFoundError をスロー", async () => {
+    vi.mocked(prisma.evaluationItem.update).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Record not found", {
+        code: "P2025",
+        clientVersion: "5",
+      }),
+    );
+
+    await expect(reorderEvaluationItems([{ id: 1, index: 1 }])).rejects.toThrow(NotFoundError);
+  });
+
+  it("一意制約違反（P2002）の場合は ConflictError をスロー", async () => {
+    vi.mocked(prisma.evaluationItem.update).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+        code: "P2002",
+        clientVersion: "5",
+      }),
+    );
+
+    await expect(reorderEvaluationItems([{ id: 1, index: 1 }])).rejects.toThrow(ConflictError);
+  });
 });
 
 describe("deleteEvaluationItem", () => {
