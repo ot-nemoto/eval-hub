@@ -162,20 +162,36 @@ describe("buildOpenApiDocument", () => {
     expect(JSON.stringify(doc.components.schemas)).not.toContain("additionalProperties");
   });
 
+  // 共通ラッパー（withApiErrorHandling）が捕捉されない例外を 500 { error } に変換するため、
+  // 全 operation が 500 を返しうる。配信 spec を仕様の唯一の正とするため spec にも載せる。
+  it("全 operation が 500 を定義する（サーバー側の失敗も spec に載せる）", () => {
+    const { paths } = buildOpenApiDocument();
+    let checked = 0;
+    for (const [path, item] of Object.entries(paths)) {
+      for (const [method, op] of Object.entries(item as Record<string, unknown>)) {
+        const o = op as { responses?: Record<string, unknown> };
+        checked += 1;
+        expect(o.responses?.["500"], `${method.toUpperCase()} ${path} に 500 が無い`).toBeTruthy();
+      }
+    }
+    // 走査の起点を誤ると 1 件も検査せずに通るため、検査件数そのものを固定する。
+    expect(checked).toBeGreaterThan(0);
+  });
+
   // 実装（unauthorized()）が返す WWW-Authenticate を spec にも載せる。
   // 配信 spec を仕様の唯一の正とするため、片方だけ消えるのを防ぐ。
   it("401 を定義する全 operation が WWW-Authenticate ヘッダを宣言する", () => {
     const { paths } = buildOpenApiDocument();
     let checked = 0;
-    for (const item of Object.values(paths)) {
-      for (const op of Object.values(item as Record<string, unknown>)) {
-        const o = op as {
-          operationId?: string;
-          responses?: Record<string, { headers?: Record<string, unknown> }>;
-        };
+    for (const [path, item] of Object.entries(paths)) {
+      for (const [method, op] of Object.entries(item as Record<string, unknown>)) {
+        const o = op as { responses?: Record<string, { headers?: Record<string, unknown> }> };
         if (!o.responses?.["401"]) continue;
         checked += 1;
-        expect(o.responses["401"].headers?.["WWW-Authenticate"], o.operationId).toBeTruthy();
+        expect(
+          o.responses["401"].headers?.["WWW-Authenticate"],
+          `${method.toUpperCase()} ${path} の 401 に WWW-Authenticate が無い`,
+        ).toBeTruthy();
       }
     }
     expect(checked).toBeGreaterThan(0);
