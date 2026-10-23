@@ -22,11 +22,7 @@ vi.mock("@/lib/prisma", () => ({
       delete: vi.fn(),
     },
     evaluationItem: { count: vi.fn() },
-    $transaction: vi.fn((cb: (tx: unknown) => Promise<unknown>) =>
-      cb({
-        category: { update: vi.mocked(prisma.category.update) },
-      }),
-    ),
+    $transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
   },
 }));
 
@@ -164,7 +160,7 @@ describe("updateCategory", () => {
 describe("reorderCategories", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("2ステップで index を更新する", async () => {
+  it("1 トランザクションで index を更新する", async () => {
     vi.mocked(prisma.category.update).mockResolvedValue({} as never);
 
     await reorderCategories([
@@ -172,27 +168,20 @@ describe("reorderCategories", () => {
       { id: 2, index: 1 },
     ]);
 
+    // index に一意制約が無いため、途中状態の衝突を避ける 2 パス更新は不要（T235）。
+    // 単一パスであることを回数で固定する。
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-    expect(prisma.category.update).toHaveBeenCalledTimes(4);
+    expect(prisma.category.update).toHaveBeenCalledTimes(2);
     expect(prisma.category.update).toHaveBeenNthCalledWith(1, {
-      where: { id: 1 },
-      data: { index: 100002 },
-    });
-    expect(prisma.category.update).toHaveBeenNthCalledWith(2, {
-      where: { id: 2 },
-      data: { index: 100001 },
-    });
-    expect(prisma.category.update).toHaveBeenNthCalledWith(3, {
       where: { id: 1 },
       data: { index: 2 },
     });
-    expect(prisma.category.update).toHaveBeenNthCalledWith(4, {
+    expect(prisma.category.update).toHaveBeenNthCalledWith(2, {
       where: { id: 2 },
       data: { index: 1 },
     });
   });
-  // reorder は OFFSET を使う 2 段更新で、同じ catch 節が P2025 と P2002 を分けている。
-  // どちらも API では 404 / 409 として spec に宣言しているため、分岐を固定する。
+
   it("並び替え対象が存在しない（P2025）場合は NotFoundError をスロー", async () => {
     vi.mocked(prisma.category.update).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Record not found", {
@@ -202,17 +191,6 @@ describe("reorderCategories", () => {
     );
 
     await expect(reorderCategories([{ id: 1, index: 1 }])).rejects.toThrow(NotFoundError);
-  });
-
-  it("一意制約違反（P2002）の場合は ConflictError をスロー", async () => {
-    vi.mocked(prisma.category.update).mockRejectedValue(
-      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
-        code: "P2002",
-        clientVersion: "5",
-      }),
-    );
-
-    await expect(reorderCategories([{ id: 1, index: 1 }])).rejects.toThrow(ConflictError);
   });
 });
 
