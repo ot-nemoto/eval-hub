@@ -40,6 +40,11 @@ function collectApiRoutePaths(dir = API_DIR, prefix = "/api"): string[] {
   const paths: string[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     if (entry.isDirectory()) {
+      // キャッチオール（[...unmatched]）は「どれにも一致しなかったものを受ける」側であり、
+      // isApiRoute に一致させる対象ではない。下の検査から除くため収集しない。
+      // 除外は catch-all セグメントに限定する（この検査は isApiRoute の登録漏れを
+      // 検出する安全網なので、除外を広げると穴になる）。
+      if (/^\[\.\.\..+\]$/.test(entry.name)) continue;
       const isRouteGroup = /^\(.+\)$/.test(entry.name);
       const segment = entry.name.replace(/^\[(?:\.\.\.)?.+\]$/, "abc");
       paths.push(
