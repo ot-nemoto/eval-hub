@@ -49,6 +49,17 @@ const mockFy = {
   evalItemVersionId: null,
 };
 
+// vi.clearAllMocks() は mockClear 相当でモックの実装を戻さないため、
+// mockRejectedValue / mockImplementation を張ったテストの影響がファイル末尾まで漏れる。
+// 各 describe の beforeEach より先に走るここで既定実装を張り直し、テストの並び順や
+// 追加で原因不明の失敗が出ないようにする（T236 レビュー指摘）。
+beforeEach(() => {
+  vi.mocked(prisma.$transaction).mockImplementation(((fn: (tx: unknown) => unknown) =>
+    fn({
+      fiscalYear: { create: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+    })) as never);
+});
+
 describe("getFiscalYears", () => {
   beforeEach(() => vi.clearAllMocks());
 
@@ -220,8 +231,9 @@ describe("updateFiscalYear", () => {
 
     await updateFiscalYear(2024, { isCurrent: true });
 
-    // 部分ユニークインデックス（true は最大1件）があるため、順序が逆だと
-    // 既存の現在年度と衝突して必ず P2002 になる（T236）。順序を固定する。
+    // 部分ユニークインデックス（true は最大1件）があるため、他に現在年度がある状態で
+    // 順序が逆になると P2002 になる（T236。対象自身が唯一の現在年度なら衝突しない）。
+    // 偽の tx は一意制約を再現しないので、ここで固定するのは呼び出し順だけ。
     expect(calls).toEqual(["updateMany", "update"]);
     expect(updateMany).toHaveBeenCalledWith({
       where: { isCurrent: true, year: { not: 2024 } },
@@ -229,7 +241,10 @@ describe("updateFiscalYear", () => {
     });
   });
 
-  it("isCurrent を指定しない場合は他の年度のフラグに触れない", async () => {
+  it.each([
+    ["isCurrent を指定しない", { name: "更新後" }],
+    ["isCurrent: false を指定する", { isCurrent: false }],
+  ])("%s 場合は他の年度のフラグに触れない", async (_label, data) => {
     vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
     const updateMany = vi.fn();
     vi.mocked(prisma.$transaction).mockImplementation(async (fn) =>
@@ -238,8 +253,12 @@ describe("updateFiscalYear", () => {
       } as never),
     );
 
-    await updateFiscalYear(2024, { name: "更新後" });
+    await updateFiscalYear(2024, data);
 
+    // clear は isCurrent === true のときだけ走る。false を含めてしまうと、
+    // 現在年度でない年度への { isCurrent: false } が本物の現在年度のフラグを落とし、
+    // 現在年度 0 件（getCurrentFiscalYear() が null）になる。一意制約違反にならないため
+    // 409 にもならず黙って壊れるので、false 側も固定する（T236 レビュー指摘）。
     expect(updateMany).not.toHaveBeenCalled();
   });
 
@@ -252,7 +271,12 @@ describe("updateFiscalYear", () => {
       }),
     );
 
+    // docs/actions.md が文言を契約として書いているため、クラスだけでなく文言も固定する
+    // （クラスだけ見ていると文言の変更が docs とずれても緑のまま通る）。
     await expect(updateFiscalYear(2024, { isCurrent: true })).rejects.toThrow(ConflictError);
+    await expect(updateFiscalYear(2024, { isCurrent: true })).rejects.toThrow(
+      "現在年度の更新が競合しました。再度お試しください",
+    );
   });
 
   it("P2002 以外の DB エラーは再スローする", async () => {
