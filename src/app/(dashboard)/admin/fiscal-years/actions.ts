@@ -56,7 +56,8 @@ export async function updateFiscalYearAction(
   try {
     await updateFiscalYear(year, data);
   } catch (e) {
-    if (e instanceof BadRequestError || e instanceof NotFoundError) return { error: e.message };
+    if (e instanceof BadRequestError || e instanceof NotFoundError || e instanceof ConflictError)
+      return { error: e.message };
     throw e;
   }
 

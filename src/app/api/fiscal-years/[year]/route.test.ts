@@ -66,6 +66,14 @@ describe("PATCH /api/fiscal-years/[year]", () => {
     expect((await PATCH(makeRequest("PATCH", { name: "x" }), ctx())).status).toBe(404);
   });
 
+  it("現在年度の更新競合（ConflictError）は 409", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    vi.mocked(updateFiscalYear).mockRejectedValue(
+      new ConflictError("現在年度の更新が競合しました。再度お試しください"),
+    );
+    expect((await PATCH(makeRequest("PATCH", { isCurrent: true }), ctx())).status).toBe(409);
+  });
+
   it("isCurrent 非真偽値は 400（Zod）", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
     expect((await PATCH(makeRequest("PATCH", { isCurrent: "yes" }), ctx())).status).toBe(400);

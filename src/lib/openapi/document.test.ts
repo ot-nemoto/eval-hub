@@ -80,7 +80,7 @@ const EXPECTED_STATUS: Record<string, string[]> = {
   "DELETE /api/categories/{id}": ["204", "400", "401", "403", "404", "409", "500"],
   "GET /api/fiscal-years": ["200", "401", "403", "500"],
   "POST /api/fiscal-years": ["201", "400", "401", "403", "409", "500"],
-  "PATCH /api/fiscal-years/{year}": ["200", "400", "401", "403", "404", "500"],
+  "PATCH /api/fiscal-years/{year}": ["200", "400", "401", "403", "404", "409", "500"],
   "DELETE /api/fiscal-years/{year}": ["204", "400", "401", "403", "404", "409", "500"],
   "POST /api/fiscal-years/{year}/lock": ["200", "400", "401", "403", "404", "500"],
   "GET /api/evaluation-assignments": ["200", "400", "401", "403", "500"],

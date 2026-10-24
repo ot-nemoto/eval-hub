@@ -103,19 +103,33 @@ export async function updateFiscalYear(
   if (effectiveStart > effectiveEnd)
     throw new BadRequestError("startDate は endDate 以前の日付を指定してください");
 
-  return prisma.$transaction(async (tx) => {
-    if (updateData.isCurrent === true) {
-      await tx.fiscalYear.updateMany({
-        where: { isCurrent: true, year: { not: year } },
-        data: { isCurrent: false },
+  try {
+    return await prisma.$transaction(async (tx) => {
+      if (updateData.isCurrent === true) {
+        await tx.fiscalYear.updateMany({
+          where: { isCurrent: true, year: { not: year } },
+          data: { isCurrent: false },
+        });
+      }
+      return tx.fiscalYear.update({
+        where: { year },
+        data: updateData,
+        select: fiscalYearSelect,
       });
-    }
-    return tx.fiscalYear.update({
-      where: { year },
-      data: updateData,
-      select: fiscalYearSelect,
     });
-  });
+  } catch (e) {
+    // is_current の部分ユニークインデックス違反。2 つの年度を同時に現在年度にする要求が
+    // 衝突しうる（経路は docs/architecture.md の「一意制約違反は到達可能（409）」参照。T236）。
+    //
+    // 制約名で絞っていないのは、fiscal_years のユニークインデックスが year（PK）と
+    // is_current の 2 本だけで、year は updateData に入らないため。
+    // この前提が崩れる変更（name 等にユニークを足す）をするときは、e.meta?.target で
+    // 絞るか文言を見直すこと。崩れると無関係な衝突に「現在年度の競合」が付く。
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new ConflictError("現在年度の更新が競合しました。再度お試しください");
+    }
+    throw e;
+  }
 }
 
 export async function assertFiscalYearUnlocked(
