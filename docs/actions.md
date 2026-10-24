@@ -314,7 +314,7 @@
 | `"year は 1900〜9999 の整数で指定してください"` | year が範囲外または非整数 |
 | `"name は必須です"` | name が空文字 |
 | `"startDate, endDate は必須です"` | 日付が未指定 |
-| `"同一の年度がすでに存在します"` | year 重複（ConflictError） |
+| `"同じ年度がすでに存在します"` | year 重複（ConflictError） |
 | バリデーションエラーメッセージ | 日付形式不正など（BadRequestError） |
 
 ---
