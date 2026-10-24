@@ -15,7 +15,15 @@ vi.mock("@/lib/prisma", () => ({
       delete: vi.fn(),
     },
     category: { count: vi.fn() },
-    $transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
+    // reorder は配列形式、他はコールバック形式の $transaction を使う。
+    // 片方だけに対応させると、もう一方を渡した瞬間に原因の分からない例外になる。
+    $transaction: vi.fn((arg: unknown) =>
+      Array.isArray(arg)
+        ? Promise.all(arg)
+        : (arg as (tx: unknown) => Promise<unknown>)({
+            target: { update: vi.mocked(prisma.target.update) },
+          }),
+    ),
   },
 }));
 
@@ -129,8 +137,12 @@ describe("reorderTargets", () => {
 
     // index に一意制約が無いため、途中状態の衝突を避ける 2 パス更新は不要（T235）。
     // 単一パスであることを回数で固定する。
-    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(prisma.target.update).toHaveBeenCalledTimes(2);
+    // 呼び出し回数だけでは「トランザクション外で逐次更新し、$transaction には
+    // 空配列を渡す」実装と区別できない（実 DB なら 1 件も書き込まれない）。
+    // 組み立てた op が実際に $transaction へ渡っていることを固定する。
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(prisma.$transaction).mock.calls[0][0]).toHaveLength(2);
     expect(prisma.target.update).toHaveBeenNthCalledWith(1, {
       where: { id: 1 },
       data: { index: 2 },
