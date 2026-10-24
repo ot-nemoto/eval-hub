@@ -4,7 +4,7 @@ import type { Score } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { BadRequestError, ForbiddenError } from "@/lib/errors";
+import { BadRequestError, ConflictError, ForbiddenError } from "@/lib/errors";
 import {
   addManagerComment,
   deleteManagerComment,
@@ -56,7 +56,8 @@ export async function upsertManagerScoreAction(
   try {
     await upsertManagerScore(evaluateeId, fiscalYear, evalItemId, managerScore);
   } catch (e) {
-    if (e instanceof BadRequestError || e instanceof ForbiddenError) return { error: e.message };
+    if (e instanceof BadRequestError || e instanceof ForbiddenError || e instanceof ConflictError)
+      return { error: e.message };
     throw e;
   }
 
@@ -99,7 +100,8 @@ export async function addManagerCommentAction(
   try {
     created = await addManagerComment(evaluateeId, fiscalYear, evalItemId, session.user.id, data);
   } catch (e) {
-    if (e instanceof BadRequestError || e instanceof ForbiddenError) return { error: e.message };
+    if (e instanceof BadRequestError || e instanceof ForbiddenError || e instanceof ConflictError)
+      return { error: e.message };
     throw e;
   }
 
@@ -147,7 +149,8 @@ export async function updateManagerCommentAction(
   try {
     updated = await updateManagerComment(commentId, data);
   } catch (e) {
-    if (e instanceof BadRequestError || e instanceof ForbiddenError) return { error: e.message };
+    if (e instanceof BadRequestError || e instanceof ForbiddenError || e instanceof ConflictError)
+      return { error: e.message };
     throw e;
   }
 
@@ -185,7 +188,8 @@ export async function deleteManagerCommentAction(
   try {
     await deleteManagerComment(commentId);
   } catch (e) {
-    if (e instanceof BadRequestError || e instanceof ForbiddenError) return { error: e.message };
+    if (e instanceof BadRequestError || e instanceof ForbiddenError || e instanceof ConflictError)
+      return { error: e.message };
     throw e;
   }
 
