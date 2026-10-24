@@ -43,6 +43,10 @@ vi.mock("@/lib/prisma", () => ({
 
 import { prisma } from "@/lib/prisma";
 
+// コメントが属する評価の年度。他のテストの年度（2024）と分けておき、コメント経路が
+// コメントから年度を引かずに固定値で判定する誤りも検出できるようにする。
+const COMMENT_YEAR = 2023;
+
 // vi.clearAllMocks() は mockClear 相当で、mockResolvedValue で張った実装を戻さない。
 // ロック判定に使う 2 つは各 describe の beforeEach より先に既定（未ロック・コメントあり）へ
 // 戻し、ロック中のテストの影響が後続へ漏れないようにする。
@@ -50,11 +54,16 @@ beforeEach(() => {
   vi.mocked(prisma.fiscalYear.findUnique).mockReset();
   vi.mocked(prisma.managerComment.findUnique)
     .mockReset()
-    .mockResolvedValue({ evaluation: { fiscalYear: 2024 } } as never);
+    .mockResolvedValue({ evaluation: { fiscalYear: COMMENT_YEAR } } as never);
 });
 
-const lockYear = () =>
-  vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue({ isLocked: true } as never);
+// 指定した年度だけをロック中にする。どの年度にも「ロック中」を返すと、判定に渡す年度を
+// 取り違えても（evalItemVersionDetailId を渡す等）ロックのテストが通ってしまう。
+const lockYear = (year = 2024) =>
+  vi
+    .mocked(prisma.fiscalYear.findUnique)
+    .mockImplementation(((args: { where: { year: number } }) =>
+      Promise.resolve(args.where.year === year ? { isLocked: true } : null)) as never);
 // ルートはエラーのクラスでステータスを決めるため、文言だけでなく name も固定する。
 const LOCKED = "この年度はロックされているため編集できません";
 
@@ -425,13 +434,13 @@ describe("updateManagerComment", () => {
   });
 
   it("コメントが属する年度がロック中なら ConflictError をスローし、書き込まない", async () => {
-    lockYear();
+    lockYear(COMMENT_YEAR);
     await expect(updateManagerComment("comment-1", { reason: "修正後" })).rejects.toMatchObject({
       name: "ConflictError",
       message: LOCKED,
     });
     expect(prisma.fiscalYear.findUnique).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { year: 2024 } }),
+      expect.objectContaining({ where: { year: COMMENT_YEAR } }),
     );
     expect(prisma.managerComment.update).not.toHaveBeenCalled();
   });
@@ -457,7 +466,7 @@ describe("deleteManagerComment", () => {
   });
 
   it("コメントが属する年度がロック中なら ConflictError をスローし、削除しない", async () => {
-    lockYear();
+    lockYear(COMMENT_YEAR);
     await expect(deleteManagerComment("comment-1")).rejects.toMatchObject({
       name: "ConflictError",
       message: LOCKED,
