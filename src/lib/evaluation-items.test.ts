@@ -26,22 +26,26 @@ vi.mock("@/lib/prisma", () => ({
       deleteMany: vi.fn(),
     },
     evalItemVersionDetail: { count: vi.fn() },
-    $transaction: vi.fn((cb: (tx: unknown) => Promise<unknown>) =>
-      cb({
-        target: {
-          create: vi.mocked(prisma.target.create),
-          deleteMany: vi.mocked(prisma.target.deleteMany),
-        },
-        category: {
-          create: vi.mocked(prisma.category.create),
-          deleteMany: vi.mocked(prisma.category.deleteMany),
-        },
-        evaluationItem: {
-          update: vi.mocked(prisma.evaluationItem.update),
-          createMany: vi.mocked(prisma.evaluationItem.createMany),
-          deleteMany: vi.mocked(prisma.evaluationItem.deleteMany),
-        },
-      }),
+    // reorder は配列形式、他はコールバック形式の $transaction を使う。
+    // 片方だけに対応させると、もう一方を渡した瞬間に原因の分からない例外になる。
+    $transaction: vi.fn((arg: unknown) =>
+      Array.isArray(arg)
+        ? Promise.all(arg)
+        : (arg as (tx: unknown) => Promise<unknown>)({
+            target: {
+              create: vi.mocked(prisma.target.create),
+              deleteMany: vi.mocked(prisma.target.deleteMany),
+            },
+            category: {
+              create: vi.mocked(prisma.category.create),
+              deleteMany: vi.mocked(prisma.category.deleteMany),
+            },
+            evaluationItem: {
+              update: vi.mocked(prisma.evaluationItem.update),
+              createMany: vi.mocked(prisma.evaluationItem.createMany),
+              deleteMany: vi.mocked(prisma.evaluationItem.deleteMany),
+            },
+          }),
     ),
   },
 }));
@@ -263,7 +267,7 @@ describe("updateEvaluationItem", () => {
 describe("reorderEvaluationItems", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("2ステップで index を更新する", async () => {
+  it("1 トランザクションで index を更新する", async () => {
     vi.mocked(prisma.evaluationItem.update).mockResolvedValue({} as never);
 
     await reorderEvaluationItems([
@@ -271,27 +275,24 @@ describe("reorderEvaluationItems", () => {
       { id: 2, index: 1 },
     ]);
 
+    // index に一意制約が無いため、途中状態の衝突を避ける 2 パス更新は不要（T235）。
+    // 単一パスであることを回数で固定する。
+    expect(prisma.evaluationItem.update).toHaveBeenCalledTimes(2);
+    // 呼び出し回数だけでは「トランザクション外で逐次更新し、$transaction には
+    // 空配列を渡す」実装と区別できない（実 DB なら 1 件も書き込まれない）。
+    // 組み立てた op が実際に $transaction へ渡っていることを固定する。
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-    expect(prisma.evaluationItem.update).toHaveBeenCalledTimes(4);
+    expect(vi.mocked(prisma.$transaction).mock.calls[0][0]).toHaveLength(2);
     expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(1, {
-      where: { id: 1 },
-      data: { index: 100002 },
-    });
-    expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(2, {
-      where: { id: 2 },
-      data: { index: 100001 },
-    });
-    expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(3, {
       where: { id: 1 },
       data: { index: 2 },
     });
-    expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(4, {
+    expect(prisma.evaluationItem.update).toHaveBeenNthCalledWith(2, {
       where: { id: 2 },
       data: { index: 1 },
     });
   });
-  // reorder は OFFSET を使う 2 段更新で、同じ catch 節が P2025 と P2002 を分けている。
-  // どちらも API では 404 / 409 として spec に宣言しているため、分岐を固定する。
+
   it("並び替え対象が存在しない（P2025）場合は NotFoundError をスロー", async () => {
     vi.mocked(prisma.evaluationItem.update).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Record not found", {
@@ -301,17 +302,6 @@ describe("reorderEvaluationItems", () => {
     );
 
     await expect(reorderEvaluationItems([{ id: 1, index: 1 }])).rejects.toThrow(NotFoundError);
-  });
-
-  it("一意制約違反（P2002）の場合は ConflictError をスロー", async () => {
-    vi.mocked(prisma.evaluationItem.update).mockRejectedValue(
-      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
-        code: "P2002",
-        clientVersion: "5",
-      }),
-    );
-
-    await expect(reorderEvaluationItems([{ id: 1, index: 1 }])).rejects.toThrow(ConflictError);
   });
 });
 
