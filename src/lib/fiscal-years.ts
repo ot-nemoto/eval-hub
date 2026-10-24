@@ -118,9 +118,13 @@ export async function updateFiscalYear(
       });
     });
   } catch (e) {
-    // is_current の部分ユニークインデックス違反。READ COMMITTED では、先行トランザクションが
-    // コミットした直後に updateMany の条件が再評価されて 0 行更新になるため、
-    // 2 つの年度を同時に現在年度にする要求が衝突しうる（T236）。
+    // is_current の部分ユニークインデックス違反。2 つの年度を同時に現在年度にする要求が
+    // 衝突しうる（経路は docs/architecture.md の「一意制約違反は到達可能（409）」参照。T236）。
+    //
+    // 制約名で絞っていないのは、fiscal_years のユニークインデックスが year（PK）と
+    // is_current の 2 本だけで、year は updateData に入らないため。
+    // この前提が崩れる変更（name 等にユニークを足す）をするときは、e.meta?.target で
+    // 絞るか文言を見直すこと。崩れると無関係な衝突に「現在年度の競合」が付く。
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       throw new ConflictError("現在年度の更新が競合しました。再度お試しください");
     }
