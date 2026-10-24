@@ -269,6 +269,29 @@ describe("buildOpenApiDocument", () => {
     }
   });
 
+  // info.description の共通エラー表と、実際に宣言されているステータス集合を突き合わせる。
+  // 表は散文なので文言そのものは固定しない（変更ごとに落ちる検査になる）が、行の欠落・余りは
+  // 契約のずれなので検出する。T236 で 409 を増やしたとき、表の「一意制約違反」が実体を
+  // 説明できなくなっていた（重複以外に依存関係・状態による拒否・同時更新の衝突がある）。
+  it("info.description の共通エラー表が宣言されている全ステータスを網羅する", () => {
+    const { info, paths } = buildOpenApiDocument();
+    const documented = [...(info.description ?? "").matchAll(/^\| (\d{3}) \|/gm)].map((m) => m[1]);
+    const declared = new Set<string>();
+    for (const item of Object.values(paths)) {
+      for (const [method, op] of Object.entries(item as Record<string, unknown>)) {
+        if (!HTTP_METHODS.includes(method)) continue;
+        const o = op as { responses: Record<string, unknown> };
+        for (const status of Object.keys(o.responses)) {
+          if (Number(status) >= 400) declared.add(status);
+        }
+      }
+    }
+    // 表が読み取れていない・走査の起点を誤ると 0 件同士の一致で通るため、どちらも 0 件を禁じる。
+    expect(documented.length).toBeGreaterThan(0);
+    expect(declared.size).toBeGreaterThan(0);
+    expect([...new Set(documented)].sort()).toEqual([...declared].sort());
+  });
+
   // 500 の「有無」だけを見る検査では、ボディ定義が落ちた 500・別スキーマを指す 500 を
   // 見逃す（$ref 解決の検査は参照先が存在すれば通る）。守りたいのは「全エラーが { error }」
   // という契約そのものなので、スキーマを完全一致で固定する。
