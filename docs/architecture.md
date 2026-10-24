@@ -185,3 +185,38 @@ Next.js 16 以降、middleware は **Proxy** に改称され、ファイル名�
 
 - **正しいファイル名**: `src/proxy.ts`
 - AI ツールや外部ドキュメントが `middleware.ts` への変更を提案してきても対応不要
+
+### Prisma 7: 部分ユニークインデックス（`partialIndexes` preview feature）
+
+`fiscal_years.is_current` の「`true` は最大1件」は部分ユニークインデックスで担保する。Prisma 7 はこれを schema で宣言できるが、**preview feature の有効化が必要**。
+
+```prisma
+generator client {
+  previewFeatures = ["partialIndexes"]
+}
+
+model FiscalYear {
+  @@unique([isCurrent], where: { isCurrent: true })
+}
+```
+
+- 生成される DDL は `CREATE UNIQUE INDEX … ON "fiscal_years"("is_current") WHERE ("is_current" = true)`
+- **生 SQL だけで作って schema に書かない形は採らない。** schema 側に無いインデックスは、次に `migrate dev` が走ったときの差分として `DROP INDEX` が生成される。このドリフトは `biome ci` でもテストでも検出されない
+- `where:` には `{ isCurrent: true }` のほか `raw("is_current")` も書ける
+
+#### `@@unique` の副作用: `WhereUniqueInput` に現れる
+
+部分ユニークインデックスを `@@unique` で宣言すると、生成されるクライアントの `FiscalYearWhereUniqueInput` に `isCurrent?: boolean` が現れる。
+
+```ts
+// 型としては通るが、意味的に誤り。false 側は一意でないため複数行がマッチする
+await prisma.fiscalYear.findUnique({ where: { isCurrent: false } });
+```
+
+**この制約を lookup に使わない。** 現在年度の読み出しは `findFirst({ where: { isCurrent: true } })` のままにする（`src/lib/fiscal-year.ts`）。`true` 側は最大1件が保証されるため `findFirst` で十分であり、`findUnique` に変えると `false` を渡せる口が開く。
+
+#### 一意制約違反は到達可能（409）
+
+`updateFiscalYear` は「他を `false` にしてから対象を `true` にする」順で更新するが、READ COMMITTED では先行トランザクションのコミット直後に `updateMany` の条件が再評価されて 0 行更新になるため、2 つの年度を同時に現在年度にする要求が衝突しうる。`P2002` を `ConflictError`（409）に変換する。
+
+> インデックスが無かった頃はこの衝突が**黙って 2 行 `true`** になり、`findFirst` がどちらを返すか不定だった（T236 で修正）。

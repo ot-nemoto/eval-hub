@@ -202,6 +202,72 @@ describe("updateFiscalYear", () => {
       BadRequestError,
     );
   });
+
+  it("isCurrent: true では他の年度のフラグを落としてから対象を更新する", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
+    const calls: string[] = [];
+    const updateMany = vi.fn(() => {
+      calls.push("updateMany");
+      return Promise.resolve({ count: 1 });
+    });
+    const update = vi.fn(() => {
+      calls.push("update");
+      return Promise.resolve(mockFy);
+    });
+    vi.mocked(prisma.$transaction).mockImplementation(async (fn) =>
+      fn({ fiscalYear: { create: vi.fn(), updateMany, update } } as never),
+    );
+
+    await updateFiscalYear(2024, { isCurrent: true });
+
+    // 部分ユニークインデックス（true は最大1件）があるため、順序が逆だと
+    // 既存の現在年度と衝突して必ず P2002 になる（T236）。順序を固定する。
+    expect(calls).toEqual(["updateMany", "update"]);
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { isCurrent: true, year: { not: 2024 } },
+      data: { isCurrent: false },
+    });
+  });
+
+  it("isCurrent を指定しない場合は他の年度のフラグに触れない", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
+    const updateMany = vi.fn();
+    vi.mocked(prisma.$transaction).mockImplementation(async (fn) =>
+      fn({
+        fiscalYear: { create: vi.fn(), updateMany, update: vi.fn().mockResolvedValue(mockFy) },
+      } as never),
+    );
+
+    await updateFiscalYear(2024, { name: "更新後" });
+
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+
+  it("is_current の P2002（同時実行競合）の場合は ConflictError をスロー", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
+    vi.mocked(prisma.$transaction).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+        code: "P2002",
+        clientVersion: "5",
+      }),
+    );
+
+    await expect(updateFiscalYear(2024, { isCurrent: true })).rejects.toThrow(ConflictError);
+  });
+
+  it("P2002 以外の DB エラーは再スローする", async () => {
+    vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue(mockFy as never);
+    vi.mocked(prisma.$transaction).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Connection closed", {
+        code: "P1017",
+        clientVersion: "5",
+      }),
+    );
+
+    await expect(updateFiscalYear(2024, { isCurrent: true })).rejects.toThrow(
+      Prisma.PrismaClientKnownRequestError,
+    );
+  });
 });
 
 describe("deleteFiscalYear", () => {

@@ -596,6 +596,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
+            409: errorResponse("現在年度の更新が競合"),
             500: errorResponse("サーバーエラー"),
           },
         },

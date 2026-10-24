@@ -103,19 +103,29 @@ export async function updateFiscalYear(
   if (effectiveStart > effectiveEnd)
     throw new BadRequestError("startDate は endDate 以前の日付を指定してください");
 
-  return prisma.$transaction(async (tx) => {
-    if (updateData.isCurrent === true) {
-      await tx.fiscalYear.updateMany({
-        where: { isCurrent: true, year: { not: year } },
-        data: { isCurrent: false },
+  try {
+    return await prisma.$transaction(async (tx) => {
+      if (updateData.isCurrent === true) {
+        await tx.fiscalYear.updateMany({
+          where: { isCurrent: true, year: { not: year } },
+          data: { isCurrent: false },
+        });
+      }
+      return tx.fiscalYear.update({
+        where: { year },
+        data: updateData,
+        select: fiscalYearSelect,
       });
-    }
-    return tx.fiscalYear.update({
-      where: { year },
-      data: updateData,
-      select: fiscalYearSelect,
     });
-  });
+  } catch (e) {
+    // is_current の部分ユニークインデックス違反。READ COMMITTED では、先行トランザクションが
+    // コミットした直後に updateMany の条件が再評価されて 0 行更新になるため、
+    // 2 つの年度を同時に現在年度にする要求が衝突しうる（T236）。
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new ConflictError("現在年度の更新が競合しました。再度お試しください");
+    }
+    throw e;
+  }
 }
 
 export async function assertFiscalYearUnlocked(

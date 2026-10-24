@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -53,7 +54,7 @@ model FiscalYear {
   name              String   @db.VarChar(50)
   startDate         DateTime @map("start_date") @db.Date
   endDate           DateTime @map("end_date") @db.Date
-  isCurrent         Boolean  @default(false) @map("is_current") // 部分ユニークインデックスで true は最大1件（migration で管理）
+  isCurrent         Boolean  @default(false) @map("is_current")
   isLocked          Boolean  @default(false) @map("is_locked")
   evalItemVersionId Int?     @map("eval_item_version_id")
   createdAt         DateTime @default(now()) @map("created_at")
@@ -63,6 +64,9 @@ model FiscalYear {
   evaluationAssignments EvaluationAssignment[]
   evaluations           Evaluation[]
 
+  // 現在年度は最大1件。false 側は一意でないため、この制約を lookup に使ってはならない
+  // （@@unique により WhereUniqueInput に isCurrent が現れる。docs/architecture.md のバージョン gotcha 参照）
+  @@unique([isCurrent], where: { isCurrent: true })
   @@map("fiscal_years")
 }
 
