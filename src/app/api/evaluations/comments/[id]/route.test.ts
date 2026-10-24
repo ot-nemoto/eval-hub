@@ -9,6 +9,7 @@ vi.mock("@/lib/evaluations", () => ({
 }));
 
 import { getAuthenticatedUser } from "@/lib/apiAuth";
+import { ConflictError } from "@/lib/errors";
 import { deleteManagerComment, updateManagerComment } from "@/lib/evaluations";
 import { DELETE, PATCH } from "./route";
 
@@ -65,6 +66,14 @@ describe("PATCH /api/evaluations/comments/[id]", () => {
     expect((await PATCH(makeRequest("PATCH", { reason: "x" }), ctx())).status).toBe(404);
   });
 
+  it("コメントの年度がロック中（ConflictError）は 409", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    vi.mocked(updateManagerComment).mockRejectedValueOnce(
+      new ConflictError("この年度はロックされているため編集できません"),
+    );
+    expect((await PATCH(makeRequest("PATCH", { reason: "x" }), ctx())).status).toBe(409);
+  });
+
   it("キー無効は 401 / MEMBER は 403", async () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(null);
     expect((await PATCH(makeRequest("PATCH", { reason: "x" }), ctx())).status).toBe(401);
@@ -89,6 +98,14 @@ describe("DELETE /api/evaluations/comments/[id]", () => {
     vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
     vi.mocked(deleteManagerComment).mockRejectedValue(notFound);
     expect((await DELETE(makeRequest("DELETE"), ctx())).status).toBe(404);
+  });
+
+  it("コメントの年度がロック中（ConflictError）は 409", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    vi.mocked(deleteManagerComment).mockRejectedValueOnce(
+      new ConflictError("この年度はロックされているため編集できません"),
+    );
+    expect((await DELETE(makeRequest("DELETE"), ctx())).status).toBe(409);
   });
 
   it("キー無効は 401 / MEMBER は 403", async () => {

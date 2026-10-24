@@ -5,6 +5,7 @@ vi.mock("@/lib/apiAuth", () => ({ getAuthenticatedUser: vi.fn() }));
 vi.mock("@/lib/evaluations", () => ({ upsertManagerScore: vi.fn() }));
 
 import { getAuthenticatedUser } from "@/lib/apiAuth";
+import { ConflictError } from "@/lib/errors";
 import { upsertManagerScore } from "@/lib/evaluations";
 import { POST } from "./route";
 
@@ -62,6 +63,14 @@ describe("POST /api/evaluations/manager-score", () => {
     ).toBe(400);
     expect((await POST(makePost({ ...validBody, managerScore: "bad" }))).status).toBe(400);
     expect(upsertManagerScore).not.toHaveBeenCalled();
+  });
+
+  it("対象年度がロック中（ConflictError）は 409", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    vi.mocked(upsertManagerScore).mockRejectedValueOnce(
+      new ConflictError("この年度はロックされているため編集できません"),
+    );
+    expect((await POST(makePost(validBody))).status).toBe(409);
   });
 
   it("キー無効は 401 / MEMBER は 403", async () => {

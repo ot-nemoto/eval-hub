@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { BadRequestError } from "./errors";
+import { BadRequestError, NotFoundError } from "./errors";
 import {
   addManagerComment,
   deleteManagerComment,
@@ -30,6 +30,7 @@ vi.mock("@/lib/prisma", () => ({
       findUnique: vi.fn(),
     },
     managerComment: {
+      findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -41,6 +42,21 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 import { prisma } from "@/lib/prisma";
+
+// vi.clearAllMocks() は mockClear 相当で、mockResolvedValue で張った実装を戻さない。
+// ロック判定に使う 2 つは各 describe の beforeEach より先に既定（未ロック・コメントあり）へ
+// 戻し、ロック中のテストの影響が後続へ漏れないようにする。
+beforeEach(() => {
+  vi.mocked(prisma.fiscalYear.findUnique).mockReset();
+  vi.mocked(prisma.managerComment.findUnique)
+    .mockReset()
+    .mockResolvedValue({ evaluation: { fiscalYear: 2024 } } as never);
+});
+
+const lockYear = () =>
+  vi.mocked(prisma.fiscalYear.findUnique).mockResolvedValue({ isLocked: true } as never);
+// ルートはエラーのクラスでステータスを決めるため、文言だけでなく name も固定する。
+const LOCKED = "この年度はロックされているため編集できません";
 
 const mockEvaluation = {
   id: "eval-1",
@@ -229,6 +245,17 @@ describe("upsertEvaluation", () => {
     });
   });
 
+  it("対象年度がロック中なら ConflictError をスローし、書き込まない", async () => {
+    lockYear();
+    await expect(
+      upsertEvaluation({ fiscalYear: 2024, evaluateeId: "user-1", evalItemVersionDetailId: 1 }),
+    ).rejects.toMatchObject({ name: "ConflictError", message: LOCKED });
+    expect(prisma.fiscalYear.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { year: 2024 } }),
+    );
+    expect(prisma.evaluation.upsert).not.toHaveBeenCalled();
+  });
+
   it("fiscalYear が範囲外の場合は BadRequestError をスロー", async () => {
     await expect(
       upsertEvaluation({ fiscalYear: 1800, evaluateeId: "user-1", evalItemVersionDetailId: 1 }),
@@ -292,6 +319,15 @@ describe("upsertManagerScore", () => {
     expect(result.managerScore).toBeNull();
   });
 
+  it("対象年度がロック中なら ConflictError をスローし、書き込まない", async () => {
+    lockYear();
+    await expect(upsertManagerScore("user-1", 2024, 1, "yu")).rejects.toMatchObject({
+      name: "ConflictError",
+      message: LOCKED,
+    });
+    expect(prisma.evaluation.upsert).not.toHaveBeenCalled();
+  });
+
   it("fiscalYear が範囲外の場合は BadRequestError をスロー", async () => {
     await expect(upsertManagerScore("user-1", 1800, 1, "yu")).rejects.toThrow(BadRequestError);
   });
@@ -342,6 +378,15 @@ describe("addManagerComment", () => {
     expect(result).toEqual(mockComment);
   });
 
+  it("対象年度がロック中なら ConflictError をスローし、書き込まない", async () => {
+    lockYear();
+    await expect(
+      addManagerComment("user-1", 2024, 1, "manager-1", { reason: null }),
+    ).rejects.toMatchObject({ name: "ConflictError", message: LOCKED });
+    expect(prisma.evaluation.upsert).not.toHaveBeenCalled();
+    expect(prisma.managerComment.create).not.toHaveBeenCalled();
+  });
+
   it("fiscalYear が範囲外の場合は BadRequestError をスロー", async () => {
     await expect(
       addManagerComment("user-1", 1800, 1, "manager-1", { reason: null }),
@@ -378,6 +423,24 @@ describe("updateManagerComment", () => {
     });
     expect(result).toEqual(mockUpdated);
   });
+
+  it("コメントが属する年度がロック中なら ConflictError をスローし、書き込まない", async () => {
+    lockYear();
+    await expect(updateManagerComment("comment-1", { reason: "修正後" })).rejects.toMatchObject({
+      name: "ConflictError",
+      message: LOCKED,
+    });
+    expect(prisma.fiscalYear.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { year: 2024 } }),
+    );
+    expect(prisma.managerComment.update).not.toHaveBeenCalled();
+  });
+
+  it("コメントが存在しなければ NotFoundError をスロー", async () => {
+    vi.mocked(prisma.managerComment.findUnique).mockResolvedValue(null);
+    await expect(updateManagerComment("missing", { reason: "x" })).rejects.toThrow(NotFoundError);
+    expect(prisma.managerComment.update).not.toHaveBeenCalled();
+  });
 });
 
 describe("deleteManagerComment", () => {
@@ -391,6 +454,21 @@ describe("deleteManagerComment", () => {
     expect(prisma.managerComment.delete).toHaveBeenCalledWith({
       where: { id: "comment-1" },
     });
+  });
+
+  it("コメントが属する年度がロック中なら ConflictError をスローし、削除しない", async () => {
+    lockYear();
+    await expect(deleteManagerComment("comment-1")).rejects.toMatchObject({
+      name: "ConflictError",
+      message: LOCKED,
+    });
+    expect(prisma.managerComment.delete).not.toHaveBeenCalled();
+  });
+
+  it("コメントが存在しなければ NotFoundError をスロー", async () => {
+    vi.mocked(prisma.managerComment.findUnique).mockResolvedValue(null);
+    await expect(deleteManagerComment("missing")).rejects.toThrow(NotFoundError);
+    expect(prisma.managerComment.delete).not.toHaveBeenCalled();
   });
 });
 
