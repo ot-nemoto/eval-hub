@@ -4,7 +4,7 @@ import type { Score } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { BadRequestError } from "@/lib/errors";
+import { BadRequestError, ConflictError } from "@/lib/errors";
 import { upsertEvaluation } from "@/lib/evaluations";
 import { assertFiscalYearUnlocked } from "@/lib/fiscal-years";
 import { prisma } from "@/lib/prisma";
@@ -40,7 +40,7 @@ export async function upsertSelfEvaluationAction(
       selfReason: data.selfReason,
     });
   } catch (e) {
-    if (e instanceof BadRequestError) return { error: e.message };
+    if (e instanceof BadRequestError || e instanceof ConflictError) return { error: e.message };
     throw e;
   }
 

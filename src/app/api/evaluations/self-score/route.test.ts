@@ -6,6 +6,7 @@ vi.mock("@/lib/apiAuth", () => ({ getAuthenticatedUser: vi.fn() }));
 vi.mock("@/lib/evaluations", () => ({ upsertEvaluation: vi.fn() }));
 
 import { getAuthenticatedUser } from "@/lib/apiAuth";
+import { ConflictError } from "@/lib/errors";
 import { upsertEvaluation } from "@/lib/evaluations";
 import { POST } from "./route";
 
@@ -62,6 +63,14 @@ describe("POST /api/evaluations/self-score", () => {
       new Prisma.PrismaClientKnownRequestError("FK", { code: "P2003", clientVersion: "5" }),
     );
     expect((await POST(makePost(validBody))).status).toBe(404);
+  });
+
+  it("対象年度がロック中（ConflictError）は 409", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(adminUser);
+    vi.mocked(upsertEvaluation).mockRejectedValueOnce(
+      new ConflictError("この年度はロックされているため編集できません"),
+    );
+    expect((await POST(makePost(validBody))).status).toBe(409);
   });
 
   it("キー無効は 401 / MEMBER は 403", async () => {

@@ -1,5 +1,6 @@
 import type { ManagerComment, Score } from "@prisma/client";
-import { BadRequestError } from "@/lib/errors";
+import { BadRequestError, ConflictError, NotFoundError } from "@/lib/errors";
+import { assertFiscalYearUnlocked } from "@/lib/fiscal-years";
 import { prisma } from "@/lib/prisma";
 
 /** 評価者コメントを明示 projection で返す（将来の列追加による無言の漏れを防ぐ）。 */
@@ -266,6 +267,25 @@ export async function getEvaluations(evaluateeId: string, fiscalYear: number) {
   }));
 }
 
+/**
+ * ロック中の年度への書き込みを拒否する。Server Actions は lib を呼ぶ前に自前で判定しているが、
+ * 外部 REST API は判定せずに lib を呼ぶため、書き込み関数の側で必ず判定する（T243）。
+ */
+async function assertUnlocked(fiscalYear: number) {
+  const lockError = await assertFiscalYearUnlocked(fiscalYear);
+  if (lockError) throw new ConflictError(lockError.error);
+}
+
+/** コメントが属する評価の年度で、ロック中なら拒否する。 */
+async function assertCommentUnlocked(commentId: string) {
+  const comment = await prisma.managerComment.findUnique({
+    where: { id: commentId },
+    select: { evaluation: { select: { fiscalYear: true } } },
+  });
+  if (!comment) throw new NotFoundError("コメントが見つかりません");
+  await assertUnlocked(comment.evaluation.fiscalYear);
+}
+
 export async function upsertEvaluation(data: {
   fiscalYear: number;
   evaluateeId: string;
@@ -279,6 +299,7 @@ export async function upsertEvaluation(data: {
     throw new BadRequestError("evalItemVersionDetailId は正の整数で指定してください");
 
   const { fiscalYear, evaluateeId, evalItemVersionDetailId, ...fields } = data;
+  await assertUnlocked(fiscalYear);
 
   const evaluation = await prisma.evaluation.upsert({
     where: {
@@ -309,6 +330,7 @@ export async function upsertManagerScore(
     throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
   if (!Number.isInteger(evalItemVersionDetailId) || evalItemVersionDetailId < 1)
     throw new BadRequestError("evalItemVersionDetailId は正の整数で指定してください");
+  await assertUnlocked(fiscalYear);
 
   const evaluation = await prisma.evaluation.upsert({
     where: {
@@ -339,6 +361,7 @@ export async function addManagerComment(
     throw new BadRequestError("fiscalYear は 1900〜9999 の整数で指定してください");
   if (!Number.isInteger(evalItemVersionDetailId) || evalItemVersionDetailId < 1)
     throw new BadRequestError("evalItemVersionDetailId は正の整数で指定してください");
+  await assertUnlocked(fiscalYear);
 
   const evaluation = await prisma.evaluation.upsert({
     where: {
@@ -363,6 +386,7 @@ export async function addManagerComment(
 }
 
 export async function updateManagerComment(commentId: string, data: { reason?: string | null }) {
+  await assertCommentUnlocked(commentId);
   const comment = await prisma.managerComment.update({
     where: { id: commentId },
     data,
@@ -371,5 +395,6 @@ export async function updateManagerComment(commentId: string, data: { reason?: s
 }
 
 export async function deleteManagerComment(commentId: string) {
+  await assertCommentUnlocked(commentId);
   await prisma.managerComment.delete({ where: { id: commentId } });
 }
