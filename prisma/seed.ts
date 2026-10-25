@@ -209,6 +209,13 @@ async function main() {
       isLocked: false,
     },
   ];
+  // is_current は部分ユニークインデックスで true が最大1件に制約されている（T236）。
+  // 前回のシード以降に別の年度が現在年度になっていると、ループ中の「2026 を true」が
+  // 一意制約違反になる。クリアはループの前に行う（後置だと衝突する）。
+  await prisma.fiscalYear.updateMany({
+    where: { isCurrent: true },
+    data: { isCurrent: false },
+  });
   for (const fy of fiscalYearsBase) {
     await prisma.fiscalYear.upsert({
       where: { year: fy.year },
@@ -222,10 +229,6 @@ async function main() {
       create: fy,
     });
   }
-  await prisma.fiscalYear.updateMany({
-    where: { year: { not: 2026 } },
-    data: { isCurrent: false },
-  });
   console.log(`fiscal_years: ${fiscalYearsBase.length} upserted`);
 
   // =========================================================================

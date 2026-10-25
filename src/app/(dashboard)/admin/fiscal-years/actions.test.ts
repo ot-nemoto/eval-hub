@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ConflictError, NotFoundError } from "@/lib/errors";
+import { BadRequestError, ConflictError, NotFoundError } from "@/lib/errors";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({
@@ -10,7 +10,7 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/lib/auth", () => ({ getSession: vi.fn() }));
 vi.mock("@/lib/prisma", () => ({ prisma: {} }));
-vi.mock("@/lib/fiscal-years", () => ({}));
+vi.mock("@/lib/fiscal-years", () => ({ updateFiscalYear: vi.fn() }));
 vi.mock("@/lib/eval-item-versions", () => ({
   assignVersionToFiscalYear: vi.fn(),
   unassignVersionFromFiscalYear: vi.fn(),
@@ -18,7 +18,8 @@ vi.mock("@/lib/eval-item-versions", () => ({
 
 import { getSession } from "@/lib/auth";
 import { assignVersionToFiscalYear, unassignVersionFromFiscalYear } from "@/lib/eval-item-versions";
-import { assignVersionAction, unassignVersionAction } from "./actions";
+import { updateFiscalYear } from "@/lib/fiscal-years";
+import { assignVersionAction, unassignVersionAction, updateFiscalYearAction } from "./actions";
 
 const adminSession = { user: { id: "u1", role: "ADMIN" } };
 const memberSession = { user: { id: "u2", role: "MEMBER" } };
@@ -115,5 +116,73 @@ describe("unassignVersionAction", () => {
     const result = await unassignVersionAction(2026);
     expect(result).toEqual({});
     expect(unassignVersionFromFiscalYear).toHaveBeenCalledWith(2026);
+  });
+});
+
+describe("updateFiscalYearAction", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("未ログインでリダイレクト", async () => {
+    vi.mocked(getSession).mockResolvedValue(null);
+    await expect(updateFiscalYearAction(2026, { isCurrent: true })).rejects.toThrow(
+      "REDIRECT:/login",
+    );
+  });
+
+  it("MEMBER でリダイレクト", async () => {
+    vi.mocked(getSession).mockResolvedValue(memberSession as never);
+    await expect(updateFiscalYearAction(2026, { isCurrent: true })).rejects.toThrow(
+      "REDIRECT:/evaluations",
+    );
+  });
+
+  it("不正な year でエラー", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+    const result = await updateFiscalYearAction(0, { isCurrent: true });
+    expect(result).toEqual({ error: "year は 1900〜9999 の整数で指定してください" });
+  });
+
+  it("更新フィールドが空でエラー", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+    const result = await updateFiscalYearAction(2026, {});
+    expect(result).toEqual({ error: "更新するフィールドを指定してください" });
+    expect(updateFiscalYear).not.toHaveBeenCalled();
+  });
+
+  it("NotFoundError を catch してエラーを返す", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+    vi.mocked(updateFiscalYear).mockRejectedValue(new NotFoundError("年度が見つかりません"));
+    const result = await updateFiscalYearAction(2026, { isCurrent: true });
+    expect(result).toEqual({ error: "年度が見つかりません" });
+  });
+
+  it("BadRequestError を catch してエラーを返す", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+    vi.mocked(updateFiscalYear).mockRejectedValue(new BadRequestError("name は必須です"));
+    const result = await updateFiscalYearAction(2026, { name: "x" });
+    expect(result).toEqual({ error: "name は必須です" });
+  });
+
+  it("ConflictError を catch してエラーを返す", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+    vi.mocked(updateFiscalYear).mockRejectedValue(
+      new ConflictError("現在年度の更新が競合しました。再度お試しください"),
+    );
+    const result = await updateFiscalYearAction(2026, { isCurrent: true });
+    expect(result).toEqual({ error: "現在年度の更新が競合しました。再度お試しください" });
+  });
+
+  it("予期しない例外は再スローする", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+    vi.mocked(updateFiscalYear).mockRejectedValue(new Error("DB down"));
+    await expect(updateFiscalYearAction(2026, { isCurrent: true })).rejects.toThrow("DB down");
+  });
+
+  it("正常系で空オブジェクトを返す", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+    vi.mocked(updateFiscalYear).mockResolvedValue({ year: 2026, isCurrent: true } as never);
+    const result = await updateFiscalYearAction(2026, { isCurrent: true });
+    expect(result).toEqual({});
+    expect(updateFiscalYear).toHaveBeenCalledWith(2026, { isCurrent: true });
   });
 });

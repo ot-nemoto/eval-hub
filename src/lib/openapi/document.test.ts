@@ -47,29 +47,40 @@ const HTTP_METHODS = ["get", "post", "patch", "put", "delete"];
  *
  * これは**列挙**で、spec に無いステータスを見つける検査ではない。狙いは回帰の防止:
  * ステータスを足す/消すときにこの表の更新を強制し、**無言の変更を起こさせない**。
- * 実装が返しうるのに宣言していないステータス（例: reorder の 409）は、この表があれば
- * 「表に何を書くか」を考える段階で露出する。キー集合は下の検査で spec と双方向に一致させる。
+ * キー集合は下の検査で spec と双方向に一致させる。
+ *
+ * **この表は spec と実装のズレを、どちらの向きにも検出しない。** 表と spec が一致して
+ * いれば通るため、両方に同じ嘘を書けばその嘘が固定される。
+ *
+ * - 過剰な宣言（返りえないステータスを宣言する）: reorder の 409 は `index` に一意制約が
+ *   無く `P2002` が発生しえないのに宣言されていた（T235 で撤去）
+ * - 過少な宣言（返るステータスを宣言しない）: reorder の 404 を spec と表の両方から消す
+ *   変異は全テスト green のまま通る（T235 のレビューで実測）。**こちらの方が害が大きい**
+ *
+ * つまりこの表が守るのは「片側だけ更新したこと」だけで、**宣言の正しさは一切保証しない**。
+ * ステータスを足す/消すときは、実装・スキーマの側にその経路が本当にあるかを自分で確かめる。
+ * 実装から導出する検査（ルートテストで観測したステータスと突き合わせる等）が別途必要。
  */
 const EXPECTED_STATUS: Record<string, string[]> = {
   "GET /api/evaluation-items": ["200", "400", "401", "403", "500"],
   "POST /api/evaluation-items": ["201", "400", "401", "403", "404", "409", "500"],
   "POST /api/evaluation-items/import": ["200", "400", "401", "403", "409", "500"],
-  "POST /api/evaluation-items/reorder": ["204", "400", "401", "403", "404", "409", "500"],
+  "POST /api/evaluation-items/reorder": ["204", "400", "401", "403", "404", "500"],
   "PATCH /api/evaluation-items/{id}": ["200", "400", "401", "403", "404", "409", "500"],
   "DELETE /api/evaluation-items/{id}": ["204", "400", "401", "403", "404", "500"],
   "GET /api/targets": ["200", "401", "403", "500"],
   "POST /api/targets": ["201", "400", "401", "403", "409", "500"],
-  "POST /api/targets/reorder": ["204", "400", "401", "403", "404", "409", "500"],
+  "POST /api/targets/reorder": ["204", "400", "401", "403", "404", "500"],
   "PATCH /api/targets/{id}": ["200", "400", "401", "403", "404", "409", "500"],
   "DELETE /api/targets/{id}": ["204", "400", "401", "403", "404", "409", "500"],
   "GET /api/categories": ["200", "400", "401", "403", "500"],
   "POST /api/categories": ["201", "400", "401", "403", "404", "409", "500"],
-  "POST /api/categories/reorder": ["204", "400", "401", "403", "404", "409", "500"],
+  "POST /api/categories/reorder": ["204", "400", "401", "403", "404", "500"],
   "PATCH /api/categories/{id}": ["200", "400", "401", "403", "404", "409", "500"],
   "DELETE /api/categories/{id}": ["204", "400", "401", "403", "404", "409", "500"],
   "GET /api/fiscal-years": ["200", "401", "403", "500"],
   "POST /api/fiscal-years": ["201", "400", "401", "403", "409", "500"],
-  "PATCH /api/fiscal-years/{year}": ["200", "400", "401", "403", "404", "500"],
+  "PATCH /api/fiscal-years/{year}": ["200", "400", "401", "403", "404", "409", "500"],
   "DELETE /api/fiscal-years/{year}": ["204", "400", "401", "403", "404", "409", "500"],
   "POST /api/fiscal-years/{year}/lock": ["200", "400", "401", "403", "404", "500"],
   "GET /api/evaluation-assignments": ["200", "400", "401", "403", "500"],
@@ -82,11 +93,11 @@ const EXPECTED_STATUS: Record<string, string[]> = {
   "GET /api/evaluations/progress": ["200", "400", "401", "403", "500"],
   "GET /api/evaluations/self": ["200", "400", "401", "403", "500"],
   "GET /api/evaluations/manager": ["200", "400", "401", "403", "500"],
-  "POST /api/evaluations/self-score": ["200", "400", "401", "403", "404", "500"],
-  "POST /api/evaluations/manager-score": ["200", "400", "401", "403", "404", "500"],
-  "POST /api/evaluations/comments": ["201", "400", "401", "403", "404", "500"],
-  "PATCH /api/evaluations/comments/{id}": ["200", "400", "401", "403", "404", "500"],
-  "DELETE /api/evaluations/comments/{id}": ["204", "401", "403", "404", "500"],
+  "POST /api/evaluations/self-score": ["200", "400", "401", "403", "404", "409", "500"],
+  "POST /api/evaluations/manager-score": ["200", "400", "401", "403", "404", "409", "500"],
+  "POST /api/evaluations/comments": ["201", "400", "401", "403", "404", "409", "500"],
+  "PATCH /api/evaluations/comments/{id}": ["200", "400", "401", "403", "404", "409", "500"],
+  "DELETE /api/evaluations/comments/{id}": ["204", "401", "403", "404", "409", "500"],
   "GET /api/users": ["200", "401", "403", "500"],
   "PATCH /api/users/{id}": ["200", "400", "401", "403", "404", "500"],
   "DELETE /api/users/{id}": ["204", "401", "403", "404", "409", "500"],
@@ -256,6 +267,36 @@ describe("buildOpenApiDocument", () => {
     for (const [key, codes] of Object.entries(actual)) {
       expect(codes, key).toEqual([...EXPECTED_STATUS[key]].sort());
     }
+  });
+
+  // info.description の共通エラー表と、実際に宣言されているステータス集合を突き合わせる。
+  // 表は散文なので文言そのものは固定しない（変更ごとに落ちる検査になる）が、行の欠落・余りは
+  // 契約のずれなので検出する。T236 で 409 を増やしたとき、表の「一意制約違反」が実体を
+  // 説明できなくなっていた（重複以外に依存関係・状態による拒否・同時更新の衝突がある）。
+  it("info.description の共通エラー表が宣言されている全ステータスを網羅する", () => {
+    const { info, paths } = buildOpenApiDocument();
+    // description 全体を走査すると、別の節の表にある行でエラー表の欠落が隠れる。
+    const description = info.description ?? "";
+    const start = description.indexOf("## エラーレスポンス");
+    const end = description.indexOf("\n## ", start + 1);
+    const section = start < 0 ? "" : description.slice(start, end < 0 ? undefined : end);
+    const documented = [...section.matchAll(/^\| (\d{3}) \|/gm)].map((m) => m[1]);
+    const declared = new Set<string>();
+    for (const item of Object.values(paths)) {
+      for (const [method, op] of Object.entries(item as Record<string, unknown>)) {
+        if (!HTTP_METHODS.includes(method)) continue;
+        const o = op as { responses: Record<string, unknown> };
+        for (const status of Object.keys(o.responses)) {
+          if (Number(status) >= 400) declared.add(status);
+        }
+      }
+    }
+    // 表が読み取れていない・走査の起点を誤ると 0 件同士の一致で通るため、どちらも 0 件を禁じる。
+    expect(documented.length).toBeGreaterThan(0);
+    expect(declared.size).toBeGreaterThan(0);
+    // 同じステータスの行が 2 つあると、どちらが正か読み手に分からない。
+    expect(documented.length).toBe(new Set(documented).size);
+    expect([...documented].sort()).toEqual([...declared].sort());
   });
 
   // 500 の「有無」だけを見る検査では、ボディ定義が落ちた 500・別スキーマを指す 500 を

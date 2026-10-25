@@ -171,7 +171,7 @@ erDiagram
 | name | VARCHAR(50) | NOT NULL | 表示名（例: 2025年度） |
 | start_date | DATE | NOT NULL | 開始日 |
 | end_date | DATE | NOT NULL | 終了日 |
-| is_current | BOOLEAN | DEFAULT false | 現在年度フラグ（部分ユニークインデックスで true は最大1件） |
+| is_current | BOOLEAN | DEFAULT false | 現在年度フラグ（部分ユニークインデックスで true は最大1件。false 側は一意でない） |
 | is_locked | BOOLEAN | DEFAULT false | ロックフラグ（true の場合、評価の作成・編集・削除を一切禁止） |
 | eval_item_version_id | INTEGER | FK → eval_item_versions.id, NULLABLE | 割り当てられた評価項目バージョン |
 | created_at | TIMESTAMP | DEFAULT now() | |
@@ -344,7 +344,7 @@ erDiagram
 | `categories` | UNIQUE（複合） | `(target_id, no)` | 大分類内番号の重複防止 |
 | `evaluation_items` | UNIQUE（複合） | `(category_id, no)` | 中分類内番号の重複防止 |
 | `evaluations` | UNIQUE（複合） | `(fiscal_year, evaluatee_id, eval_item_version_detail_id)` | 年度×被評価者×バージョン詳細で1レコード |
-| `fiscal_years` | PARTIAL UNIQUE | `is_current = true` | 現在年度フラグは最大1件（マイグレーションで管理） |
+| `fiscal_years` | PARTIAL UNIQUE | `is_current = true` | 現在年度フラグは最大1件。**この制約を lookup に使ってはならない**（`false` 側は一意でない） |
 
 ---
 

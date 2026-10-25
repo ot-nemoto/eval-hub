@@ -98,11 +98,11 @@ Authorization: Bearer <api_key>
 
 | ステータス | 発生条件 |
 |---|---|
-| 400 | バリデーションエラー |
-| 401 | API キーが存在しない／無効 |
-| 403 | 権限（ADMIN 等）がない |
-| 404 | 対象リソースが存在しない |
-| 409 | 一意制約違反（no 重複など） |
+| 400 | バリデーションエラー（body・クエリ・path パラメータ） |
+| 401 | API キーが無い／無効、または対象ユーザーが \`isActive: false\` |
+| 403 | 権限（\`role: ADMIN\` 等）がない、または自分自身への操作が禁止されている |
+| 404 | 対象リソース、または参照先のリソース（年度・被評価者・評価項目など）が存在しない |
+| 409 | 重複（一意制約違反）／依存するリソースが存在する削除／状態による拒否（年度のロック中・割り当て中）／同時更新の衝突 |
 | 500 | サーバー内部エラー |
 
 ## クイックスタート
@@ -372,7 +372,6 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("並び替え対象が未存在"),
-            409: errorResponse("並び替え中に一意制約違反が発生"),
             500: errorResponse("サーバーエラー"),
           },
         },
@@ -443,7 +442,6 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("並び替え対象が未存在"),
-            409: errorResponse("並び替え中に一意制約違反が発生"),
             500: errorResponse("サーバーエラー"),
           },
         },
@@ -526,7 +524,6 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("並び替え対象が未存在"),
-            409: errorResponse("並び替え中に一意制約違反が発生"),
             500: errorResponse("サーバーエラー"),
           },
         },
@@ -599,6 +596,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
+            409: errorResponse("現在年度の更新が競合"),
             500: errorResponse("サーバーエラー"),
           },
         },
@@ -815,6 +813,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("参照先（年度・被評価者・項目）が未存在"),
+            409: errorResponse("年度がロック中"),
             500: errorResponse("サーバーエラー"),
           },
         },
@@ -830,6 +829,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("参照先（年度・被評価者・項目）が未存在"),
+            409: errorResponse("年度がロック中"),
             500: errorResponse("サーバーエラー"),
           },
         },
@@ -845,6 +845,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("参照先（年度・被評価者・項目・評価者）が未存在"),
+            409: errorResponse("年度がロック中"),
             500: errorResponse("サーバーエラー"),
           },
         },
@@ -869,6 +870,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
+            409: errorResponse("年度がロック中"),
             500: errorResponse("サーバーエラー"),
           },
         },
@@ -889,6 +891,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             401: unauthorizedResponse(),
             403: errorResponse("ADMIN 権限が必要"),
             404: errorResponse("未存在"),
+            409: errorResponse("年度がロック中"),
             500: errorResponse("サーバーエラー"),
           },
         },
