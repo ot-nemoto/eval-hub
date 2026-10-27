@@ -201,7 +201,7 @@ model FiscalYear {
 ```
 
 - 生成される DDL は `CREATE UNIQUE INDEX … ON "fiscal_years"("is_current") WHERE ("is_current" = true)`
-- **生 SQL だけで作って schema に書かない形は採らない。** schema 側に無いインデックスは、次に `migrate dev` が走ったときの差分として `DROP INDEX` が生成される。このドリフトは `biome ci` でもテストでも検出されない
+- **生 SQL だけで作って schema に書かない形は採らない。** schema 側に無いインデックスは、次に `migrate dev` が走ったときの差分として `DROP INDEX` が生成される。このドリフトは CI の `Schema / migration drift check`（dev-commons が配布する `ci.yml`）で検出される
 - `where:` には `{ isCurrent: true }` のほか `raw("is_current")` も書けるが、**書式を替えてはならない。** 生成される述語が `WHERE (is_current)` と `WHERE ("is_current" = true)` で別物になり、既存インデックスの DROP / CREATE が差分として出る
 
 #### `@@unique` の副作用: `WhereUniqueInput` に現れる
